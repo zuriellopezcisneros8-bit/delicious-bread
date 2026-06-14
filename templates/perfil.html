@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delicious Bread - Panel de Socio</title>
+    <style>
+        /* Paleta de colores Premium / Old Money */
+        :root { 
+            --bg-dark: #0a0908; /* Negro profundo */
+            --panel-bg: #1c1714; /* Café muy oscuro / expreso */
+            --border-color: #3b2f2a; /* Café medio sutil */
+            --text-main: #e8e2d5; /* Beige claro */
+            --text-muted: #a69c8a; /* Beige oscuro / Arena */
+            --accent-beige: #d4c4a8; /* Beige dorado */
+            --status-pendiente: #b48645; /* Dorado cobrizo */
+            --status-horneando: #5c6c5a; /* Verde olivo mate */
+            --status-listo: #4a5d23; /* Verde bosque elegante */
+            --status-entregado: #3a3633; /* Gris topo */
+        }
+
+        body { 
+            background-color: var(--bg-dark); 
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 30px 15px; 
+            line-height: 1.5;
+        }
+
+        .container { 
+            max-width: 850px; 
+            margin: 0 auto; 
+        }
+
+        /* --- Encabezado --- */
+        .header-panel { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-bottom: 1px solid var(--border-color); 
+            padding-bottom: 25px; 
+            margin-bottom: 35px; 
+        }
+
+        h1, h2 { 
+            font-family: 'Georgia', 'Times New Roman', serif; 
+            color: var(--accent-beige); 
+            margin: 0; 
+            font-weight: normal;
+            letter-spacing: 0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn-nav { 
+            padding: 10px 20px; 
+            background: transparent; 
+            border: 1px solid var(--text-muted); 
+            color: var(--text-main); 
+            text-decoration: none; 
+            border-radius: 4px; 
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease; 
+        }
+
+        .btn-nav:hover { 
+            background: var(--text-main); 
+            color: var(--bg-dark); 
+        }
+
+        .btn-logout {
+            border-color: #5a3a3a;
+            color: #d89b9b;
+        }
+
+        .btn-logout:hover {
+            background: #5a3a3a;
+            color: #f5f5f5;
+        }
+
+        /* --- Tarjeta de Perfil --- */
+        .profile-card { 
+            background: var(--panel-bg); 
+            padding: 30px; 
+            border-radius: 6px; 
+            border: 1px solid var(--border-color); 
+            margin-bottom: 40px; 
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .profile-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 25px; 
+        }
+
+        .data-label { 
+            font-size: 0.75rem; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            margin-bottom: 8px; 
+        }
+
+        .data-value { 
+            font-size: 1.15rem; 
+            color: var(--text-main); 
+        }
+
+        /* --- Tarjetas de Pedidos --- */
+        .section-title {
+            border-bottom: 1px solid var(--border-color); 
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-size: 1.5rem;
+        }
+
+        .order-card { 
+            background: var(--panel-bg); 
+            border: 1px solid var(--border-color); 
+            border-radius: 6px; 
+            padding: 25px; 
+            margin-bottom: 20px; 
+            display: flex; 
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 15px;
+        }
+
+        .order-id {
+            font-family: 'Georgia', serif;
+            font-size: 1.3rem; 
+            color: var(--accent-beige); 
+            letter-spacing: 1px;
+        }
+
+        .order-body {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .order-products {
+            font-size: 0.95rem; 
+            color: var(--text-muted); 
+            line-height: 1.6;
+        }
+
+        .order-meta {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .order-time {
+            font-size: 0.8rem; 
+            color: #7a7063; 
+        }
+
+        .order-price {
+            font-size: 1.25rem; 
+            color: var(--text-main);
+        }
+
+        .badge { 
+            padding: 6px 14px; 
+            border-radius: 3px; 
+            font-size: 0.75rem; 
+            letter-spacing: 1px;
+            text-transform: uppercase; 
+        }
+
+        .status-pendiente { background: var(--status-pendiente); color: #fff; }
+        .status-horneando { background: var(--status-horneando); color: #fff; }
+        .status-listo { background: var(--status-listo); color: #fff; }
+        .status-entregado { background: var(--status-entregado); color: var(--text-muted); border: 1px solid var(--border-color); }
+
+        .empty-state {
+            color: var(--text-muted); 
+            font-style: italic; 
+            text-align: center; 
+            margin-top: 40px;
+            font-family: 'Georgia', serif;
+        }
+
+        /* --- Responsividad (Móviles) --- */
+        @media (max-width: 600px) {
+            .header-panel {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .header-actions {
+                width: 100%;
+                display: flex;
+            }
+
+            .btn-nav {
+                flex: 1;
+                text-align: center;
+                padding: 12px 10px;
+            }
+
+            .profile-card {
+                padding: 20px;
+            }
+
+            .profile-grid {
+                grid-template-columns: 1fr; /* Apila los datos del cliente */
+                gap: 15px;
+            }
+
+            .order-body {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .order-meta {
+                text-align: left;
+                width: 100%;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                padding-top: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-panel">
+            <h1>Panel de Socio</h1>
+            <div class="header-actions">
+                <a href="{{ url_for('index') }}" class="btn-nav">Ir a la Tienda</a>
+                <a href="{{ url_for('logout') }}" class="btn-nav btn-logout">Cerrar Sesión</a>
+            </div>
+        </div>
+
+        <div class="profile-card">
+            <div class="profile-grid">
+                <div>
+                    <div class="data-label">Nombre del Cliente</div>
+                    <div class="data-value">{{ usuario.nombre }}</div>
+                </div>
+                <div>
+                    <div class="data-label">Teléfono (Avisos de Horno)</div>
+                    <div class="data-value">{{ usuario.telefono }}</div>
+                </div>
+                <div>
+                    <div class="data-label">Correo (Tickets de Compra)</div>
+                    <div class="data-value" style="word-break: break-all;">{{ usuario.correo }}</div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">Mis Pedidos</h2>
+        
+        {% for pedido in pedidos %}
+        <div class="order-card">
+            <div class="order-header">
+                <span class="order-id">{{ pedido.codigo_recogida }}</span>
+                <span class="badge status-{{ pedido.estado.lower() }}">{{ pedido.estado }}</span>
+            </div>
+            
+            <div class="order-body">
+                <div class="order-products">
+                    {% for detalle in pedido.detalles %}
+                        {{ detalle.cantidad }}x {{ detalle.producto.nombre }}<br>
+                    {% endfor %}
+                </div>
+                
+                <div class="order-meta">
+                    <span class="order-time">Pick-Up: {{ pedido.horario_recogida }} hrs</span>
+                    <span class="order-price">${{ "%.2f"|format(pedido.monto_total) }}</span>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <p class="empty-state">Aún no tienes pedidos registrados en tu cuenta.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>

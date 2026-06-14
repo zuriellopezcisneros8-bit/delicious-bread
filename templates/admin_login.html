@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acceso Restringido - Delicious Bread</title>
+    <style>
+        :root { --matte-black: #1A1A1A; --wood-brown: #5C4033; --gold: #D4AF37; --text-light: #F5F5DC; }
+        body { background-color: var(--matte-black); color: var(--text-light); font-family: 'Georgia', serif; height: 100vh; display: flex; justify-content: center; align-items: center; margin: 0; }
+        .login-box { background: #111; padding: 40px; border: 1px solid var(--wood-brown); border-radius: 8px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        h2 { color: var(--gold); letter-spacing: 2px; text-transform: uppercase; font-size: 1.2rem; margin-bottom: 30px; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        input[type="password"] { width: 100%; padding: 12px; background: transparent; border: none; border-bottom: 1px solid var(--wood-brown); color: var(--gold); font-size: 1rem; outline: none; box-sizing: border-box; }
+        input[type="password"]:focus { border-bottom-color: var(--gold); }
+        .btn-auth { background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 12px 30px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; transition: 0.3s; margin-top: 10px; width: 100%; }
+        .btn-auth:hover { background: var(--gold); color: var(--matte-black); }
+        .error-msg { color: #cc3300; font-size: 0.85rem; margin-bottom: 15px; font-family: Arial, sans-serif; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>Panel Operativo</h2>
+        {% with messages = get_flashed_messages(category_filter=['error']) %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="error-msg">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form method="POST">
+            <div class="input-group">
+                <input type="password" name="password" placeholder="Clave de Acceso" required>
+            </div>
+            <button type="submit" class="btn-auth">Ingresar</button>
+        </form>
+        <a href="{{ url_for('index') }}" style="display:block; margin-top:20px; color:#666; text-decoration:none; font-size:0.8rem; font-family:Arial, sans-serif;">&larr; Volver a la tienda</a>
+    </div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+/* Paleta de colores Premium / Old Money */
+:root {
+    --bg-dark: #121212; /* Negro mate profundo */
+    --text-light: #F5F5DC; /* Beige suave */
+    --accent-gold: #D4AF37; /* Dorado clásico */
+    --accent-olive: #556B2F; /* Verde oliva para botones de confirmación */
+    --panel-bg: #1E1E1E; /* Gris muy oscuro para tarjetas */
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-light);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Contenedor principal */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Tarjetas de Productos y Perfil */
+.card {
+    background-color: var(--panel-bg);
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Botones */
+.btn-primary {
+    background-color: var(--accent-gold);
+    color: var(--bg-dark);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #B8960C;
+}
+
+/* Estado del Pedido: Listo para recoger */
+.status-ready {
+    color: var(--accent-olive);
+    font-weight: bold;
+    border: 1px solid var(--accent-olive);
+    padding: 5px 10px;
+    border-radius: 4px;
+}

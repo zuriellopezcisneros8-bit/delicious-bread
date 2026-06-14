@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Delicious Bread</title>
+</head>
+<body style="background-color: #0d0d0d; color: #dfd0c0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; padding: 40px 20px;">
+    
+    <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; margin: 0 auto; background-color: #111111; border: 1px solid #d8a25e;">
+        <tr>
+            <td style="padding: 40px 30px 20px 30px; text-align: center; border-bottom: 1px dashed #333333;">
+                <h1 style="color: #dfd0c0; margin: 0; font-size: 28px; font-weight: normal; letter-spacing: 2px;">Delicious Bread</h1>
+                <p style="color: #8b7355; letter-spacing: 3px; font-size: 11px; text-transform: uppercase; margin-top: 8px;">Atelier de Panadería Artesanal</p>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="padding: 30px;">
+                <p style="font-size: 16px; margin-bottom: 5px;">Hola, <strong>{{ usuario.nombre }}</strong>.</p>
+                <p style="font-size: 14px; color: #999999; margin-top: 0;">Hemos recibido tu selección. Aquí tienes tu comprobante:</p>
+                
+                <div style="background-color: #1a1a1a; padding: 25px; margin: 25px 0; border-left: 4px solid #d8a25e;">
+                    <p style="margin: 0 0 20px 0; color: #d8a25e; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">
+                        Código: <strong>{{ pedido.codigo_recogida }}</strong>
+                    </p>
+                    
+                    <table width="100%" cellpadding="0" cellspacing="0" style="font-size: 14px; color: #dfd0c0;">
+                        {% for detalle in detalles %}
+                        <tr>
+                            <td style="padding: 10px 0; border-bottom: 1px solid #2a2a2a;">
+                                <strong>{{ detalle.cantidad }}x</strong> {{ detalle.producto.nombre }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    
+                    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
+                        <tr>
+                            <td style="font-size: 13px; color: #8b7355; padding-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">
+                                Recepción: <span style="color: #dfd0c0;">{{ pedido.horario_recogida }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-size: 13px; color: #8b7355; padding-bottom: 20px; text-transform: uppercase; letter-spacing: 1px;">
+                                Pago: <span style="color: #dfd0c0;">{{ pedido.metodo_pago }}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-size: 22px; color: #d8a25e; font-weight: bold; border-top: 1px dashed #333333; padding-top: 20px;">
+                                TOTAL: ${{ "%.2f"|format(pedido.monto_total) }} MXN
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                
+                <p style="font-size: 12px; color: #666666; text-align: center; margin-top: 30px; line-height: 1.6;">
+                    Presenta tu <strong>código de pedido</strong> en mostrador.<br>
+                    Te esperamos en la boutique para entregarte tus favoritos.
+                </p>
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

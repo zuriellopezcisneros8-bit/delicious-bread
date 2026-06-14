@@ -1,0 +1,7 @@
+Flask
+Flask-SQLAlchemy
+Flask-Mail
+Werkzeug
+gunicorn
+psycopg2-binary
+email-validator

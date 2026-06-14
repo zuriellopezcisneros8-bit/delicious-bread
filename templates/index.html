@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DELICIOUS BREAD | PREMIUM</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-beige: #EADBC8;         /* Fondo Beige Ultra Premium */
+            --card-black: #000000;       /* Negro Mate Profundo (seis ceros) */
+            --skin-beige: #dfd0c0;         
+            --light-brown: #8b7355;        
+            --luxury-gold: #c5a880;
+            --deep-espresso: #1a120b;
+            --border-fino: #222222;        
+            --text-dark: #1A1A1A;
+            --transition-smooth: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-beige);
+            color: var(--text-dark);
+            font-family: 'Montserrat', sans-serif; 
+            font-weight: 300;
+            line-height: 1.6;
+            padding: 20px 15px;
+            overflow-x: hidden;
+        }
+
+        body.no-scroll { overflow-y: hidden; }
+
+        header { text-align: center; margin: 80px 0 90px 0; }
+
+        h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 400; }
+        h1 { font-size: clamp(2.2rem, 5vw, 4rem); letter-spacing: 6px; margin-bottom: 15px; color: var(--text-dark); text-transform: uppercase; font-weight: 600;}
+        header p { font-size: clamp(0.8rem, 1.5vw, 0.9rem); font-style: italic; color: #554433; letter-spacing: 4px; text-transform: uppercase; font-weight: 500;}
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        .grid-productos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; margin-bottom: 80px; }
+
+        /* TARJETAS NEGRO MATE */
+        .card-producto {
+            background: var(--card-black);
+            border-radius: 4px; 
+            overflow: hidden; 
+            transition: var(--transition-smooth);
+            display: flex; flex-direction: column;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+        }
+        .card-producto:hover { transform: translateY(-8px); box-shadow: 0 25px 45px rgba(0,0,0,0.3); }
+
+        /* PRODUCTO PAUSADO */
+        .card-producto.pausado { opacity: 0.6; filter: grayscale(80%); pointer-events: none; }
+        .overlay-pausado {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 10;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Montserrat', sans-serif; font-size: 1.5rem; font-weight: 600;
+            letter-spacing: 4px; color: #ff4d4d; text-transform: uppercase; backdrop-filter: blur(2px);
+        }
+
+        /* IMAGEN DE ESQUINA A ESQUINA */
+        .img-contenedor {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+}
+
+.img-contenedor img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+        .card-producto:hover .img-contenedor img { transform: scale(1.05); }
+
+        .info-producto { padding: 30px; display: flex; flex-direction: column; flex-grow: 1; }
+        .info-producto h3 { font-size: 1.4rem; margin-bottom: 12px; color: var(--skin-beige); letter-spacing: 1px; }
+        .info-producto p { font-size: 0.85rem; color: #8a8a8a; margin-bottom: 25px; flex-grow: 1; line-height: 1.8; font-weight: 300; }
+
+        .meta-producto { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-fino); padding-top: 25px; }
+        .precio { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--luxury-gold); font-weight: 400; }
+
+        .control-cantidad { display: flex; align-items: center; border: 1px solid var(--border-fino); background: #080808; }
+        .control-cantidad button { background: transparent; color: var(--luxury-gold); border: none; padding: 6px 14px; font-size: 1.1rem; cursor: pointer; transition: var(--transition-smooth); }
+        .control-cantidad button:hover { color: var(--skin-beige); background: #141414; }
+        .control-cantidad input { background: transparent; color: var(--skin-beige); border: none; text-align: center; width: 40px; font-size: 0.9rem; font-family: 'Montserrat', sans-serif; font-weight: 400; }
+        .control-cantidad input:focus { outline: none; }
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+        /* BOTON FLOTANTE */
+        .btn-carrito-top {
+            position: fixed; top: 30px; right: 30px;
+            background: var(--card-black); backdrop-filter: blur(12px);
+            border: 1px solid var(--luxury-gold); padding: 12px 28px;
+            display: flex; align-items: center; gap: 15px; z-index: 1500;
+            cursor: pointer; border-radius: 4px; transition: var(--transition-smooth);
+            transform: translateY(-150%); box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .btn-carrito-top.visible { transform: translateY(0); }
+        .btn-carrito-top:hover { background: var(--luxury-gold); }
+        .btn-carrito-top:hover .icono-svg { stroke: var(--card-black); }
+        .btn-carrito-top:hover .monto-top { color: var(--card-black); }
+        .icono-svg { stroke: var(--luxury-gold); transition: var(--transition-smooth); }
+        .monto-top { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--luxury-gold); font-weight: 500; transition: var(--transition-smooth); }
+        .badge-cantidad { background: var(--skin-beige); color: var(--card-black); font-size: 0.7rem; font-weight: 600; padding: 2px 8px; border-radius: 4px; margin-left: -5px; letter-spacing: 0.5px; }
+
+        /* SIDEBAR Y MENÚ LATERAL */
+        .overlay-carrito { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 2400; opacity: 0; pointer-events: none; transition: var(--transition-smooth); }
+        .overlay-carrito.activo { opacity: 1; pointer-events: auto; }
+
+        .sidebar-carrito {
+            position: fixed; top: 0; right: -100%; width: 460px; max-width: 100vw; height: 100dvh;
+            background: var(--card-black); border-left: 1px solid var(--border-fino);
+            z-index: 2500; transition: var(--transition-smooth); display: flex; flex-direction: column;
+            box-shadow: -20px 0 50px rgba(0,0,0,0.5);
+        }
+        .sidebar-carrito.abierto { right: 0; }
+        .sidebar-header { padding: 35px; border-bottom: 1px solid var(--border-fino); display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-shrink: 0; }
+        .sidebar-header h2 { font-size: 1.3rem; letter-spacing: 2px; color: var(--skin-beige); text-transform: uppercase; line-height: 1.3; flex-grow: 1; }
+        .btn-cerrar-sidebar { background: transparent; border: none; color: var(--light-brown); font-size: 2.2rem; cursor: pointer; transition: color 0.3s; line-height: 1; flex-shrink: 0; }
+        .btn-cerrar-sidebar:hover { color: var(--luxury-gold); }
+
+        .sidebar-body { padding: 35px; flex-grow: 1; overflow-y: auto; }
+        #listaCarrito { margin-bottom: 40px; }
+        .item-carrito { display: flex; justify-content: space-between; padding: 18px 0; border-bottom: 1px dashed var(--border-fino); font-size: 0.9rem; }
+        .item-nombre { color: var(--skin-beige); font-weight: 400; letter-spacing: 0.5px; }
+        .item-subtotal { color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+
+        .grupo-campo { display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; }
+        label { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--light-brown); font-weight: 500; }
+        select { background: transparent; border: none; border-bottom: 1px solid var(--light-brown); color: var(--skin-beige); padding: 12px 0; font-family: 'Montserrat', sans-serif; font-size: 0.85rem; width: 100%; cursor: pointer; appearance: none; border-radius: 0; }
+        select:focus { outline: none; border-bottom-color: var(--luxury-gold); }
+        select option { background: #121212; color: var(--skin-beige); }
+
+        .sidebar-footer { padding: 35px; border-top: 1px solid var(--border-fino); background: #0A0A0A; flex-shrink: 0; position: relative; z-index: 10; }
+        .total-final { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .total-final span:first-child { font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; color: #777; }
+        .total-final span:last-child { font-family: 'Playfair Display', serif; font-size: 1.6rem; color: var(--luxury-gold); font-weight: 400; }
+
+        .btn-confirmar { background: var(--luxury-gold); border: none; color: var(--card-black); text-transform: uppercase; letter-spacing: 3px; padding: 22px 30px; cursor: pointer; transition: var(--transition-smooth); width: 100%; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; font-weight: 600; border-radius: 4px; }
+        .btn-confirmar:hover:not(:disabled) { background: #EADBC8; }
+        .btn-confirmar:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+        #mensajeTransferencia { display: none; padding: 18px; margin-bottom: 20px; font-size: 0.8rem; text-align: center; color: #999; border: 1px solid var(--border-fino); background: #080808; line-height: 1.7; }
+        #mensajeTransferencia b { color: var(--luxury-gold); font-weight: 400; }
+        
+        /* ALERTAS GLOBALES DE CIERRE Y HORARIO */
+        .alerta-horario { background: var(--card-black); border: 1px solid #4a2d1d; color: var(--luxury-gold); padding: 20px; margin-bottom: 40px; text-align: center; font-size: 0.9rem; letter-spacing: 2px; line-height: 1.6; text-transform: uppercase; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        #mensajeCierre { display: none; background: #1a0f0f; border: 1px solid #4a1d1d; color: #ff6b6b; padding: 20px; margin-bottom: 20px; text-align: center; font-size: 0.8rem; letter-spacing: 1px; line-height: 1.6; border-radius: 4px; }
+
+        /* MODALES (AMAZON Y 3D) */
+        .amazon-lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
+        .lightbox-contenido { background: var(--card-black); border: 1px solid var(--border-fino); max-width: 950px; width: 100%; display: grid; grid-template-columns: 1fr 1fr; position: relative; max-height: 90vh; overflow-y: auto; border-radius: 4px;}
+        .btn-cerrar-lightbox { position: absolute; top: 15px; right: 20px; background: transparent; border: none; color: var(--skin-beige); font-size: 2.2rem; font-weight: 200; cursor: pointer; z-index: 10; }
+        .lightbox-izq img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .lightbox-der { padding: 50px; display: flex; flex-direction: column; justify-content: center; }
+        .precio-tag { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--luxury-gold); margin: 20px 0; }
+        #lightboxDescripcion { color: #888; font-size: 0.85rem; line-height: 1.8; margin-bottom: 40px; font-weight: 300; }
+
+        #modal-3d { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--card-black); z-index: 4000; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
+        .escena-3d { width: 130px; height: 130px; perspective: 800px; margin-bottom: 50px; }
+        .cubo-empaque { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: rotarCaja 4s infinite cubic-bezier(0.25, 1, 0.5, 1); }
+        .cara-cubo { position: absolute; width: 130px; height: 130px; background: #121212; border: 1px solid var(--luxury-gold); display: flex; align-items: center; justify-content: center; text-align: center; box-shadow: inset 0 0 25px rgba(0,0,0,0.9); font-family: 'Playfair Display', serif; color: var(--luxury-gold); letter-spacing: 1px; opacity: 0.9; padding: 12px; }
+        .texto-cara { font-size: 0.75rem; word-wrap: break-word; overflow-wrap: break-word; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-transform: uppercase; }
+        .frontal  { transform: translateZ(65px); } .trasera  { transform: rotateY(180deg) translateZ(65px); }
+        .derecha  { transform: rotateY(90deg) translateZ(65px); } .izquierda{ transform: rotateY(-90deg) translateZ(65px); }
+        .superior { transform: rotateX(90deg) translateZ(65px); } .inferior { transform: rotateX(-90deg) translateZ(65px); }
+        @keyframes rotarCaja { 0% { transform: rotateX(-20deg) rotateY(0deg); } 50% { transform: rotateX(-40deg) rotateY(180deg); } 100% { transform: rotateX(-20deg) rotateY(360deg); } }
+
+        #modalTicket { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 5000; align-items: center; justify-content: center; padding: 20px; }
+        .ticket-contenido { background: #111111; border: 1px solid var(--luxury-gold); max-width: 420px; width: 100%; padding: 45px 35px; box-shadow: 0 25px 60px rgba(0,0,0,0.9); position: relative; text-align: center; border-radius: 4px;}
+        .ticket-contenido::before { content: ''; position: absolute; top: -5px; left: -5px; right: -5px; bottom: -5px; border: 1px dashed var(--border-fino); pointer-events: none; }
+        .ticket-header h2 { font-size: 1.8rem; color: var(--skin-beige); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
+        .ticket-header p { font-size: 0.7rem; letter-spacing: 3px; color: var(--light-brown); text-transform: uppercase; margin-bottom: 35px; }
+        .ticket-detalle { text-align: left; margin-bottom: 35px; border-top: 1px dashed #262626; border-bottom: 1px dashed #262626; padding: 25px 0; }
+        .ticket-linea { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 12px; color: #a0a0a0; }
+        .ticket-total { display: flex; justify-content: space-between; font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--luxury-gold); margin-top: 25px; letter-spacing: 0.5px; }
+        .ticket-acciones { display: flex; flex-direction: column; gap: 12px; }
+        
+        .btn-enviar-ticket { background: var(--luxury-gold); color: var(--card-black); border: none; padding: 18px; font-family: 'Montserrat', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; font-size: 0.8rem; border-radius: 4px;}
+        .btn-enviar-ticket:hover { background: var(--skin-beige); }
+        .btn-cancelar-ticket { background: transparent; color: #777; border: 1px solid #222; padding: 14px; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; border-radius: 4px;}
+        .btn-cancelar-ticket:hover { color: var(--skin-beige); border-color: var(--light-brown); }
+
+    </style>
+</head>
+<body>
+
+    <div id="overlayCarrito" class="overlay-carrito" onclick="cerrarCarrito()"></div>
+
+    <div id="btnCarritoTop" class="btn-carrito-top" onclick="abrirCarrito()">
+        <svg class="icono-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <span id="badgeCantidad" class="badge-cantidad">0</span>
+        <span id="montoTop" class="monto-top">$0.00</span>
+    </div>
+
+    <header>
+        <h1>DELICIOUS BREAD</h1>
+        <p>ALTA PANADERIA Y REPOSTERIA</p>
+        <a href="{{ url_for('perfil') }}" style="display: inline-block; margin-top: 25px; color: var(--text-dark); text-decoration: none; border: 1px solid var(--text-dark); padding: 10px 28px; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; transition: 0.4s; font-weight: 600;" onmouseover="this.style.background='var(--text-dark)'; this.style.color='var(--bg-beige)';" onmouseout="this.style.background='transparent'; this.style.color='var(--text-dark)';">Mi Perfil</a>
+    </header>
+
+    <div class="container" style="padding: 0 15px;">
+        {% if not tienda_abierta %}
+        <div class="alerta-horario">
+            <span style="font-weight: 600;">BOUTIQUE INHABILITADA EL DÍA DE HOY</span><br>
+            <span style="font-size: 0.8rem; color: #a38c6d; font-style: normal;">{{ motivo_cierre }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <form id="pedidoForm" method="POST" action="/procesar_pedido">
+        <div class="container">
+            <div class="grid-productos">
+                {% for producto in productos %}
+                <div class="card-producto {% if not producto.disponible %}pausado{% endif %}">
+                    
+                    <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
+                        <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/600x450/121212/C5A059?text=Atelier' }}" alt="{{ producto.nombre }}">
+                        {% if not producto.disponible %}
+                        <div class="overlay-pausado">PAUSADO</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="info-producto">
+                        <h3>{{ producto.nombre }}</h3>
+                        <p>{{ producto.descripcion }}</p>
+                        
+                        <div class="meta-producto">
+                            <span class="precio">${{ "%.2f"|format(producto.precio) }} MXN</span>
+                            
+                            <div class="control-cantidad">
+                                {% if producto.disponible %}
+                                    <button type="button" onclick="cambiarCantidad('cant_{{ producto.id }}', -1)">-</button>
+                                    <input type="number" class="input-cantidad" id="cant_{{ producto.id }}" name="cantidad_{{ producto.id }}" value="0" min="0" data-precio="{{ producto.precio }}" data-nombre="{{ producto.nombre }}" readonly>
+                                    <button type="button" class="btn-suma-dinamico" onclick="cambiarCantidad('cant_{{ producto.id }}', 1)">+</button>
+                                {% else %}
+                                    <span style="color: #ff4d4d; font-size: 0.75rem; letter-spacing: 2px; padding: 10px 15px; font-weight: 600;">NO DISPONIBLE</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div id="sidebarCarrito" class="sidebar-carrito">
+            <div class="sidebar-header">
+                <h2 id="tituloPersonalizado">Cargando Atelier...</h2>
+                <button type="button" class="btn-cerrar-sidebar" onclick="cerrarCarrito()">&times;</button>
+            </div>
+            
+            <div class="sidebar-body">
+                <div id="listaCarrito">
+                    <p style="color:#555; font-size:0.85rem; font-style:italic; letter-spacing: 0.5px;">Su selección está vacía.</p>
+                </div>
+
+                <h3 style="font-size: 1.1rem; color: var(--skin-beige); margin-bottom: 20px; margin-top: 30px; letter-spacing: 2px; text-transform: uppercase;">Logística de Recepción</h3>
+                
+                <div class="grupo-campo">
+                    <label for="horario">Horario de Recogida</label>
+                    <select id="horario" name="horario" required>
+                        <option value="" disabled selected>Seleccione la hora de retiro...</option>
+                        <option value="05:00 PM">05:00 PM - Recién Horneado</option>
+                        <option value="06:00 PM">06:00 PM - Temperado Ideal</option>
+                        <option value="07:00 PM">07:00 PM - Reposado Óptimo</option>
+                    </select>
+                </div>
+
+                <div class="grupo-campo">
+                    <label for="metodo_pago">Método de Pago</label>
+                    <select id="metodo_pago" name="metodo_pago" required>
+                        <option value="" disabled selected>Seleccione el formato...</option>
+                        <option value="Efectivo">Efectivo en Boutique</option>
+                        <option value="Transferencia">Transferencia Electrónica</option>
+                    </select>
+                </div>
+
+                <div id="mensajeTransferencia">
+                    Muestre el <b>comprobante electrónico</b> en caja al retirar.<br>
+                    Use su <b>código de pedido</b> asignado en el concepto.
+                </div>
+
+                <div id="mensajeCierre"></div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="total-final">
+                    <span>Total Estimado</span>
+                    <span id="montoSidebar">$0.00</span>
+                </div>
+                <button type="button" id="btnProcesar" class="btn-confirmar" onclick="ejecutarEmpacado3D()">
+                    Procesar Pedido
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <div id="amazonLightbox" class="amazon-lightbox">
+        <div class="lightbox-contenido">
+            <button class="btn-cerrar-lightbox" onclick="cerrarLightbox()">&times;</button>
+            <div class="lightbox-izq"><img id="lightboxImg" src="" alt="Producto Sublimado"></div>
+            <div class="lightbox-der">
+                <h2 id="lightboxNombre">Línea Premium</h2>
+                <div id="lightboxPrecio" class="precio-tag">$0.00 MXN</div>
+                <p id="lightboxDescripcion">Descripción detallada de la alta panadería.</p>
+                <button type="button" class="btn-confirmar" onclick="cerrarLightbox()">Volver a la Colección</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-3d">
+        <div class="escena-3d">
+            <div class="cubo-empaque">
+                <div class="cara-cubo frontal"><span class="texto-cara">DELICIOUS BREAD</span></div>
+                <div class="cara-cubo trasera"><span class="texto-cara">DELICIOUS BREAD</span></div>
+                <div class="cara-cubo inferior"><span class="texto-cara">PREMIUM</span></div>
+                <div class="cara-cubo derecha"><span class="texto-cara">{{ nombre_usuario|default('Señor Zmarth') }}</span></div>
+                <div class="cara-cubo izquierda"><span class="texto-cara">{{ nombre_usuario|default('Señor Zmarth') }}</span></div>
+                <div class="cara-cubo superior"><span class="texto-cara">PREMIUM<br>PACKAGING</span></div>
+            </div>
+        </div>
+        <h2 style="font-family: 'Playfair Display', serif; font-weight: 400; color: var(--skin-beige); letter-spacing: 1px;">Estructurando su Selección</h2>
+        <p style="color: var(--luxury-gold); margin-top: 15px; letter-spacing: 3px; font-size: 0.75rem; text-transform: uppercase;">Empacando bajo estándares de alta repostería...</p>
+    </div>
+
+    <div id="modalTicket">
+        <div class="ticket-contenido">
+            <div class="ticket-header">
+                <h2>Ticket de Pedido</h2>
+                <p>DELICIOUS BREAD</p>
+            </div>
+            <div class="ticket-detalle" id="ticketDetalleItems"></div>
+            <div class="ticket-acciones">
+                <button type="button" class="btn-enviar-ticket" onclick="enviarAlBackend()">Confirmar Orden y Notificar</button>
+                <button type="button" class="btn-cancelar-ticket" onclick="cerrarTicket()">Modificar Selección</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // VARIABLES JINJA-PYTHON HACIA JAVASCRIPT
+        const nombreUsuarioGlobal = {{ nombre_usuario|default('Señor Zmarth')|tojson }};
+        const tiendaAbierta = {{ 'true' if tienda_abierta else 'false' }};
+        const motivoCierre = {{ motivo_cierre|default('')|tojson }};
+
+        // LÓGICA DE BLOQUEO MAESTRO (HORARIO Y ADMIN)
+        function validarHorarioOperativo() {
+            const btnProcesar = document.getElementById('btnProcesar');
+            const mensajeCierre = document.getElementById('mensajeCierre');
+            const botonesSuma = document.querySelectorAll('.btn-suma-dinamico');
+
+            let estaBloqueado = false;
+            let mensajeBloqueo = "";
+
+            const fecha = new Date();
+            const horaActual = fecha.getHours(); 
+
+            // Prioridad 1: Si el administrador cerró el día manualmente
+            if (!tiendaAbierta) {
+                estaBloqueado = true;
+                mensajeBloqueo = `ATELIER BLOQUEADO HOY.<br>Motivo: <b>${motivoCierre}</b>`;
+            } 
+            // Prioridad 2: Bloqueo automático por reloj (Solo abierto de 1 AM a 4 PM)
+            else if (horaActual >= 16 || horaActual < 1) {
+                estaBloqueado = true;
+                mensajeBloqueo = `RECEPCIÓN DE PEDIDOS CERRADA.<br>Horario operativo del Atelier: 1:00 AM a 4:00 PM.`;
+            }
+
+            // Ejecutar el bloqueo frontal en la UI
+            if (estaBloqueado) {
+                btnProcesar.disabled = true;
+                btnProcesar.innerText = 'CERRADO';
+                mensajeCierre.innerHTML = mensajeBloqueo;
+                mensajeCierre.style.display = 'block';
+                
+                // Desactivar todos los botones "+" para que nadie pueda agregar nada a la bolsa
+                botonesSuma.forEach(btn => {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.3';
+                    btn.style.cursor = 'not-allowed';
+                });
+            }
+        }
+
+        window.onload = validarHorarioOperativo;
+
+        function calcularTotal() {
+            var inputs = document.querySelectorAll('.input-cantidad');
+            var totalAcumulado = 0;
+            var articulosTotales = 0;
+            var listaHtml = '';
+
+            inputs.forEach(function(input) {
+                var cantidad = parseInt(input.value) || 0;
+                if (cantidad > 0) {
+                    var precio = parseFloat(input.getAttribute('data-precio')) || 0;
+                    var nombre = input.getAttribute('data-nombre') || 'Producto';
+                    var subtotal = cantidad * precio;
+                    
+                    totalAcumulado += subtotal;
+                    articulosTotales += cantidad;
+
+                    listaHtml += `
+                        <div class="item-carrito">
+                            <span class="item-nombre">${cantidad}x ${nombre}</span>
+                            <span class="item-subtotal">$${subtotal.toFixed(2)}</span>
+                        </div>
+                    `;
+                }
+            });
+
+            var totalFormateado = '$' + totalAcumulado.toFixed(2) + ' MXN';
+            var totalShort = '$' + totalAcumulado.toFixed(2);
+
+            document.getElementById('montoTop').innerText = totalShort;
+            document.getElementById('badgeCantidad').innerText = articulosTotales;
+            document.getElementById('montoSidebar').innerText = totalFormateado;
+            
+            document.getElementById('listaCarrito').innerHTML = listaHtml || '<p style="color:#555; font-size:0.85rem; font-style:italic; letter-spacing:0.5px;">Su selección está vacía.</p>';
+
+            var btnTop = document.getElementById('btnCarritoTop');
+            if (articulosTotales > 0) {
+                btnTop.classList.add('visible');
+            } else {
+                btnTop.classList.remove('visible');
+                if (articulosTotales === 0 && document.getElementById('sidebarCarrito').classList.contains('abierto')) {
+                    cerrarCarrito();
+                }
+            }
+        }
+
+        function cambiarCantidad(inputId, delta) {
+            var input = document.getElementById(inputId);
+            var valorActual = parseInt(input.value) || 0;
+            var nuevoValor = valorActual + delta;
+
+            if (nuevoValor >= 0) {
+                input.value = nuevoValor;
+                calcularTotal(); 
+            }
+        }
+
+        function personalizarSaludo() {
+            const frases = [
+                `Gusto en verlo, ${nombreUsuarioGlobal}`,
+                `Su alta selección, ${nombreUsuarioGlobal}`,
+                `${nombreUsuarioGlobal} | Panel Exclusivo`,
+                `Orden en desarrollo, ${nombreUsuarioGlobal}`,
+                `Curaduría para ${nombreUsuarioGlobal}`
+            ];
+            const titulo = document.getElementById('tituloPersonalizado');
+            titulo.innerText = frases[Math.floor(Math.random() * frases.length)];
+        }
+
+        function abrirCarrito() {
+            personalizarSaludo();
+            document.getElementById('sidebarCarrito').classList.add('abierto');
+            document.getElementById('overlayCarrito').classList.add('activo');
+            document.body.classList.add('no-scroll');
+        }
+
+        function cerrarCarrito() {
+            document.getElementById('sidebarCarrito').classList.remove('abierto');
+            document.getElementById('overlayCarrito').classList.remove('activo');
+            document.body.classList.remove('no-scroll');
+        }
+
+        document.getElementById('metodo_pago').addEventListener('change', function() {
+            var mensaje = document.getElementById('mensajeTransferencia');
+            if (this.value === 'Transferencia') {
+                mensaje.style.display = 'block';
+            } else {
+                mensaje.style.display = 'none';
+            }
+        });
+
+        function abrirLightbox(nombre, precio, descripcion, urlImagen) {
+            document.getElementById('lightboxNombre').innerText = nombre;
+            document.getElementById('lightboxPrecio').innerText = '$' + parseFloat(precio).toFixed(2) + ' MXN';
+            document.getElementById('lightboxDescripcion').innerText = descripcion;
+            // Evitar problemas de imagen nula
+            document.getElementById('lightboxImg').src = urlImagen ? urlImagen : 'https://via.placeholder.com/600x450/121212/C5A059?text=Atelier';
+            document.getElementById('amazonLightbox').style.display = 'flex';
+        }
+
+        function cerrarLightbox() {
+            document.getElementById('amazonLightbox').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            var lightbox = document.getElementById('amazonLightbox');
+            if (event.target == lightbox) {
+                lightbox.style.display = 'none';
+            }
+        }
+
+        function ejecutarEmpacado3D() {
+            var form = document.getElementById('pedidoForm');
+            if (!form.checkValidity()) {
+                form.reportValidity(); 
+                return;
+            }
+            
+            document.getElementById('sidebarCarrito').classList.remove('abierto');
+            document.getElementById('modal-3d').style.display = 'flex';
+            
+            setTimeout(() => {
+                document.getElementById('modal-3d').style.display = 'none';
+                generarTicketVista();
+                document.getElementById('modalTicket').style.display = 'flex';
+            }, 3500);
+        }
+
+        function generarTicketVista() {
+            var inputs = document.querySelectorAll('.input-cantidad');
+            var totalAcumulado = 0;
+            var detalleHtml = '';
+
+            inputs.forEach(function(input) {
+                var cantidad = parseInt(input.value) || 0;
+                if (cantidad > 0) {
+                    var precio = parseFloat(input.getAttribute('data-precio')) || 0;
+                    var nombre = input.getAttribute('data-nombre') || 'Producto';
+                    var subtotal = cantidad * precio;
+                    totalAcumulado += subtotal;
+
+                    detalleHtml += `
+                        <div class="ticket-linea">
+                            <span>${cantidad}x ${nombre}</span>
+                            <span>$${subtotal.toFixed(2)}</span>
+                        </div>
+                    `;
+                }
+            });
+
+            var horario = document.getElementById('horario').value;
+            var metodo = document.getElementById('metodo_pago').value;
+
+            detalleHtml += `
+                <div class="ticket-linea" style="margin-top: 15px; color: var(--luxury-gold);">
+                    <span>Recepción:</span>
+                    <span>${horario}</span>
+                </div>
+                <div class="ticket-linea" style="color: var(--luxury-gold);">
+                    <span>Formato de Pago:</span>
+                    <span>${metodo}</span>
+                </div>
+                <div class="ticket-total">
+                    <span>TOTAL DB</span>
+                    <span>$${totalAcumulado.toFixed(2)} MXN</span>
+                </div>
+            `;
+
+            document.getElementById('ticketDetalleItems').innerHTML = detalleHtml;
+        }
+
+        function cerrarTicket() {
+            document.getElementById('modalTicket').style.display = 'none';
+            abrirCarrito(); 
+        }
+
+        function enviarAlBackend() {
+            const btn = document.querySelector('.btn-enviar-ticket');
+            btn.innerText = "Transmitiendo Orden...";
+            btn.style.opacity = "0.6";
+            btn.disabled = true;
+
+            document.getElementById('pedidoForm').submit();
+        }
+    </script>
+</body>
+</html>
