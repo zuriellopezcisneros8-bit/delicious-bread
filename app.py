@@ -449,7 +449,10 @@ from datetime import datetime
 # Asegúrate de importar tu librería de correos (ej. flask_mail)
 
 
+# Mueve esta creación de tablas fuera del bloque if __name__ para que ocurra al arrancar la app
+with app.app_context():
+    db.create_all()
+    print("Tablas verificadas/creadas correctamente en la base de datos.")
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(host='0.0.0.0', port=5000, debug=True)
