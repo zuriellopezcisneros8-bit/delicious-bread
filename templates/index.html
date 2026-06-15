@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Delicious Bread">
-<link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}">
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DELICIOUS BREAD | PREMIUM</title>
-    
+
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Delicious Bread">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
@@ -76,17 +75,19 @@
 
         /* IMAGEN DE ESQUINA A ESQUINA */
         .img-contenedor {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    overflow: hidden;
-}
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            position: relative;
+        }
 
-.img-contenedor img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-}
+        .img-contenedor img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            transition: var(--transition-smooth);
+        }
         .card-producto:hover .img-contenedor img { transform: scale(1.05); }
 
         .info-producto { padding: 30px; display: flex; flex-direction: column; flex-grow: 1; }

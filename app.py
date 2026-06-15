@@ -1,19 +1,26 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash, check_password_hash # NUEVO: Seguridad de contraseñas
-from flask_mail import Mail, Message # NUEVO: Sistema de correos
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_mail import Mail, Message
 import random
 import string
-import os # <-- ¡Esta es la línea que faltaba/se borró!
+import os
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
-import os
-# ...
-db_uri = os.environ.get('DATABASE_URL') or 'sqlite:///delicious_bread.db'
+
+# ================= CONFIGURACIÓN DE BASE DE DATOS EN LA NUBE =================
+# REEMPLAZA EL TEXTO DE ABAJO CON LA URL DE TU BASE DE DATOS POSTGRESQL
+# Ejemplo: 'postgresql://usuario:contraseña@servidor.com/nombre_bd'
+URL_NUBE = 'PEGA_AQUI_TU_URL_DE_POSTGRESQL'
+
+db_uri = os.environ.get('DATABASE_URL') or URL_NUBE
+
+# Corrección automática de dialecto para SQLAlchemy
 if db_uri.startswith("postgres://"):
     db_uri = db_uri.replace("postgres://", "postgresql://", 1)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'zmarth_executive_secure_key_2026'
@@ -21,8 +28,7 @@ app.secret_key = 'zmarth_executive_secure_key_2026'
 # Configuración de 6 meses (180 días) para la sesión
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=180)
 
-# ================= CONFIGURACIÓN DE CORREO (NUEVO) =================
-# Para Gmail, necesitas generar una "Contraseña de Aplicación" en los ajustes de seguridad de tu cuenta.
+# ================= CONFIGURACIÓN DE CORREO =================
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
@@ -31,7 +37,6 @@ app.config['MAIL_PASSWORD'] = 'omzi mgmg hpsz hmfh'
 app.config['MAIL_DEFAULT_SENDER'] = 'DELICIOUS BREAD'
 
 mail = Mail(app)
-# =================================================================
 
 # Configuración para la subida de fotos
 UPLOAD_FOLDER = os.path.join('static', 'uploads')
@@ -42,14 +47,13 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 db = SQLAlchemy(app)
 
 # ================= MODELOS DE BASE DE DATOS =================
-# (Tus modelos se mantienen exactamente igual, están perfectos)
 
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     telefono = db.Column(db.String(15), unique=True, nullable=False)
     correo = db.Column(db.String(100), unique=True, nullable=False)
-    contrasena = db.Column(db.String(255), nullable=False) # Aumenté el tamaño para el hash
+    contrasena = db.Column(db.String(255), nullable=False)
     pedidos = db.relationship('Pedido', backref='cliente', lazy=True)
 
 class Producto(db.Model):
@@ -59,11 +63,13 @@ class Producto(db.Model):
     precio = db.Column(db.Float, nullable=False)
     imagen_url = db.Column(db.String(500), nullable=True)
     disponible = db.Column(db.Boolean, default=True)
+    # Control de stock sobrante / ventas flash de excedentes
+    stock_sobrante = db.Column(db.Integer, default=0)
 
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    horario_recogida = db.Column(db.String(20), nullable=False) # Aumentado por si el string es largo
+    horario_recogida = db.Column(db.String(20), nullable=False)
     metodo_pago = db.Column(db.String(20), nullable=False)
     monto_total = db.Column(db.Float, nullable=False)
     estado = db.Column(db.String(30), default='Pendiente')
@@ -83,9 +89,50 @@ class DiaInhabil(db.Model):
     fecha = db.Column(db.Date, unique=True, nullable=False)
     motivo = db.Column(db.String(200), nullable=True)
 
+# Sistema de anuncios rotativos tipo Amazon
+class Anuncio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(100), nullable=True)
+    imagen_url = db.Column(db.String(500), nullable=False)
+    enlace_destino = db.Column(db.String(500), nullable=True)
+    activo = db.Column(db.Boolean, default=True)
+
+# Sistema de Pedidos Especiales de Alta Gama (Catering / Eventos)
+class PedidoEspecial(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre_contacto = db.Column(db.String(100), nullable=False)
+    telefono_contacto = db.Column(db.String(15), nullable=False)
+    correo_contacto = db.Column(db.String(100), nullable=False)
+    metodo_entrega = db.Column(db.String(20), nullable=False)  # 'PickUp' o 'Domicilio'
+    direccion_texto = db.Column(db.String(300), nullable=True)
+    numero_casa = db.Column(db.String(20), nullable=True)
+    referencias = db.Column(db.Text, nullable=True)
+    latitud = db.Column(db.Float, nullable=True)
+    longitud = db.Column(db.Float, nullable=True)
+    monto_total = db.Column(db.Float, nullable=False)
+    monto_anticipo = db.Column(db.Float, nullable=False)  # 50% Obligatorio
+    comprobante_url = db.Column(db.String(500), nullable=True)
+    anticipo_validado = db.Column(db.Boolean, default=False)
+    estado = db.Column(db.String(50), default='Pendiente de Validación')  # 'En Producción', 'Listo', 'Entregado'
+    codigo_recogida = db.Column(db.String(15), unique=True, nullable=False)
+    fecha_evento = db.Column(db.String(50), nullable=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    detalles = db.relationship('DetallePedidoEspecial', backref='pedido_especial', lazy=True)
+
+class DetallePedidoEspecial(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    pedido_especial_id = db.Column(db.Integer, db.ForeignKey('pedido_especial.id'), nullable=False)
+    producto_id = db.Column(db.Integer, db.ForeignKey('producto.id'), nullable=False)
+    cantidad = db.Column(db.Integer, nullable=False)
+    producto = db.relationship('Producto')
+
 def generar_codigo():
     caracteres = string.ascii_uppercase + string.digits
     return f"DB-{''.join(random.choice(caracteres) for _ in range(4))}"
+
+def generar_codigo_especial():
+    caracteres = string.ascii_uppercase + string.digits
+    return f"ZCW-EV-{''.join(random.choice(caracteres) for _ in range(5))}"
 
 # ================= CONTROL DE AUTENTICACIÓN =================
 
@@ -102,7 +149,6 @@ def registro():
             flash('El correo o teléfono ya se encuentra registrado.', 'error')
             return redirect(url_for('registro'))
             
-        # NUEVO: Encriptamos la contraseña antes de guardarla
         contrasena_hash = generate_password_hash(contrasena)
         nuevo_usuario = Usuario(nombre=nombre, telefono=telefono, correo=correo, contrasena=contrasena_hash)
         db.session.add(nuevo_usuario)
@@ -121,9 +167,8 @@ def login():
         
         usuario = Usuario.query.filter_by(correo=correo).first()
         
-        # NUEVO: Comparamos el hash con la contraseña ingresada
         if usuario and check_password_hash(usuario.contrasena, contrasena):
-            session.permanent = True # <-- LÍNEA AGREGADA AQUÍ
+            session.permanent = True
             session['usuario_id'] = usuario.id
             return redirect(url_for('index'))
         else:
@@ -131,31 +176,31 @@ def login():
             return redirect(url_for('login'))
             
     return render_template('login.html')
+
 @app.route('/logout')
 def logout():
     session.pop('usuario_id', None)
     return redirect(url_for('login'))
 
-# ================= TIENDA PRINCIPAL =================
-
-# ================= TIENDA PRINCIPAL CORREGIDA =================
+# ================= TIENDA PRINCIPAL CORREGIDA e INTEGRADA =================
 
 @app.route('/', methods=['GET'])
 def index():
     if 'usuario_id' not in session:
         return redirect(url_for('login'))
         
-    # CORRECCIÓN 1: Usar la sintaxis moderna db.session.get()
     usuario = db.session.get(Usuario, session['usuario_id'])
     
-    # CORRECCIÓN 2: Candado por si la base de datos cambió y el usuario ya no existe
     if not usuario:
-        session.pop('usuario_id', None) # Limpiamos la sesión dañada
-        return redirect(url_for('login')) # Lo mandamos a loguearse de nuevo
+        session.pop('usuario_id', None)
+        return redirect(url_for('login'))
         
     productos = Producto.query.all()
+    anuncios = Anuncio.query.filter_by(activo=True).all()
     
-    # Verificar si el día de hoy está inhabilitado
+    # Filtrar productos que tengan stock sobrante activo para ventas flash
+    productos_sobrantes = [p for p in productos if p.stock_sobrante > 0]
+    
     hoy = datetime.utcnow().date()
     dia_bloqueado = DiaInhabil.query.filter_by(fecha=hoy).first()
     tienda_abierta = False if dia_bloqueado else True
@@ -163,22 +208,24 @@ def index():
     
     return render_template('index.html', 
                            productos=productos, 
+                           productos_sobrantes=productos_sobrantes,
+                           anuncios=anuncios,
                            usuario=usuario, 
                            nombre_usuario=usuario.nombre,
                            tienda_abierta=tienda_abierta,
                            motivo_cierre=motivo_cierre)
+
 @app.route('/procesar_pedido', methods=['POST'])
 def procesar_pedido():
     if 'usuario_id' not in session:
         return redirect(url_for('login'))
         
-    # Candado de seguridad por si intentan forzar la compra
     hoy = datetime.utcnow().date()
     if DiaInhabil.query.filter_by(fecha=hoy).first():
         flash('La boutique está cerrada el día de hoy. No es posible procesar el pedido.', 'error')
         return redirect(url_for('index'))
         
-    usuario = Usuario.query.get(session['usuario_id'])
+    usuario = db.session.get(Usuario, session['usuario_id'])
     horario = request.form.get('horario')
     metodo_pago = request.form.get('metodo_pago')
     
@@ -210,7 +257,6 @@ def procesar_pedido():
             db.session.add(d)
         db.session.commit()
         
-        # Enviar ticket de compra (Esto se queda para los días normales)
         try:
             asunto = f"Tu Ticket de Delicious Bread - {nuevo_pedido.codigo_recogida}"
             msg = Message(asunto, recipients=[usuario.correo])
@@ -225,20 +271,163 @@ def procesar_pedido():
 
     return redirect(url_for('index'))
 
-# ================= PERFIL DEL CLIENTE =================
+# Compra en tiempo real de excedentes / stock sobrante
+@app.route('/procesar_sobrante', methods=['POST'])
+def procesar_sobrante():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+        
+    usuario = db.session.get(Usuario, session['usuario_id'])
+    producto_id = request.form.get('producto_id')
+    cantidad_solicitada = int(request.form.get('cantidad', 1))
+    horario = request.form.get('horario', 'Inmediato')
+    metodo_pago = request.form.get('metodo_pago', 'Efectivo')
+    
+    producto = db.session.get(Producto, producto_id)
+    
+    if not producto or producto.stock_sobrante < cantidad_solicitada:
+        flash('Lo sentimos, las piezas solicitadas ya han sido adquiridas por otro cliente.', 'error')
+        return redirect(url_for('index'))
+    
+    # Descuento atómico del stock sobrante
+    producto.stock_sobrante -= cantidad_solicitada
+    monto_total = producto.precio * cantidad_solicitada
+    
+    nuevo_pedido = Pedido(
+        usuario_id=usuario.id,
+        horario_recogida=horario,
+        metodo_pago=metodo_pago,
+        monto_total=monto_total,
+        codigo_recogida=generar_codigo(),
+        estado='Venta Flash Excedente'
+    )
+    db.session.add(nuevo_pedido)
+    db.session.commit()
+    
+    detalle = DetallePedido(pedido_id=nuevo_pedido.id, producto_id=producto.id, cantidad=cantidad_solicitada)
+    db.session.add(detalle)
+    db.session.commit()
+    
+    try:
+        asunto = f"Ticket de Producto Excedente - {nuevo_pedido.codigo_recogida}"
+        msg = Message(asunto, recipients=[usuario.correo])
+        msg.html = render_template('correo_ticket.html', pedido=nuevo_pedido, usuario=usuario, detalles=[detalle])
+        mail.send(msg)
+        flash('¡Adquisición relámpago completada! Ticket enviado.', 'success')
+    except Exception as e:
+        print(f"Error correo venta flash: {e}")
+        flash('Adquisición procesada, error al despachar la notificación por correo.', 'warning')
+        
+    return redirect(url_for('perfil'))
+
+# ================= PERFIL DEL CLIENTE CON PEDIDOS ESPECIALES =================
 
 @app.route('/perfil')
 def perfil():
     if 'usuario_id' not in session:
         return redirect(url_for('login'))
         
-    usuario = Usuario.query.get(session['usuario_id'])
+    usuario = db.session.get(Usuario, session['usuario_id'])
     mis_pedidos = Pedido.query.filter_by(usuario_id=usuario.id).order_by(Pedido.fecha_pedido.desc()).all()
-    return render_template('perfil.html', usuario=usuario, pedidos=mis_pedidos)
+    
+    # Obtener también pedidos especiales que coincidan con su correo de cuenta
+    mis_especiales = PedidoEspecial.query.filter_by(correo_contacto=usuario.correo).order_by(PedidoEspecial.fecha_creacion.desc()).all()
+    
+    return render_template('perfil.html', usuario=usuario, pedidos=mis_pedidos, especiales=mis_especiales)
 
-# ================= PANEL ADMINISTRATIVO =================
+# Sistema de Creación de Pedidos Especiales (Eventos) sin registro riguroso
+@app.route('/pedido_especial', methods=['GET', 'POST'])
+def pedido_especial():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        telefono = request.form.get('telefono')
+        correo = request.form.get('correo')
+        metodo_entrega = request.form.get('metodo_entrega')  # 'PickUp' o 'Domicilio'
+        fecha_evento = request.form.get('fecha_evento')
+        
+        # Dirección y Geo-Coordenadas
+        direccion = request.form.get('direccion')
+        numero_casa = request.form.get('numero_casa')
+        referencias = request.form.get('referencias')
+        lat = request.form.get('latitud')
+        lng = request.form.get('longitud')
+        
+        productos = Producto.query.all()
+        monto_total = 0
+        detalles_especiales = []
+        
+        for prod in productos:
+            cant = request.form.get(f'cantidad_especial_{prod.id}', 0)
+            if cant and int(cant) > 0:
+                cantidad = int(cant)
+                monto_total += prod.precio * float(cantidad)
+                detalles_especiales.append(DetallePedidoEspecial(producto_id=prod.id, cantidad=cantidad))
+                
+        if not detalles_especiales:
+            flash('Debe seleccionar al menos un producto para cotizar su evento.', 'error')
+            return redirect(url_for('pedido_especial'))
+            
+        monto_anticipo = monto_total * 0.50
+        
+        # Procesamiento del comprobante de pago
+        file = request.files.get('comprobante_pago')
+        comprobante_url = None
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            unique_filename = f"COMP_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+            comprobante_url = f"/static/uploads/{unique_filename}"
+            
+        nuevo_especial = PedidoEspecial(
+            nombre_contacto=nombre,
+            telefono_contacto=telefono,
+            correo_contacto=correo,
+            metodo_entrega=metodo_entrega,
+            direccion_texto=direccion,
+            numero_casa=numero_casa,
+            referencias=referencias,
+            latitud=float(lat) if lat else None,
+            longitud=float(lng) if lng else None,
+            monto_total=monto_total,
+            monto_anticipo=monto_anticipo,
+            comprobante_url=comprobante_url,
+            codigo_recogida=generar_codigo_especial(),
+            fecha_evento=fecha_evento
+        )
+        db.session.add(nuevo_especial)
+        db.session.commit()
+        
+        for det in detalles_especiales:
+            det.pedido_especial_id = nuevo_especial.id
+            db.session.add(det)
+        db.session.commit()
+        
+        # Despachar notificación inicial por correo
+        try:
+            asunto = f"Cotización de Orden Especial Recibida - {nuevo_especial.codigo_recogida}"
+            cuerpo = f"""
+            <h2>Ecosistema Zmarth - Confirmación de Recepción</h2>
+            <p>Hola {nombre}, hemos registrado tu solicitud de pedido especial para el día {fecha_evento}.</p>
+            <p><strong>Código de Seguimiento:</strong> {nuevo_especial.codigo_recogida}</p>
+            <p><strong>Monto Total:</strong> ${monto_total:,.2f} MXN</p>
+            <p><strong>Anticipo Requerido (50%):</strong> ${monto_anticipo:,.2f} MXN</p>
+            <p>Tu comprobante está siendo evaluado manualmente en nuestro Atelier Administrativo. Te notificaremos vía correo en cuanto la producción sea iniciada.</p>
+            """
+            msg = Message(asunto, recipients=[correo])
+            msg.html = cuerpo
+            mail.send(msg)
+            flash('Solicitud de evento enviada. El comprobante está bajo verificación manual.', 'success')
+        except Exception as e:
+            print(f"Error correo orden especial: {e}")
+            flash('Solicitud guardada con éxito, pero la notificación por correo falló.', 'warning')
+            
+        return redirect(url_for('index'))
+        
+    productos = Producto.query.all()
+    return render_template('pedido_especial.html', productos=productos)
 
-# Contraseña maestra para el administrador (Cámbiala por la que prefieras)
+# ================= PANEL ADMINISTRATIVO EXPANDIDO =================
+
 app.config['ADMIN_PASSWORD'] = 'ZmarthAdmin26'
 
 @app.route('/admin/login', methods=['GET', 'POST'])
@@ -262,10 +451,12 @@ def admin():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
+    # Gestión de alta de producto ordinario o con excedente incrustado
     if request.method == 'POST' and 'nuevo_producto' in request.form:
         nombre = request.form.get('nombre')
         descripcion = request.form.get('descripcion')
         precio = float(request.form.get('precio'))
+        stock_sob = int(request.form.get('stock_sobrante', 0))
         file = request.files.get('imagen_file')
         imagen_url = None
         
@@ -275,7 +466,7 @@ def admin():
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
             imagen_url = f"/static/uploads/{unique_filename}"
         
-        nuevo_prod = Producto(nombre=nombre, descripcion=descripcion, precio=precio, imagen_url=imagen_url)
+        nuevo_prod = Producto(nombre=nombre, descripcion=descripcion, precio=precio, imagen_url=imagen_url, stock_sobrante=stock_sob)
         db.session.add(nuevo_prod)
         db.session.commit()
         return redirect(url_for('admin'))
@@ -303,9 +494,10 @@ def admin():
             produccion_total[prod_nombre] = produccion_total.get(prod_nombre, 0) + detalle.cantidad
 
     productos = Producto.query.all()
-    
-    # NUEVO: Obtenemos los días bloqueados
     dias_bloqueados_lista = DiaInhabil.query.order_by(DiaInhabil.fecha.asc()).all()
+    
+    anuncios_lista = Anuncio.query.all()
+    pedidos_especiales_lista = PedidoEspecial.query.order_by(PedidoEspecial.fecha_creacion.desc()).all()
 
     return render_template('admin.html', 
                            pedidos_activos=pedidos_activos, 
@@ -313,7 +505,74 @@ def admin():
                            produccion=produccion_total,
                            productos=productos,
                            filtro_actual=filtro,
-                           dias_bloqueados_lista=dias_bloqueados_lista) # Pasamos a la plantilla
+                           dias_bloqueados_lista=dias_bloqueados_lista,
+                           anuncios_lista=anuncios_lista,
+                           pedidos_especiales_lista=pedidos_especiales_lista)
+
+# Endpoint para inyectar anuncios dinámicos tipo Amazon
+@app.route('/admin/anuncio/nuevo', methods=['POST'])
+def nuevo_anuncio():
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    titulo = request.form.get('titulo')
+    enlace = request.form.get('enlace_destino')
+    file = request.files.get('anuncio_file')
+    
+    if file and file.filename != '':
+        filename = secure_filename(file.filename)
+        unique_filename = f"AD_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+        img_url = f"/static/uploads/{unique_filename}"
+        
+        ad = Anuncio(titulo=titulo, imagen_url=img_url, enlace_destino=enlace)
+        db.session.add(ad)
+        db.session.commit()
+        flash('Anuncio publicitario integrado exitosamente.', 'success')
+    return redirect(url_for('admin'))
+
+# Control manual de Pedidos Especiales (Validación de 50% de anticipo)
+@app.route('/admin/pedido_especial/<int:pedido_id>/validar', methods=['POST'])
+def validar_anticipo_especial(pedido_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    
+    especial = PedidoEspecial.query.get_or_404(pedido_id)
+    accion = request.form.get('accion')  # 'aprobar' o 'completar'
+    
+    if accion == 'aprobar':
+        especial.anticipo_validado = True
+        especial.estado = 'En Producción'
+        db.session.commit()
+        
+        try:
+            asunto = f"¡Producción Iniciada! Anticipo Validado - {especial.codigo_recogida}"
+            cuerpo = f"""
+            <div style="background-color: #0A0A0A; padding: 30px; font-family: Arial, sans-serif; text-align: center;">
+                <div style="background-color: #1A1A1A; max-width: 550px; margin: 0 auto; padding: 30px; border-radius: 12px; border: 1px solid #333; text-align: left;">
+                    <h2 style="color: #E8D8C8; text-align: center;">Anticipo Verificado</h2>
+                    <p style="color: #CCC;">Hola <strong>{especial.nombre_contacto}</strong>,</p>
+                    <p style="color: #CCC;">Hemos verificado con éxito tu depósito del 50% correspondiente a <strong>${especial.monto_anticipo:,.2f} MXN</strong>.</p>
+                    <p style="color: #E8D8C8; font-size: 16px; font-weight: bold; text-align: center; background: #222; padding: 10px; border-radius: 6px;">
+                        Estado de tu orden: COMENZAR A TRABAJAR PEDIDO
+                    </p>
+                    <p style="color: #AAA; font-size: 14px;">Tu entrega bajo modalidad <strong>{especial.metodo_entrega}</strong> está agendada para la fecha estipulada.</p>
+                    <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
+                    <p style="font-size: 11px; color: #666; text-align: center;">ZMARTH CREATIVE SERVICES — DELICIOUS BREAD ATELIER</p>
+                </div>
+            </div>
+            """
+            msg = Message(asunto, recipients=[especial.correo_contacto])
+            msg.html = cuerpo
+            mail.send(msg)
+            flash('Anticipo aprobado y orden enviada a la línea de producción.', 'success')
+        except Exception as e:
+            print(f"Error despachando correo de producción: {e}")
+            flash('Orden actualizada a producción, pero falló la notificación por correo.', 'warning')
+            
+    elif accion == 'completar':
+        especial.estado = 'Entregado'
+        db.session.commit()
+        flash('Pedido Especial marcado como entregado de manera definitiva.', 'success')
+        
+    return redirect(url_for('admin'))
 
 @app.route('/admin/pedido/<int:pedido_id>/estado', methods=['POST'])
 def actualizar_estado(pedido_id):
@@ -325,7 +584,6 @@ def actualizar_estado(pedido_id):
         pedido.estado = nuevo_estado
         db.session.commit()
 
-        # NUEVO: Restauramos el correo automático cuando está Listo
         if nuevo_estado == 'Listo':
             try:
                 asunto = f"Tu pedido está listo - {pedido.codigo_recogida}"
@@ -364,7 +622,6 @@ def inhabilitar_dias():
         delta = fecha_fin - fecha_inicio
         for i in range(delta.days + 1):
             dia_actual = fecha_inicio + timedelta(days=i)
-            # Solo agregar si no existe ya
             if not DiaInhabil.query.filter_by(fecha=dia_actual).first():
                 nuevo_dia = DiaInhabil(fecha=dia_actual, motivo=motivo)
                 db.session.add(nuevo_dia)
@@ -388,30 +645,22 @@ def toggle_producto(producto_id):
     db.session.commit()
     return redirect(url_for('admin'))
 
-from sqlalchemy.exc import IntegrityError
-import os
-
 @app.route('/admin/eliminar_producto/<int:producto_id>', methods=['POST'])
 def eliminar_producto(producto_id):
     if 'admin_logged_in' not in session:
         return redirect(url_for('admin'))
     
     producto = Producto.query.get_or_404(producto_id)
-    
-    # Verificamos si este producto tiene ventas asociadas usando el ID correcto
     tiene_ventas = DetallePedido.query.filter_by(producto_id=producto_id).first()
     
     if tiene_ventas:
-        # Si tiene ventas, no lo borramos, lo pausamos para evitar errores
         producto.disponible = False
         db.session.commit()
         flash('El producto tenía ventas registradas, así que se ha PAUSADO automáticamente para mantener tu historial.', 'warning')
     else:
-        # Si no tiene ventas, lo borramos físicamente
         try:
             if producto.imagen_url:
                 filename = producto.imagen_url.split('/')[-1]
-                # Aseguramos la ruta correcta usando app.root_path
                 filepath = os.path.join(app.root_path, 'static', 'uploads', filename)
                 if os.path.exists(filepath):
                     os.remove(filepath)
@@ -433,8 +682,8 @@ def editar_producto(producto_id):
     producto.nombre = request.form.get('nombre')
     producto.descripcion = request.form.get('descripcion')
     producto.precio = float(request.form.get('precio'))
+    producto.stock_sobrante = int(request.form.get('stock_sobrante', 0))
     
-    # Lógica opcional si sube nueva foto, si no, se queda la anterior
     file = request.files.get('imagen_file')
     if file and file.filename != '':
         filename = secure_filename(file.filename)
@@ -445,11 +694,6 @@ def editar_producto(producto_id):
     db.session.commit()
     return redirect(url_for('admin'))
 
-from datetime import datetime
-# Asegúrate de importar tu librería de correos (ej. flask_mail)
-
-
-# Mueve esta creación de tablas fuera del bloque if __name__ para que ocurra al arrancar la app
 with app.app_context():
     db.create_all()
     print("Tablas verificadas/creadas correctamente en la base de datos.")
