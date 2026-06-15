@@ -10,6 +10,11 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
+
+with app.app_context():
+    db.create_all()
+
+
 # ================= CONFIGURACIÓN DE BASE DE DATOS EN LA NUBE =================
 # REEMPLAZA EL TEXTO DE ABAJO CON LA URL DE TU BASE DE DATOS POSTGRESQL
 # Ejemplo: 'postgresql://usuario:contraseña@servidor.com/nombre_bd'
@@ -694,9 +699,6 @@ def editar_producto(producto_id):
     db.session.commit()
     return redirect(url_for('admin'))
 
-with app.app_context():
-    db.create_all()
-    print("Tablas verificadas/creadas correctamente en la base de datos.")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
