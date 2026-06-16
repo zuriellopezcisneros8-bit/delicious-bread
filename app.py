@@ -702,7 +702,6 @@ def editar_producto(producto_id):
 
 
 with app.app_context():
-    db.create_all()
     try:
         print("====== DIAGNÓSTICO DE BASE DE DATOS ======")
         print(f"Conectando a la URL: {db_uri[:25]}... (oculto por seguridad)")

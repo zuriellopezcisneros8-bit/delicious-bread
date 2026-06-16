@@ -436,7 +436,7 @@
             <div class="card">
                 <h3>📢 Banner de Anuncios</h3>
                 <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Fija un mensaje en la pantalla principal de los clientes (Ej. Cierres, ofertas).</p>
-                <form action="{{ url_for('actualizar_anuncio') }}" method="POST">
+                <form action="{{ url_for('nuevo_anuncio') }}" method="POST">
                     <textarea name="mensaje_anuncio" class="form-control" placeholder="Escribe el anuncio aquí..." style="height:80px; resize: none;">{{ anuncio_actual }}</textarea>
                     <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px; background: var(--input-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-dark);">
                         <input type="checkbox" name="anuncio_activo" id="anuncio_activo" value="1" {% if anuncio_activo %}checked{% endif %} style="accent-color: var(--accent-gold); width: 18px; height: 18px;">
