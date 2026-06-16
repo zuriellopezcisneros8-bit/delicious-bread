@@ -76,7 +76,7 @@
             margin: 10px auto; 
             padding: 0 15px; 
             display: flex; 
-            flex-direction: column; /* Apilado en móviles */
+            flex-direction: column; 
             gap: 15px;
         }
         @media (min-width: 768px) {
@@ -90,7 +90,7 @@
             padding: 6px;
             border-radius: 30px;
             border: 1px solid var(--border-dark);
-            overflow-x: auto; /* Scroll horizontal en móviles */
+            overflow-x: auto; 
             white-space: nowrap;
             -webkit-overflow-scrolling: touch;
         }
@@ -161,7 +161,7 @@
         
         /* TABLAS RESPONSIVAS */
         .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
-        .admin-table { width: 100%; min-width: 500px; border-collapse: separate; border-spacing: 0 8px; }
+        .admin-table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0 8px; }
         .admin-table th { color: var(--text-gray); padding: 0 15px 10px; text-align: left; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-dark); }
         .admin-table td { padding: 15px; background: var(--input-bg); font-size: 0.85rem; color: var(--text-white); border-top: 1px solid var(--border-dark); border-bottom: 1px solid var(--border-dark); }
         .admin-table td:first-child { border-radius: 12px 0 0 12px; border-left: 1px solid var(--border-dark); }
@@ -212,7 +212,7 @@
             display: none; position: fixed; top: 0; left: 0; 
             width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); 
             backdrop-filter: blur(5px); z-index: 9999; 
-            justify-content: center; align-items: flex-end; /* En móvil sale de abajo */
+            justify-content: center; align-items: flex-end; 
         }
         @media (min-width: 768px) { .modal-overlay { align-items: center; } }
         
@@ -249,6 +249,7 @@
     <div class="controls-container">
         <div class="tabs">
             <button class="tab-btn active" onclick="openTab('activos')">📦 Órdenes Live</button>
+            <button class="tab-btn" onclick="openTab('especiales')">💼 Pedidos Especiales</button>
             <button class="tab-btn" onclick="openTab('inventario')">🥖 Menú & Productos</button>
             <button class="tab-btn" onclick="openTab('configuracion')">⚙️ Alertas & Ajustes</button>
             <button class="tab-btn" onclick="openTab('historial')">🗄️ Historial</button>
@@ -349,6 +350,69 @@
         </div>
     </div>
 
+    <div id="especiales" class="tab-content">
+        <div class="card">
+            <h3>💼 Alta Gama & Pedidos Especiales</h3>
+            <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 20px;">Línea de producción dedicada a catering corporativo, bodas y solicitudes personalizadas de Atelier.</p>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Código Tracking</th>
+                            <th>Cliente / Contacto</th>
+                            <th>Fecha Evento</th>
+                            <th>Total Solicitado</th>
+                            <th>Anticipo (50%)</th>
+                            <th>Estado Operativo</th>
+                            <th>Atelier Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for esp in pedidos_especiales_lista %}
+                        <tr>
+                            <td style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">{{ esp.codigo_recogida }}</td>
+                            <td>
+                                <strong style="display:block; color:#fff;">{{ esp.nombre_contacto }}</strong>
+                                <span style="font-size: 0.75rem; color: #777;">{{ esp.telefono_contacto }} | {{ esp.correo_contacto }}</span>
+                            </td>
+                            <td>{{ esp.fecha_evento }}</td>
+                            <td><strong style="color: var(--accent-gold);">${{ "%.2f"|format(esp.monto_total) }}</strong></td>
+                            <td>
+                                <span>${{ "%.2f"|format(esp.monto_anticipo) }}</span>
+                                {% if esp.anticipo_validado %}
+                                <span style="color: #6BD968; font-size: 0.75rem; display:block;">[Validado]</span>
+                                {% else %}
+                                <span style="color: #FF5A5A; font-size: 0.75rem; display:block;">[Pendiente]</span>
+                                {% endif %}
+                            </td>
+                            <td><span style="background: #111; border: 1px solid #333; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color:#ccc;">{{ esp.estado }}</span></td>
+                            <td>
+                                {% if esp.comprobante_url %}
+                                <a href="{{ esp.comprobante_url }}" target="_blank" style="color: var(--accent-gold); font-size: 0.8rem; text-decoration: underline; margin-right: 10px; display:inline-block;">Ver Comprobante</a>
+                                {% endif %}
+                                
+                                {% if not esp.anticipo_validado %}
+                                <form action="/admin/pedido_especial/{{ esp.id }}/validar" method="POST" style="display:inline;">
+                                    <input type="hidden" name="accion" value="aprobar">
+                                    <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: #365C2B; color: #6BD968;">Validar Anticipo</button>
+                                </form>
+                                {% elif esp.estado != 'Entregado' %}
+                                <form action="/admin/pedido_especial/{{ esp.id }}/validar" method="POST" style="display:inline;">
+                                    <input type="hidden" name="accion" value="completar">
+                                    <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: var(--accent-gold); color: var(--accent-gold);">Cerrar (Entregado)</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" style="text-align: center; padding: 35px; color: var(--text-gray);">No existen cotizaciones o pedidos especiales en fila.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div id="inventario" class="tab-content">
         <div class="admin-grid">
             <div class="card" style="align-self: start;">
@@ -360,10 +424,12 @@
                     
                     <div class="edit-grid" style="margin-bottom: 15px;">
                         <input type="number" step="0.50" name="precio" class="form-control" required placeholder="Precio Base ($)" style="margin-bottom: 0;">
-                        <div style="background: var(--input-bg); border: 1px solid var(--border-dark); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px;">
-                            <input type="checkbox" name="es_pedido_grande" id="is_large" value="1" style="accent-color: var(--accent-gold); width: 16px; height: 16px;">
-                            <label for="is_large" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Pedido Grande / Mayoreo</label>
-                        </div>
+                        <input type="number" name="stock_sobrante" class="form-control" min="0" value="0" placeholder="Stock Sobrante / Venta Flash (Piezas)" style="margin-bottom: 0;">
+                    </div>
+                    
+                    <div style="margin-bottom: 15px; background: var(--input-bg); border: 1px solid var(--border-dark); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" name="es_pedido_grande" id="is_large" value="1" style="accent-color: var(--accent-gold); width: 16px; height: 16px;">
+                        <label for="is_large" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Pedido Grande / Mayoreo</label>
                     </div>
 
                     <div style="background: var(--input-bg); border: 1px dashed var(--border-dark); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px;">
@@ -388,6 +454,11 @@
                             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
                                 <strong style="font-size:0.95rem; color:var(--text-white); text-transform: uppercase;">{{ prod.nombre }}</strong>
                                 <span style="color:var(--accent-gold); font-weight: bold; font-size: 0.9rem;">${{ "%.2f"|format(prod.precio) }}</span>
+                                
+                                {% if prod.stock_sobrante and prod.stock_sobrante > 0 %}
+                                <span style="background: #1C333B; color: #6BE0FF; font-size: 0.6rem; padding: 3px 8px; border-radius: 10px; border: 1px solid #2B525F;">⚡ FLASH: {{ prod.stock_sobrante }} PZS</span>
+                                {% endif %}
+                                
                                 {% if prod.es_pedido_grande %}
                                 <span style="background: #3b2b1a; color: var(--accent-gold); font-size: 0.6rem; padding: 3px 8px; border-radius: 10px; border: 1px solid var(--accent-gold);">MAYOREO</span>
                                 {% endif %}
@@ -415,9 +486,27 @@
                 <div id="edit-form-{{ prod.id }}" style="display:none; background:var(--input-bg); padding:15px; border:1px solid var(--accent-gold); margin-bottom:20px; border-radius:16px;">
                     <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data">
                         <div class="edit-grid">
-                            <input type="text" name="nombre" class="form-control" value="{{ prod.nombre }}" style="margin-bottom:0;" required>
-                            <input type="number" step="0.50" name="precio" class="form-control" value="{{ prod.precio }}" style="margin-bottom:0;" required>
+                            <div>
+                                <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Nombre del Producto:</label>
+                                <input type="text" name="nombre" class="form-control" value="{{ prod.nombre }}" required>
+                            </div>
+                            <div>
+                                <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Precio Base ($):</label>
+                                <input type="number" step="0.50" name="precio" class="form-control" value="{{ prod.precio }}" required>
+                            </div>
                         </div>
+                        
+                        <div class="edit-grid" style="margin-top: 10px;">
+                            <div>
+                                <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Modificar Sobrante (Venta Flash):</label>
+                                <input type="number" name="stock_sobrante" class="form-control" value="{{ prod.stock_sobrante or 0 }}" min="0">
+                            </div>
+                            <div style="display: flex; align-items: center; padding-top: 15px;">
+                                <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--accent-gold); width: 16px; height: 16px; margin-right: 8px;">
+                                <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Mayoreo</label>
+                            </div>
+                        </div>
+
                         <textarea name="descripcion" class="form-control" style="height:50px; resize:none; margin-top: 10px;">{{ prod.descripcion }}</textarea>
                         
                         <div style="display:flex; gap:15px; margin-top: 10px;">
@@ -434,15 +523,30 @@
     <div id="configuracion" class="tab-content">
         <div class="admin-grid">
             <div class="card">
-                <h3>📢 Banner de Anuncios</h3>
-                <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Fija un mensaje en la pantalla principal de los clientes (Ej. Cierres, ofertas).</p>
-                <form action="{{ url_for('nuevo_anuncio') }}" method="POST">
-                    <textarea name="mensaje_anuncio" class="form-control" placeholder="Escribe el anuncio aquí..." style="height:80px; resize: none;">{{ anuncio_actual }}</textarea>
+                <h3>📢 Banner de Anuncios Corporativos</h3>
+                <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Publica banners con imágenes de alta definición y vínculos de redirección del ecosistema.</p>
+                <form action="{{ url_for('nuevo_anuncio') }}" method="POST" enctype="multipart/form-data">
+                    <div class="edit-grid">
+                        <div>
+                            <label style="font-size:0.75rem; color:var(--text-gray);">Título / Eslogan Campaña:</label>
+                            <input type="text" name="titulo" class="form-control" placeholder="Ej. Lanzamiento Línea de Bodas" value="{{ anuncio_actual_titulo or '' }}">
+                        </div>
+                        <div>
+                            <label style="font-size:0.75rem; color:var(--text-gray);">Enlace de Destino (URL):</label>
+                            <input type="url" name="enlace_destino" class="form-control" placeholder="https://thezmarthorganization.com/..." value="{{ anuncio_actual_enlace or '' }}">
+                        </div>
+                    </div>
+
+                    <div style="background: var(--input-bg); border: 1px dashed var(--border-dark); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px;">
+                        <span style="display:block; margin-bottom:8px; font-size:0.8rem; font-weight: bold; color: var(--text-gray);">Arte Publicitario (Subir Archivo de Imagen)</span>
+                        <input type="file" name="anuncio_file" accept="image/*" style="font-size:0.8rem; width: 100%; color: var(--text-gray);">
+                    </div>
+
                     <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px; background: var(--input-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-dark);">
                         <input type="checkbox" name="anuncio_activo" id="anuncio_activo" value="1" {% if anuncio_activo %}checked{% endif %} style="accent-color: var(--accent-gold); width: 18px; height: 18px;">
                         <label for="anuncio_activo" style="color:var(--text-white); font-size: 0.85rem; cursor: pointer;">Publicar Anuncio en Tienda</label>
                     </div>
-                    <button type="submit" class="btn-action">Guardar Anuncio</button>
+                    <button type="submit" class="btn-action">Desplegar Banner Multi-Media</button>
                 </form>
             </div>
 
