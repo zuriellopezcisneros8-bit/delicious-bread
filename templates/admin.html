@@ -10,7 +10,7 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE ZMARTH ORG — OPERACIONES</title>
+    <title>DELICIOUS BREAD — OPERACIONES</title>
     <style>
         :root { 
             /* Paleta Ecosistema Zmarth */
@@ -174,21 +174,13 @@
             border-radius: 16px; border: 1px solid var(--border-dark); 
             gap: 15px;
         }
-        @media (min-width: 768px) { .inv-item { flex-direction: row; justify-content: space-between; align-items: center; padding: 20px; } }
+        @media (min-width: 768px) { .inv-item { flex-direction: row; justify-content: space-between; align-items: center; padding: 20px; flex-wrap: wrap; } }
         .inv-item.agotado { opacity: 0.5; filter: grayscale(80%); }
         
         .inv-info { display: flex; gap: 15px; align-items: center; width: 100%; }
         .inv-actions { display: flex; gap: 10px; width: 100%; justify-content: space-between; flex-wrap: wrap; }
         @media (min-width: 768px) { .inv-actions { width: auto; justify-content: flex-end; } }
        
- <div style="margin-top: 10px; padding: 10px; background: #1A1815; border-radius: 10px; border: 1px solid #365C2B; width: 100%;">
-    <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" style="display: flex; gap: 10px; align-items: center;">
-        <label style="font-size: 0.7rem; color: var(--text-gray); white-space: nowrap;">Stock Flash:</label>
-        <input type="number" name="stock_sobrante" value="{{ prod.stock_sobrante or 0 }}" min="0" class="form-control" style="margin-bottom: 0; padding: 5px; width: 80px;">
-        <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: var(--accent-gold); color: var(--accent-gold);">Actualizar</button>
-    </form>
-</div>
-
         /* FORMULARIOS */
         .form-control { 
             width: 100%; padding: 12px 15px; background: var(--input-bg); 
@@ -246,7 +238,7 @@
 <body>
 
     <header class="top-bar">
-        <h1>THE ZMARTH ORG — OPERACIONES</h1>
+        <h1>DELICIOUS BREAD — OPERACIONES</h1>
         <div style="font-size: 0.75rem; color: #8A8A8A; margin-top: 5px; font-weight: bold; letter-spacing: 1px;">Ecosistema Delicious Bread</div>
         <div class="auth-links">
             <a href="{{ url_for('index') }}">🛒 Ver Tienda</a>
@@ -487,6 +479,21 @@
                         <button class="btn-small" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='block'">Editar</button>
                         <form action="{{ url_for('eliminar_producto', producto_id=prod.id) }}" method="POST" onsubmit="return confirm('¿Eliminar producto?');" style="flex: 1;">
                             <button type="submit" class="btn-small" style="width: 100%; border-color: #5C2B2B; color: #D96868;">Borrar</button>
+                        </form>
+                    </div>
+                    
+                    <div style="margin-top: 10px; padding: 10px; background: #1A1815; border-radius: 10px; border: 1px solid #365C2B; width: 100%;">
+                        <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" style="display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
+                            <input type="hidden" name="nombre" value="{{ prod.nombre }}">
+                            <input type="hidden" name="descripcion" value="{{ prod.descripcion }}">
+                            <input type="hidden" name="precio" value="{{ prod.precio }}">
+                            {% if prod.es_pedido_grande %}
+                            <input type="hidden" name="es_pedido_grande" value="1">
+                            {% endif %}
+                            
+                            <label style="font-size: 0.7rem; color: var(--text-gray); white-space: nowrap;">Stock Flash Rápido:</label>
+                            <input type="number" name="stock_sobrante" value="{{ prod.stock_sobrante or 0 }}" min="0" class="form-control" style="margin-bottom: 0; padding: 5px; width: 80px;">
+                            <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: var(--accent-gold); color: var(--accent-gold); flex: none;">Actualizar</button>
                         </form>
                     </div>
                 </div>
