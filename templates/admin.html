@@ -10,7 +10,7 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DELICIOUS BREAD — OPERACIONES</title>
+    <title>THE ZMARTH ORG — OPERACIONES</title>
     <style>
         :root { 
             /* Paleta Ecosistema Zmarth */
@@ -238,7 +238,7 @@
 <body>
 
     <header class="top-bar">
-        <h1>DELICIOUS BREAD — OPERACIONES</h1>
+        <h1>THE ZMARTH ORG — OPERACIONES</h1>
         <div style="font-size: 0.75rem; color: #8A8A8A; margin-top: 5px; font-weight: bold; letter-spacing: 1px;">Ecosistema Delicious Bread</div>
         <div class="auth-links">
             <a href="{{ url_for('index') }}">🛒 Ver Tienda</a>
@@ -482,8 +482,9 @@
                         </form>
                     </div>
                     
+                    <!-- Mini Formulario Flash -->
                     <div style="margin-top: 10px; padding: 10px; background: #1A1815; border-radius: 10px; border: 1px solid #365C2B; width: 100%;">
-                        <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" style="display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
+                        <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
                             <input type="hidden" name="nombre" value="{{ prod.nombre }}">
                             <input type="hidden" name="descripcion" value="{{ prod.descripcion }}">
                             <input type="hidden" name="precio" value="{{ prod.precio }}">
@@ -498,6 +499,7 @@
                     </div>
                 </div>
 
+                <!-- Formulario Completo de Edición (AHORA CON OPCIÓN PARA IMAGEN) -->
                 <div id="edit-form-{{ prod.id }}" style="display:none; background:var(--input-bg); padding:15px; border:1px solid var(--accent-gold); margin-bottom:20px; border-radius:16px;">
                     <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data">
                         <div class="edit-grid">
@@ -524,7 +526,13 @@
 
                         <textarea name="descripcion" class="form-control" style="height:50px; resize:none; margin-top: 10px;">{{ prod.descripcion }}</textarea>
                         
-                        <div style="display:flex; gap:15px; margin-top: 10px;">
+                        <!-- NUEVO BLOQUE: Editar Fotografía -->
+                        <div style="background: var(--card-black); border: 1px dashed var(--border-dark); padding: 12px; border-radius: 12px; text-align: center; margin-top: 5px;">
+                            <span style="display:block; margin-bottom:8px; font-size:0.75rem; font-weight: bold; color: var(--text-gray);">Actualizar Fotografía (Opcional)</span>
+                            <input type="file" name="imagen_file" accept="image/*" style="font-size:0.8rem; width: 100%; color: var(--text-gray);">
+                        </div>
+                        
+                        <div style="display:flex; gap:15px; margin-top: 15px;">
                             <button type="submit" class="btn-action" style="flex: 2; background: var(--accent-gold); color: var(--card-black);">Guardar</button>
                             <button type="button" class="btn-action" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='none'" style="flex: 1; border-color: var(--border-dark); color: var(--text-gray);">Cerrar</button>
                         </div>
