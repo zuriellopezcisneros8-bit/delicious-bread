@@ -216,6 +216,177 @@
             letter-spacing: 3px; color: #666; text-transform: uppercase; margin: 0;
         }
 
+        /* =========================================
+           ZEDITH | IA CONCIERGE PREMIUM
+           ========================================= */
+        .btn-zedith-trigger {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: var(--card-black);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--luxury-gold);
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 1500;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: var(--transition-smooth);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        
+        .btn-zedith-trigger:hover {
+            background: var(--luxury-gold);
+        }
+        
+        .btn-zedith-trigger:hover .zedith-texto { color: var(--card-black); }
+        .btn-zedith-trigger:hover .zedith-dot { background: var(--card-black); }
+
+        .zedith-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--luxury-gold);
+            border-radius: 50%;
+            animation: latido 2s infinite;
+            transition: var(--transition-smooth);
+        }
+        
+        .zedith-texto {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--luxury-gold);
+            font-weight: 600;
+            transition: var(--transition-smooth);
+        }
+
+        @keyframes latido {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(197, 168, 128, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(197, 168, 128, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(197, 168, 128, 0); }
+        }
+
+        /* Modal del Chat */
+        .zedith-modal {
+            display: none;
+            position: fixed;
+            bottom: 90px;
+            left: 30px;
+            width: 360px;
+            height: 550px;
+            max-height: 70vh;
+            background: var(--card-black);
+            border: 1px solid var(--border-fino);
+            border-radius: 4px;
+            z-index: 2000;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+        
+        .zedith-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border-fino);
+            background: #0A0A0A;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .zedith-header h3 {
+            font-size: 1rem;
+            color: var(--skin-beige);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0;
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .btn-cerrar-zedith {
+            background: transparent;
+            border: none;
+            color: var(--light-brown);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        
+        .btn-cerrar-zedith:hover { color: var(--luxury-gold); }
+
+        .zedith-body {
+            flex-grow: 1;
+            padding: 25px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #050505;
+        }
+        
+        .msg-zedith {
+            background: #111;
+            border-left: 2px solid var(--luxury-gold);
+            padding: 12px 15px;
+            color: var(--skin-beige);
+            font-size: 0.85rem;
+            border-radius: 0 4px 4px 0;
+            align-self: flex-start;
+            max-width: 85%;
+            line-height: 1.6;
+            font-weight: 300;
+        }
+        
+        .msg-usuario {
+            background: var(--luxury-gold);
+            color: var(--card-black);
+            padding: 12px 15px;
+            font-size: 0.85rem;
+            border-radius: 4px 0 0 4px;
+            align-self: flex-end;
+            max-width: 85%;
+            line-height: 1.6;
+            font-weight: 500;
+        }
+        
+        .zedith-footer {
+            padding: 20px 25px;
+            border-top: 1px solid var(--border-fino);
+            background: #0A0A0A;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .zedith-input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--light-brown);
+            color: var(--skin-beige);
+            padding: 8px 0;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.85rem;
+        }
+        
+        .zedith-input:focus { outline: none; border-bottom-color: var(--luxury-gold); }
+        
+        .zedith-btn-enviar {
+            background: transparent;
+            border: none;
+            color: var(--luxury-gold);
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .zedith-btn-enviar:hover { color: var(--skin-beige); }
+        .zedith-typing { color: var(--light-brown); font-size: 0.75rem; font-style: italic; display: none; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -298,7 +469,9 @@
             <button type="button" class="store-tab-btn" onclick="filtrarCategoria('mayoreo')">Eventos & Mayoreo</button>
         </div>
 
-    </div> <form id="pedidoForm" method="POST" action="/procesar_pedido">
+    </div> 
+    
+    <form id="pedidoForm" method="POST" action="/procesar_pedido">
         <div class="container">
             <div class="grid-productos">
                 {% for producto in productos %}
@@ -425,6 +598,35 @@
                 <button type="button" class="btn-enviar-ticket" onclick="enviarAlBackend()">Confirmar Orden y Notificar</button>
                 <button type="button" class="btn-cancelar-ticket" onclick="cerrarTicket()">Modificar Selección</button>
             </div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         BOTÓN TRIGGER ZEDITH
+         ========================================= -->
+    <div class="btn-zedith-trigger" onclick="toggleZedith()">
+        <div class="zedith-dot"></div>
+        <span class="zedith-texto">ZEDITH IA</span>
+    </div>
+
+    <!-- =========================================
+         MODAL ZEDITH
+         ========================================= -->
+    <div id="zedithModal" class="zedith-modal">
+        <div class="zedith-header">
+            <h3>Conciërge Virtual</h3>
+            <button class="btn-cerrar-zedith" onclick="toggleZedith()">&times;</button>
+        </div>
+        
+        <div class="zedith-body" id="zedithBody">
+            <div class="msg-zedith">
+                Bienvenido al Atelier de Delicious Bread. Soy Zedith. ¿En qué le puedo asistir con nuestra selección de alta repostería el día de hoy?
+            </div>
+        </div>
+        
+        <div class="zedith-footer">
+            <input type="text" id="zedithInput" class="zedith-input" placeholder="Consulte con Zedith..." onkeypress="manejarEnter(event)">
+            <button class="zedith-btn-enviar" onclick="enviarMensajeZedith()">Enviar</button>
         </div>
     </div>
 
@@ -689,6 +891,80 @@
             btn.disabled = true;
 
             document.getElementById('pedidoForm').submit();
+        }
+
+        // =========================================
+        // LÓGICA ZEDITH IA
+        // =========================================
+        function toggleZedith() {
+            const modal = document.getElementById('zedithModal');
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            } else {
+                modal.style.display = 'flex';
+                document.getElementById('zedithInput').focus();
+            }
+        }
+
+        function manejarEnter(event) {
+            if (event.key === "Enter") {
+                enviarMensajeZedith();
+            }
+        }
+
+        async function enviarMensajeZedith() {
+            const inputField = document.getElementById('zedithInput');
+            const mensaje = inputField.value.trim();
+            if (mensaje === "") return;
+
+            const chatBody = document.getElementById('zedithBody');
+
+            // 1. Mostrar mensaje del usuario
+            const userDiv = document.createElement('div');
+            userDiv.className = 'msg-usuario';
+            userDiv.innerText = mensaje;
+            chatBody.appendChild(userDiv);
+            
+            // Limpiar input y hacer scroll
+            inputField.value = "";
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            // 2. Mostrar indicador de "Escribiendo..."
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'zedith-typing';
+            typingDiv.innerText = "Zedith está redactando...";
+            typingDiv.style.display = 'block';
+            chatBody.appendChild(typingDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            try {
+                // 3. Fetch al backend de Python
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({message: mensaje})
+                });
+                
+                const data = await response.json();
+                
+                // Remover "Escribiendo..."
+                chatBody.removeChild(typingDiv);
+
+                // 4. Mostrar respuesta
+                const zedithDiv = document.createElement('div');
+                zedithDiv.className = 'msg-zedith';
+                zedithDiv.innerText = data.reply;
+                chatBody.appendChild(zedithDiv);
+                chatBody.scrollTop = chatBody.scrollHeight;
+
+            } catch (error) {
+                chatBody.removeChild(typingDiv);
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'msg-zedith';
+                errorDiv.innerText = "Disculpe, mis sistemas están en mantenimiento. Por favor, intente en unos momentos.";
+                chatBody.appendChild(errorDiv);
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
         }
     </script>
 </body>

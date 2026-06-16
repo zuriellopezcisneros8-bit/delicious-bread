@@ -156,6 +156,59 @@ def generar_codigo_especial():
 
 # ================= CONTROL DE AUTENTICACIÓN =================
 
+import os
+import google.generativeai as genai
+from flask import request, jsonify
+
+# 1. Cargar todas las llaves desde las variables de entorno
+# Esto busca GEMINI_KEY_1, GEMINI_KEY_2... hasta la 50.
+API_KEYS = []
+for i in range(1, 51):
+    key = os.environ.get(f"GEMINI_KEY_{i}")
+    if key:
+        API_KEYS.append(key)
+
+# Definimos la personalidad de Zedith (puedes ajustarla)
+system_instruction = """Eres Zedith, la asistente ejecutiva de inteligencia artificial de 'Delicious Bread', una panadería de alta gama. 
+Tu tono es sofisticado, cálido, profesional y apasionado por la panadería fina. 
+Tu objetivo es ayudar a los clientes con información sobre productos, horarios y realizar recomendaciones personalizadas. 
+Si te preguntan por productos, ten en cuenta que somos una panadería artesanal. No inventes precios ni productos que no existen. 
+Sé breve, elegante y muy servicial."""
+
+@app.route('/api/chat', methods=['POST'])
+def chat_zedith():
+    data = request.json
+    user_message = data.get('message')
+    
+    if not user_message:
+        return jsonify({"error": "No hay mensaje"}), 400
+    
+    # 2. Sistema de Rotación Automática
+    for index, key in enumerate(API_KEYS):
+        try:
+            # Configurar Gemini con la llave actual del ciclo
+            genai.configure(api_key=key)
+            
+            # Inicializar el modelo
+            model = genai.GenerativeModel(
+                model_name="gemini-2.5-flash", # Cambiar a 1.5-flash si marca error el servidor
+                system_instruction=system_instruction
+            )
+            
+            # Intentar generar la respuesta
+            response = model.generate_content(user_message)
+            
+            # Si tiene éxito, se envía al index y se rompe el ciclo
+            return jsonify({"reply": response.text})
+            
+        except Exception as e:
+            # Si hay un error (ej. límite de cuota), imprimimos en consola interna pero NO al cliente
+            print(f"Fallo en la llave {index + 1}. Rotando a la siguiente... Error: {e}")
+            continue # Salta a la siguiente llave
+    
+    # 3. Si el ciclo termina y NINGUNA de las 50 llaves funcionó
+    return jsonify({"reply": "Disculpa, en este momento estoy atendiendo a múltiples clientes. Por favor, intenta de nuevo en unos minutos."}), 500
+
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
