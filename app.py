@@ -14,20 +14,22 @@ app = Flask(__name__)
 
 
 
-# ================= CONFIGURACIÓN DE BASE DE DATOS EN LA NUBE =================
-# REEMPLAZA EL TEXTO DE ABAJO CON LA URL DE TU BASE DE DATOS POSTGRESQL
-# Ejemplo: 'postgresql://usuario:contraseña@servidor.com/nombre_bd'
-URL_NUBE = 'PEGA_AQUI_TU_URL_DE_POSTGRESQL'
+# ================= CONFIGURACIÓN DE BASE DE DATOS =================
+# Primero busca la variable segura en Render
+db_uri = os.environ.get('DATABASE_URL')
 
-db_uri = os.environ.get('DATABASE_URL') or URL_NUBE
+# Si no la encuentra (porque estás en tu computadora local), usa tu URL de Neon directamente:
+if not db_uri:
+    db_uri = 'postgresql://tu_usuario:tu_contraseña@tu_servidor.neon.tech/neondb?sslmode=require' # <--- PEGA TU URL DE NEON AQUÍ SOLO SI LA USAS LOCAL
 
 # Corrección automática de dialecto para SQLAlchemy
-if db_uri.startswith("postgres://"):
+if db_uri and db_uri.startswith("postgres://"):
     db_uri = db_uri.replace("postgres://", "postgresql://", 1)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'zmarth_executive_secure_key_2026'
+
 
 # Configuración de 6 meses (180 días) para la sesión
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=180)
@@ -701,6 +703,21 @@ def editar_producto(producto_id):
 
 with app.app_context():
     db.create_all()
+    try:
+        print("====== DIAGNÓSTICO DE BASE DE DATOS ======")
+        print(f"Conectando a la URL: {db_uri[:25]}... (oculto por seguridad)")
+        print("Intentando crear las tablas ahora mismo...")
+        
+        db.create_all()
+        
+        print("¡ÉXITO ENORMÍSIMO! Las tablas se crearon o ya existían.")
+        print(f"Tablas registradas en el sistema: {list(db.metadata.tables.keys())}")
+        print("==========================================")
+    except Exception as e:
+        print("==========================================")
+        print(f"❌ ERROR CRÍTICO AL CREAR TABLAS: {e}")
+        print("==========================================")
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
