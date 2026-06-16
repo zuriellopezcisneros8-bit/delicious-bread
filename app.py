@@ -82,6 +82,7 @@ class Pedido(db.Model):
     codigo_recogida = db.Column(db.String(10), unique=True, nullable=False)
     fecha_pedido = db.Column(db.DateTime, default=datetime.utcnow)
     detalles = db.relationship('DetallePedido', backref='pedido', lazy=True)
+    comprobante_url = db.Column(db.String(500), nullable=True)
 
 class DetallePedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -699,6 +700,33 @@ def editar_producto(producto_id):
         
     db.session.commit()
     return redirect(url_for('admin'))
+
+# ================= SUBIDA DE COMPROBANTES (TIENDA REGULAR) =================
+@app.route('/subir_comprobante/<int:pedido_id>', methods=['POST'])
+def subir_comprobante(pedido_id):
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+        
+    pedido = Pedido.query.get_or_404(pedido_id)
+    
+    # Verificamos que el pedido pertenezca al usuario que inició sesión
+    if pedido.usuario_id != session['usuario_id']:
+        flash('Acceso denegado.', 'error')
+        return redirect(url_for('perfil'))
+        
+    file = request.files.get('comprobante_pago')
+    if file and file.filename != '':
+        filename = secure_filename(file.filename)
+        # Nombre único para evitar que se sobreescriban archivos con el mismo nombre
+        unique_filename = f"COMP_ORDEN_{pedido.codigo_recogida}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+        
+        # Guardar la ruta en la base de datos
+        pedido.comprobante_url = f"/static/uploads/{unique_filename}"
+        db.session.commit()
+        flash('Comprobante anexado exitosamente. Entrará a revisión.', 'success')
+        
+    return redirect(url_for('perfil'))
 
 
 with app.app_context():

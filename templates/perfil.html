@@ -1,22 +1,12 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <meta name="apple-mobile-web-app-title" content="Delicious Bread">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}">
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PANEL DE SOCIO | DELICIOUS BREAD</title>
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 
     <style>
-        /* Paleta Unificada del Atelier */
         :root {
             --bg-beige: #EADBC8;         
             --card-black: #000000;       
@@ -25,268 +15,75 @@
             --luxury-gold: #c5a880;
             --border-fino: #222222;        
             --text-dark: #1A1A1A;
-            --transition-smooth: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            background-color: var(--bg-beige);
-            color: var(--text-dark);
-            font-family: 'Montserrat', sans-serif; 
-            font-weight: 300;
-            line-height: 1.6;
-            padding: 20px 15px;
-            overflow-x: hidden;
-        }
-
-        /* --- Encabezado --- */
-        header { text-align: center; margin: 60px 0 60px 0; position: relative; }
+        body { background-color: var(--bg-beige); color: var(--text-dark); font-family: 'Montserrat', sans-serif; padding: 20px 15px; }
         
-        h1, h2, h3 { font-family: 'Playfair Display', serif; font-weight: 400; }
-        h1 { font-size: clamp(2rem, 4vw, 3.5rem); letter-spacing: 6px; margin-bottom: 15px; color: var(--text-dark); text-transform: uppercase; font-weight: 600;}
-        header p { font-size: clamp(0.7rem, 1.2vw, 0.85rem); font-style: italic; color: #554433; letter-spacing: 4px; text-transform: uppercase; font-weight: 500;}
-
-        .nav-actions {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin-top: 35px;
-            flex-wrap: wrap;
-        }
-
-        .btn-nav {
-            display: inline-block; 
-            color: var(--text-dark); 
-            text-decoration: none; 
-            border: 1px solid var(--text-dark); 
-            padding: 10px 28px; 
-            font-size: 0.75rem; 
-            letter-spacing: 2px; 
-            text-transform: uppercase; 
-            transition: var(--transition-smooth); 
-            font-weight: 600;
-            cursor: pointer;
-        }
-
+        header { text-align: center; margin: 60px 0; }
+        h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 10px; }
+        
+        .nav-actions { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
+        .btn-nav { color: var(--text-dark); text-decoration: none; border: 1px solid var(--text-dark); padding: 10px 20px; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
         .btn-nav:hover { background: var(--text-dark); color: var(--bg-beige); }
+
+        .container { max-width: 800px; margin: 0 auto; }
+        .profile-card { background: var(--card-black); padding: 30px; border-radius: 4px; margin-bottom: 40px; color: var(--skin-beige); }
+        .order-card { background: var(--card-black); border: 1px solid var(--border-fino); padding: 25px; margin-bottom: 20px; color: var(--skin-beige); }
         
-        .btn-logout { border-color: #8b0000; color: #8b0000; }
-        .btn-logout:hover { background: #8b0000; color: var(--bg-beige); border-color: #8b0000; }
-
-        .container { max-width: 900px; margin: 0 auto; padding-bottom: 80px; }
-
-        /* --- Tarjeta de Perfil --- */
-        .profile-card { 
-            background: var(--card-black); 
-            padding: 40px; 
-            border-radius: 4px; 
-            border: 1px solid var(--border-fino); 
-            margin-bottom: 60px; 
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        }
-
-        .profile-grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
-            gap: 30px; 
-        }
-
-        .data-box {
-            border-left: 2px solid var(--light-brown);
-            padding-left: 15px;
-        }
-
-        .data-label { 
-            font-size: 0.7rem; 
-            color: var(--light-brown); 
-            text-transform: uppercase; 
-            letter-spacing: 2px;
-            margin-bottom: 8px; 
-            font-weight: 500;
-        }
-
-        .data-value { 
-            font-family: 'Playfair Display', serif;
-            font-size: 1.3rem; 
-            color: var(--skin-beige); 
-            letter-spacing: 1px;
-            word-break: break-all;
-        }
-
-        /* --- Historial de Pedidos --- */
-        .section-title {
-            text-align: center;
-            font-size: 2rem;
-            color: var(--text-dark);
-            margin-bottom: 40px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-        }
-
-        .order-card { 
-            background: var(--card-black); 
-            border: 1px solid var(--border-fino); 
-            border-radius: 4px; 
-            padding: 30px; 
-            margin-bottom: 25px; 
-            display: flex; 
-            flex-direction: column;
-            gap: 20px;
-            transition: var(--transition-smooth);
-        }
-
-        .order-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.15); border-color: var(--light-brown); }
-
-        .order-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px dashed var(--border-fino);
-            padding-bottom: 20px;
-        }
-
-        .order-id {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.5rem; 
-            color: var(--luxury-gold); 
-            letter-spacing: 2px;
-        }
-
-        .order-body {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
-
-        .order-products {
-            font-size: 0.85rem; 
-            color: #8a8a8a; 
-            line-height: 1.8;
-            font-weight: 300;
-        }
-
-        .order-meta {
-            text-align: right;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .order-time {
-            font-size: 0.75rem; 
-            color: var(--light-brown); 
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .order-price {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.4rem; 
-            color: var(--skin-beige);
-        }
-
-        /* --- Etiquetas de Estado --- */
-        .badge { 
-            padding: 8px 16px; 
-            border-radius: 2px; 
-            font-size: 0.65rem; 
-            letter-spacing: 2px;
-            text-transform: uppercase; 
-            font-weight: 600;
-        }
-
-        /* Colores adaptados al fondo negro mate */
-        .status-pendiente { background: transparent; color: var(--luxury-gold); border: 1px solid var(--luxury-gold); }
-        .status-horneando { background: #2a221b; color: var(--skin-beige); border: 1px solid var(--light-brown); }
-        .status-listo { background: var(--skin-beige); color: var(--card-black); }
-        .status-entregado { background: transparent; color: #555; border: 1px dashed #333; }
-
-        .empty-state {
-            color: #554433; 
-            font-style: italic; 
-            text-align: center; 
-            margin-top: 60px;
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2rem;
-            letter-spacing: 1px;
-        }
-
-        /* --- Responsividad --- */
-        @media (max-width: 600px) {
-            .order-body {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 20px;
-            }
-            .order-meta {
-                text-align: left;
-                width: 100%;
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-                border-top: 1px dashed var(--border-fino);
-                padding-top: 20px;
-            }
-        }
+        .order-header { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; margin-bottom: 15px; }
+        .order-id { color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.2rem; }
+        
+        .badge { font-size: 0.6rem; padding: 5px 10px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); text-transform: uppercase; }
+        .file-upload-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #333; }
     </style>
 </head>
 <body>
 
     <header>
         <h1>PANEL DE SOCIO</h1>
-        <p>SUS DATOS Y ORDENES</p>
         <div class="nav-actions">
-            <a href="{{ url_for('index') }}" class="btn-nav">Volver Delicious Bread</a>
-            <a href="{{ url_for('logout') }}" class="btn-nav btn-logout">Cerrar Sesión</a>
+            <a href="{{ url_for('index') }}" class="btn-nav">Tienda</a>
+            <a href="{{ url_for('logout') }}" class="btn-nav">Salir</a>
         </div>
     </header>
 
     <div class="container">
-        
         <div class="profile-card">
-            <div class="profile-grid">
-                <div class="data-box">
-                    <div class="data-label">Titular de la Cuenta</div>
-                    <div class="data-value">{{ usuario.nombre }}</div>
-                </div>
-                <div class="data-box">
-                    <div class="data-label">Línea de Contacto</div>
-                    <div class="data-value">{{ usuario.telefono }}</div>
-                </div>
-                <div class="data-box">
-                    <div class="data-label">Buzón Electrónico</div>
-                    <div class="data-value">{{ usuario.correo }}</div>
-                </div>
-            </div>
+            <h3>{{ usuario.nombre }}</h3>
+            <p>{{ usuario.correo }} | {{ usuario.telefono }}</p>
         </div>
 
-        <h2 class="section-title">Historial de Pedidos</h2>
+        <h2 style="text-align: center; margin-bottom: 30px;">Historial de Pedidos</h2>
         
         {% for pedido in pedidos %}
         <div class="order-card">
             <div class="order-header">
                 <span class="order-id">{{ pedido.codigo_recogida }}</span>
-                <span class="badge status-{{ pedido.estado.lower() }}">{{ pedido.estado }}</span>
+                <span class="badge">{{ pedido.estado }}</span>
             </div>
             
             <div class="order-body">
-                <div class="order-products">
-                    {% for detalle in pedido.detalles %}
-                        {{ detalle.cantidad }}x {{ detalle.producto.nombre }}<br>
-                    {% endfor %}
-                </div>
-                
-                <div class="order-meta">
-                    <span class="order-time">Recepción: {{ pedido.horario_recogida }}</span>
-                    <span class="order-price">${{ "%.2f"|format(pedido.monto_total) }}</span>
-                </div>
+                {% for detalle in pedido.detalles %}
+                    <p>{{ detalle.cantidad }}x {{ detalle.producto.nombre }}</p>
+                {% endfor %}
+                <p style="margin-top: 10px; font-weight: bold;">Total: ${{ "%.2f"|format(pedido.monto_total) }}</p>
             </div>
+
+            {% if pedido.metodo_pago == 'Transferencia' %}
+            <div class="file-upload-section">
+                {% if pedido.comprobante_url %}
+                    <p style="color: var(--luxury-gold); font-size: 0.8rem;">✓ Comprobante recibido</p>
+                {% else %}
+                    <form action="{{ url_for('subir_comprobante', pedido_id=pedido.id) }}" method="POST" enctype="multipart/form-data">
+                        <input type="file" name="comprobante_pago" required accept="image/*" style="color: white; font-size: 0.7rem;">
+                        <button type="submit" class="btn-nav" style="padding: 5px 10px; cursor: pointer;">Subir Pago</button>
+                    </form>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
-        {% else %}
-        <p class="empty-state">Su registro de pedidos se encuentra vacío en este momento.</p>
         {% endfor %}
-        
     </div>
 
 </body>
