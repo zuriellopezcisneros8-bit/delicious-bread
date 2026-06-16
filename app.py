@@ -8,10 +8,27 @@ import string
 import os
 from datetime import datetime, timedelta
 
+import cloudinary
+import cloudinary.uploader
+
 app = Flask(__name__)
 
+# ================= CONFIGURACIÓN DE CLOUDINARY =================
+# Configuración usando variables de entorno que definiste en Render
+cloudinary.config(
+    cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key = os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret = os.environ.get('CLOUDINARY_API_SECRET')
+)
 
-
+# Función global para subir archivos a Cloudinary
+def subir_a_cloudinary(file):
+    if file and file.filename != '':
+        # Esto sube la imagen a la nube y devuelve el resultado
+        upload_result = cloudinary.uploader.upload(file)
+        # Retorna la URL segura y permanente
+        return upload_result.get("secure_url")
+    return None
 
 
 # ================= CONFIGURACIÓN DE BASE DE DATOS =================
@@ -30,7 +47,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'zmarth_executive_secure_key_2026'
 
-
 # Configuración de 6 meses (180 días) para la sesión
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=180)
 
@@ -44,11 +60,8 @@ app.config['MAIL_DEFAULT_SENDER'] = 'DELICIOUS BREAD'
 
 mail = Mail(app)
 
-# Configuración para la subida de fotos
-UPLOAD_FOLDER = os.path.join('static', 'uploads')
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+# Límite de tamaño para subir archivos (16 MB) - Ya no guardamos en local
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 db = SQLAlchemy(app)
 
@@ -376,14 +389,11 @@ def pedido_especial():
             
         monto_anticipo = monto_total * 0.50
         
-        # Procesamiento del comprobante de pago
+        # Procesamiento del comprobante de pago directo a Cloudinary
         file = request.files.get('comprobante_pago')
         comprobante_url = None
         if file and file.filename != '':
-            filename = secure_filename(file.filename)
-            unique_filename = f"COMP_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
-            comprobante_url = f"/static/uploads/{unique_filename}"
+            comprobante_url = subir_a_cloudinary(file)
             
         nuevo_especial = PedidoEspecial(
             nombre_contacto=nombre,
@@ -464,14 +474,13 @@ def admin():
         descripcion = request.form.get('descripcion')
         precio = float(request.form.get('precio'))
         stock_sob = int(request.form.get('stock_sobrante', 0))
+        
         file = request.files.get('imagen_file')
         imagen_url = None
         
+        # Subida a Cloudinary
         if file and file.filename != '':
-            filename = secure_filename(file.filename)
-            unique_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
-            imagen_url = f"/static/uploads/{unique_filename}"
+            imagen_url = subir_a_cloudinary(file)
         
         nuevo_prod = Producto(nombre=nombre, descripcion=descripcion, precio=precio, imagen_url=imagen_url, stock_sobrante=stock_sob)
         db.session.add(nuevo_prod)
@@ -525,15 +534,17 @@ def nuevo_anuncio():
     file = request.files.get('anuncio_file')
     
     if file and file.filename != '':
-        filename = secure_filename(file.filename)
-        unique_filename = f"AD_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
-        img_url = f"/static/uploads/{unique_filename}"
+        # Corrección: Subimos directamente a Cloudinary
+        img_url = subir_a_cloudinary(file)
         
-        ad = Anuncio(titulo=titulo, imagen_url=img_url, enlace_destino=enlace)
-        db.session.add(ad)
-        db.session.commit()
-        flash('Anuncio publicitario integrado exitosamente.', 'success')
+        if img_url:
+            ad = Anuncio(titulo=titulo, imagen_url=img_url, enlace_destino=enlace)
+            db.session.add(ad)
+            db.session.commit()
+            flash('Anuncio publicitario integrado exitosamente.', 'success')
+        else:
+            flash('Hubo un error al procesar la imagen del anuncio.', 'error')
+            
     return redirect(url_for('admin'))
 
 # Control manual de Pedidos Especiales (Validación de 50% de anticipo)
@@ -666,12 +677,8 @@ def eliminar_producto(producto_id):
         flash('El producto tenía ventas registradas, así que se ha PAUSADO automáticamente para mantener tu historial.', 'warning')
     else:
         try:
-            if producto.imagen_url:
-                filename = producto.imagen_url.split('/')[-1]
-                filepath = os.path.join(app.root_path, 'static', 'uploads', filename)
-                if os.path.exists(filepath):
-                    os.remove(filepath)
-            
+            # Eliminada la lógica de intentar borrar el archivo localmente con 'os.remove'
+            # Cloudinary mantiene la imagen en la nube, lo cual es más seguro a nivel base de datos.
             db.session.delete(producto)
             db.session.commit()
             flash('Producto eliminado permanentemente del catálogo.', 'success')
@@ -693,10 +700,10 @@ def editar_producto(producto_id):
     
     file = request.files.get('imagen_file')
     if file and file.filename != '':
-        filename = secure_filename(file.filename)
-        unique_filename = f"{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
-        producto.imagen_url = f"/static/uploads/{unique_filename}"
+        # Corrección: Subimos directamente a Cloudinary en vez de guardar en local
+        nueva_imagen_url = subir_a_cloudinary(file)
+        if nueva_imagen_url:
+            producto.imagen_url = nueva_imagen_url
         
     db.session.commit()
     return redirect(url_for('admin'))
@@ -716,15 +723,15 @@ def subir_comprobante(pedido_id):
         
     file = request.files.get('comprobante_pago')
     if file and file.filename != '':
-        filename = secure_filename(file.filename)
-        # Nombre único para evitar que se sobreescriban archivos con el mismo nombre
-        unique_filename = f"COMP_ORDEN_{pedido.codigo_recogida}_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+        # Corrección: Subimos a Cloudinary y guardamos ESA URL (eliminé la sobrescritura con la ruta local)
+        url_nube = subir_a_cloudinary(file)
         
-        # Guardar la ruta en la base de datos
-        pedido.comprobante_url = f"/static/uploads/{unique_filename}"
-        db.session.commit()
-        flash('Comprobante anexado exitosamente. Entrará a revisión.', 'success')
+        if url_nube:
+            pedido.comprobante_url = url_nube
+            db.session.commit()
+            flash('Comprobante anexado exitosamente. Entrará a revisión.', 'success')
+        else:
+            flash('Hubo un error al procesar el comprobante.', 'error')
         
     return redirect(url_for('perfil'))
 
@@ -744,7 +751,6 @@ with app.app_context():
         print("==========================================")
         print(f"❌ ERROR CRÍTICO AL CREAR TABLAS: {e}")
         print("==========================================")
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
