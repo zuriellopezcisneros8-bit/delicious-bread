@@ -550,23 +550,48 @@
                 </form>
             </div>
 
-            <div class="card">
-                <h3>🚫 Bloqueo de Fechas (Horno Cerrado)</h3>
-                <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Inhabilita días específicos para que no puedan realizarse pedidos.</p>
-                <form action="/admin/inhabilitar_dias" method="POST">
-                    <div class="edit-grid">
-                        <div>
-                            <label style="font-size:0.75rem; color:var(--text-gray);">Desde:</label>
-                            <input type="date" name="fecha_inicio" class="form-control" required style="padding: 10px; margin-bottom: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card">
+                    <h3>🚫 Bloqueo de Fechas (Horno Cerrado)</h3>
+                    <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Inhabilita días específicos para que no puedan realizarse pedidos.</p>
+                    <form action="/admin/inhabilitar_dias" method="POST">
+                        <div class="edit-grid">
+                            <div>
+                                <label style="font-size:0.75rem; color:var(--text-gray);">Desde:</label>
+                                <input type="date" name="fecha_inicio" class="form-control" required style="padding: 10px; margin-bottom: 10px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75rem; color:var(--text-gray);">Hasta:</label>
+                                <input type="date" name="fecha_fin" class="form-control" required style="padding: 10px; margin-bottom: 10px;">
+                            </div>
                         </div>
-                        <div>
-                            <label style="font-size:0.75rem; color:var(--text-gray);">Hasta:</label>
-                            <input type="date" name="fecha_fin" class="form-control" required style="padding: 10px; margin-bottom: 10px;">
+                        <input type="text" name="motivo" class="form-control" placeholder="Motivo (Ej. Mantenimiento del Atelier)">
+                        <button type="submit" class="btn-action">Ejecutar Bloqueo</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>📅 Días Inhabilitados Actuales</h3>
+                    <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Fechas en las que el Atelier no recibirá órdenes. Retíralas para abrir el horno.</p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        {% for dia in dias_bloqueados_lista %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-dark);">
+                            <div>
+                                <strong style="color: var(--text-white); display: block; font-size: 0.9rem;">{{ dia.fecha.strftime('%d/%m/%Y') }}</strong>
+                                <span style="color: var(--accent-gold); font-size: 0.75rem;">{{ dia.motivo }}</span>
+                            </div>
+                            <form action="{{ url_for('habilitar_dia', dia_id=dia.id) }}" method="POST" style="margin: 0;">
+                                <button type="submit" class="btn-small" style="border-color: #5C2B2B; color: #D96868; padding: 6px 12px; margin: 0; min-width: 90px;">Reactivar</button>
+                            </form>
                         </div>
+                        {% else %}
+                        <div style="text-align: center; padding: 20px; background: var(--input-bg); border-radius: 12px; border: 1px dashed var(--border-dark);">
+                            <span style="color: var(--text-gray); font-size: 0.85rem;">No hay fechas bloqueadas actualmente. El horno opera con normalidad.</span>
+                        </div>
+                        {% endfor %}
                     </div>
-                    <input type="text" name="motivo" class="form-control" placeholder="Motivo (Ej. Mantenimiento del Atelier)">
-                    <button type="submit" class="btn-action">Ejecutar Bloqueo</button>
-                </form>
+                </div>
             </div>
         </div>
     </div>
