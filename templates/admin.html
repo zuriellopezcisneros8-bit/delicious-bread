@@ -180,7 +180,15 @@
         .inv-info { display: flex; gap: 15px; align-items: center; width: 100%; }
         .inv-actions { display: flex; gap: 10px; width: 100%; justify-content: space-between; flex-wrap: wrap; }
         @media (min-width: 768px) { .inv-actions { width: auto; justify-content: flex-end; } }
-        
+       
+ <div style="margin-top: 10px; padding: 10px; background: #1A1815; border-radius: 10px; border: 1px solid #365C2B; width: 100%;">
+    <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" style="display: flex; gap: 10px; align-items: center;">
+        <label style="font-size: 0.7rem; color: var(--text-gray); white-space: nowrap;">Stock Flash:</label>
+        <input type="number" name="stock_sobrante" value="{{ prod.stock_sobrante or 0 }}" min="0" class="form-control" style="margin-bottom: 0; padding: 5px; width: 80px;">
+        <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: var(--accent-gold); color: var(--accent-gold);">Actualizar</button>
+    </form>
+</div>
+
         /* FORMULARIOS */
         .form-control { 
             width: 100%; padding: 12px 15px; background: var(--input-bg); 
