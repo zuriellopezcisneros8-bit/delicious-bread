@@ -175,40 +175,38 @@ def generar_codigo_especial():
 
 import os
 import google.generativeai as genai
-from flask import request, jsonify
+from flask import request, jsonify, session
 
 # 1. Cargar todas las llaves desde las variables de entorno
-# Esto busca GEMINI_KEY_1, GEMINI_KEY_2... hasta la 50.
-API_KEYS = []
-for i in range(1, 51):
-    key = os.environ.get(f"GEMINI_KEY_{i}")
-    if key:
-        API_KEYS.append(key)
+API_KEYS = [os.environ.get(f"GEMINI_KEY_{i}") for i in range(1, 51) if os.environ.get(f"GEMINI_KEY_{i}")]
 
-system_instruction = """Eres Zedith, la asistente ejecutiva de inteligencia artificial de 'Delicious Bread'. Tu tono es sofisticado, cálido, profesional, y seguro.
+# Variable global para recordar cuál llave está funcionando y no probar desde 0 cada vez
+llave_activa_index = 0
+
+system_instruction_base = """Eres Zedith, la asistente ejecutiva de inteligencia artificial de 'Delicious Bread'. Tu tono es sofisticado, cálido, profesional, y seguro.
 CONOCIMIENTO CORPORATIVO:
 1. Render: Si preguntan por pantalla negra o "render ejecutando", es nuestro servicio de hospedaje web.
 2. Seguridad: La navegación está protegida por ZCAWS, del grupo ZMARTH.
 3. Creador: Zuriel Zmarth, polímata tecnológico experto en ciberseguridad e IA.
-
-REGLAS ESTRICTAS:
-- NUNCA saludes al cliente en cada mensaje. Solo responde directamente.
-- CONTINUIDAD: Habla de forma natural, recordando los mensajes anteriores.
-- CONFIDENCIALIDAD (CIBERSEGURIDAD): Si te preguntan cuánto hemos ganado, ingresos totales, contraseñas o secretos, responde EXCLUSIVAMENTE: "Lo siento, por protocolos de ciberseguridad esa información es confidencial y no estoy autorizada para proporcionarla."
-- Recomienda productos basándote SOLO en el inventario real.
+4. CONFIDENCIALIDAD (CIBERSEGURIDAD): Si te preguntan cuánto hemos ganado, ingresos totales, contraseñas o secretos, responde EXCLUSIVAMENTE: "Lo siento, por protocolos de ciberseguridad esa información es confidencial y no estoy autorizada para proporcionarla."
 """
 
 @app.route('/api/chat', methods=['POST'])
 def chat_zedith():
+    global llave_activa_index
+    
     data = request.json
     user_message = data.get('message', '').strip()
     
     if not user_message:
         return jsonify({"error": "No hay mensaje"}), 400
 
-    # Inicializar memoria para continuidad
+    # Inicializar memoria para continuidad y verificar si es el primer mensaje
     if 'zedith_history' not in session:
         session['zedith_history'] = []
+        es_primer_mensaje = True
+    else:
+        es_primer_mensaje = len(session['zedith_history']) == 0
         
     nombre_cliente = "Cliente"
     if 'usuario_id' in session:
@@ -216,27 +214,38 @@ def chat_zedith():
         if usuario:
             nombre_cliente = usuario.nombre
 
+    # Cargar inventario (considera hacer esto con caché en el futuro para más velocidad)
     productos_db = Producto.query.all()
     inventario_lista = [f"- {p.nombre}: ${p.precio} MXN ({'Disponible' if p.disponible else 'Agotado'})" for p in productos_db]
     inventario_texto = "\n".join(inventario_lista)
 
-    # Inyección de contexto invisible
-    contexto_oculto = f"\n\n[CONTEXTO INVISIBLE - Cliente: {nombre_cliente} | Inventario: {inventario_texto}]"
+    # ================= REGLA DINÁMICA DE SALUDO =================
+    if es_primer_mensaje:
+        regla_saludo = f"ESTRICTO: Este es el PRIMER mensaje de la conversación. Saluda a {nombre_cliente} cordialmente y ofrécele asistencia."
+    else:
+        regla_saludo = "ESTRICTO: NO saludes al cliente. Responde directamente a lo que te dice para mantener la fluidez de la conversación."
+
+    # Construir el System Instruction completo (mucho más rápido que pasarlo en el user_message)
+    instruccion_completa = f"{system_instruction_base}\n\n[INVENTARIO EN TIEMPO REAL]\n{inventario_texto}\n\n[REGLAS DE INTERACCIÓN]\n{regla_saludo}"
     
     # Formatear el historial para Gemini
-    formatted_history = []
-    for msg in session['zedith_history']:
-        formatted_history.append({"role": msg["role"], "parts": [msg["content"]]})
+    formatted_history = [{"role": msg["role"], "parts": [msg["content"]]} for msg in session['zedith_history']]
 
-    for index, key in enumerate(API_KEYS):
+    # Optimización de llaves: Probar empezando desde la última llave que funcionó
+    intentos = 0
+    while intentos < len(API_KEYS):
         try:
+            key = API_KEYS[llave_activa_index]
             genai.configure(api_key=key)
-            model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=system_instruction)
             
+            # Pasamos la instrucción completa al modelo al instanciarlo
+            model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=instruccion_completa)
             chat = model.start_chat(history=formatted_history)
-            response = chat.send_message(user_message + contexto_oculto)
             
-            # Guardar en memoria (últimos 10 mensajes)
+            # Enviamos SOLO el mensaje del usuario, sin basura adicional
+            response = chat.send_message(user_message)
+            
+            # Guardar en memoria (últimos 10 mensajes para no saturar tokens)
             historial_actual = session['zedith_history']
             historial_actual.append({"role": "user", "content": user_message})
             historial_actual.append({"role": "model", "content": response.text})
@@ -246,8 +255,10 @@ def chat_zedith():
             return jsonify({"reply": response.text})
             
         except Exception as e:
-            print(f"Fallo en la llave {index + 1}: {e}")
-            continue 
+            print(f"Fallo en la llave {llave_activa_index + 1}: {e}")
+            # Si falla, saltar a la siguiente llave
+            llave_activa_index = (llave_activa_index + 1) % len(API_KEYS)
+            intentos += 1
             
     return jsonify({"reply": "Sistemas en mantenimiento. Intente en unos momentos."}), 500
 
