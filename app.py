@@ -174,93 +174,124 @@ def generar_codigo_especial():
 # ================= CONTROL DE AUTENTICACIÓN =================
 
 import os
+import re
 import google.generativeai as genai
 from flask import request, jsonify, session
 
 # 1. Cargar todas las llaves desde las variables de entorno
-API_KEYS = [os.environ.get(f"GEMINI_KEY_{i}") for i in range(1, 51) if os.environ.get(f"GEMINI_KEY_{i}")]
+API_KEYS = []
+for i in range(1, 51):
+    key = os.environ.get(f"GEMINI_KEY_{i}")
+    if key:
+        API_KEYS.append(key)
 
-# Variable global para recordar cuál llave está funcionando y no probar desde 0 cada vez
-llave_activa_index = 0
+system_instruction_base = """Eres Zedith, la asistente ejecutiva de inteligencia artificial de 'Delicious Bread', una panadería de alta gama. 
+Tu tono es sofisticado, cálido, profesional, seguro y apasionado.
 
-system_instruction_base = """Eres Zedith, la asistente ejecutiva de inteligencia artificial de 'Delicious Bread'. Tu tono es sofisticado, cálido, profesional, y seguro.
 CONOCIMIENTO CORPORATIVO:
 1. Render: Si preguntan por pantalla negra o "render ejecutando", es nuestro servicio de hospedaje web.
 2. Seguridad: La navegación está protegida por ZCAWS, del grupo ZMARTH.
 3. Creador: Zuriel Zmarth, polímata tecnológico experto en ciberseguridad e IA.
-4. CONFIDENCIALIDAD (CIBERSEGURIDAD): Si te preguntan cuánto hemos ganado, ingresos totales, contraseñas o secretos, responde EXCLUSIVAMENTE: "Lo siento, por protocolos de ciberseguridad esa información es confidencial y no estoy autorizada para proporcionarla."
+4. CONFIDENCIALIDAD: Si preguntan cuánto hemos ganado, contraseñas o secretos, responde: "Lo siento, por protocolos de ciberseguridad esa información es confidencial."
 """
 
 @app.route('/api/chat', methods=['POST'])
 def chat_zedith():
-    global llave_activa_index
-    
     data = request.json
     user_message = data.get('message', '').strip()
     
     if not user_message:
         return jsonify({"error": "No hay mensaje"}), 400
 
-    # Inicializar memoria para continuidad y verificar si es el primer mensaje
-    if 'zedith_history' not in session:
-        session['zedith_history'] = []
+    # 1. Identificar si es el primer mensaje y manejar la memoria sin romper las cookies (Límite: 4 mensajes)
+    if 'zedith_historial' not in session:
+        session['zedith_historial'] = []
         es_primer_mensaje = True
     else:
-        es_primer_mensaje = len(session['zedith_history']) == 0
-        
+        es_primer_mensaje = len(session['zedith_historial']) == 0
+
     nombre_cliente = "Cliente"
     if 'usuario_id' in session:
         usuario = db.session.get(Usuario, session['usuario_id'])
         if usuario:
             nombre_cliente = usuario.nombre
 
-    # Cargar inventario (considera hacer esto con caché en el futuro para más velocidad)
+    # 2. Extraer Inventario Real
     productos_db = Producto.query.all()
     inventario_lista = [f"- {p.nombre}: ${p.precio} MXN ({'Disponible' if p.disponible else 'Agotado'})" for p in productos_db]
     inventario_texto = "\n".join(inventario_lista)
 
-    # ================= REGLA DINÁMICA DE SALUDO =================
-    if es_primer_mensaje:
-        regla_saludo = f"ESTRICTO: Este es el PRIMER mensaje de la conversación. Saluda a {nombre_cliente} cordialmente y ofrécele asistencia."
-    else:
-        regla_saludo = "ESTRICTO: NO saludes al cliente. Responde directamente a lo que te dice para mantener la fluidez de la conversación."
-
-    # Construir el System Instruction completo (mucho más rápido que pasarlo en el user_message)
-    instruccion_completa = f"{system_instruction_base}\n\n[INVENTARIO EN TIEMPO REAL]\n{inventario_texto}\n\n[REGLAS DE INTERACCIÓN]\n{regla_saludo}"
+    # 3. Lógica de Consulta de Pedidos (Recuperada de tu versión rápida)
+    codigo_match = re.search(r'(DB-[A-Z0-9]{4}|ZCW-EV-[A-Z0-9]{5})', user_message, re.IGNORECASE)
+    estado_pedido = "El cliente no ha consultado ningún pedido específico en este mensaje."
     
-    # Formatear el historial para Gemini
-    formatted_history = [{"role": msg["role"], "parts": [msg["content"]]} for msg in session['zedith_history']]
+    if codigo_match:
+        codigo = codigo_match.group(0).upper()
+        pedido = Pedido.query.filter_by(codigo_recogida=codigo).first()
+        if not pedido:
+            pedido = PedidoEspecial.query.filter_by(codigo_recogida=codigo).first()
+            
+        if pedido:
+            estado_pedido = f"El pedido {codigo} está en estado: '{pedido.estado}'."
+        else:
+            estado_pedido = f"El código {codigo} NO existe en la base de datos."
 
-    # Optimización de llaves: Probar empezando desde la última llave que funcionó
-    intentos = 0
-    while intentos < len(API_KEYS):
+    # 4. Regla de saludo dinámico (Solo en el primer mensaje)
+    if es_primer_mensaje:
+        regla_saludo = f"ESTRICTO: Este es el PRIMER mensaje de la conversación. SALUDA a {nombre_cliente} cordialmente."
+    else:
+        regla_saludo = "ESTRICTO: NO saludes en este mensaje. Continúa la conversación directamente."
+
+    # 5. Construir historial como texto continuo (Súper estable y rápido)
+    historial_texto = ""
+    if session['zedith_historial']:
+        historial_texto = "\n[HISTORIAL RECIENTE DE LA CONVERSACIÓN]\n"
+        for msg in session['zedith_historial']:
+            historial_texto += f"{msg['role']}: {msg['content']}\n"
+
+    # 6. Prompt Estructurado Final (El cerebro de Zedith)
+    prompt_enriquecido = f"""
+    {historial_texto}
+    [CONTEXTO EN TIEMPO REAL]
+    - Cliente actual: {nombre_cliente}
+    - Rastreo de pedidos: {estado_pedido}
+    - Inventario:
+    {inventario_texto}
+
+    [INSTRUCCIÓN INMEDIATA]
+    {regla_saludo}
+
+    Cliente: "{user_message}"
+    Zedith:
+    """
+
+    # 7. Ejecución Veloz (Método generate_content)
+    for index, key in enumerate(API_KEYS):
         try:
-            key = API_KEYS[llave_activa_index]
             genai.configure(api_key=key)
+            model = genai.GenerativeModel(
+                model_name="gemini-2.5-flash",
+                system_instruction=system_instruction_base
+            )
             
-            # Pasamos la instrucción completa al modelo al instanciarlo
-            model = genai.GenerativeModel(model_name="gemini-2.5-flash", system_instruction=instruccion_completa)
-            chat = model.start_chat(history=formatted_history)
+            # Petición única, sin los bloqueos de start_chat
+            response = model.generate_content(prompt_enriquecido)
+            respuesta_texto = response.text.strip()
             
-            # Enviamos SOLO el mensaje del usuario, sin basura adicional
-            response = chat.send_message(user_message)
-            
-            # Guardar en memoria (últimos 10 mensajes para no saturar tokens)
-            historial_actual = session['zedith_history']
-            historial_actual.append({"role": "user", "content": user_message})
-            historial_actual.append({"role": "model", "content": response.text})
-            session['zedith_history'] = historial_actual[-10:]
+            # Guardar en memoria de forma segura (cortando los más viejos, máximo 4)
+            historial_actual = session['zedith_historial']
+            historial_actual.append({"role": "Cliente", "content": user_message})
+            historial_actual.append({"role": "Zedith", "content": respuesta_texto})
+            session['zedith_historial'] = historial_actual[-4:]
             session.modified = True
             
-            return jsonify({"reply": response.text})
+            return jsonify({"reply": respuesta_texto})
             
         except Exception as e:
-            print(f"Fallo en la llave {llave_activa_index + 1}: {e}")
-            # Si falla, saltar a la siguiente llave
-            llave_activa_index = (llave_activa_index + 1) % len(API_KEYS)
-            intentos += 1
-            
-    return jsonify({"reply": "Sistemas en mantenimiento. Intente en unos momentos."}), 500
+            print(f"Fallo en la llave {index + 1}: {e}")
+            continue 
+    
+    return jsonify({"reply": "Disculpa, en este momento el Atelier está procesando múltiples solicitudes. Por favor, intenta de nuevo en unos minutos."}), 500
 
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
