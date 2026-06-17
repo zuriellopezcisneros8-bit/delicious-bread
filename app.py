@@ -280,7 +280,7 @@ def chat_zedith():
         try:
             genai.configure(api_key=llaves_disponibles[i])
             model = genai.GenerativeModel(
-                model_name="gemini-2.5-flash",
+                model_name="gemini-3.1-flash-lite",
                 system_instruction=system_instruction_base
             )
             
