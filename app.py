@@ -907,4 +907,4 @@ with app.app_context():
         print(f"❌ ERROR CRÍTICO AL CREAR TABLAS: {e}")
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True) # SE CAMBIA app.run POR socketio.run
+    app.run(app, host='0.0.0.0', port=5000, debug=True) # SE CAMBIA app.run POR socketio.run
