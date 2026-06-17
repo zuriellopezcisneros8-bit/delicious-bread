@@ -173,136 +173,303 @@ def generar_codigo_especial():
 
 # ================= CONTROL DE AUTENTICACIÓN =================
 
+# ================= IA ZEDITH =================
+
 import os
 import re
 import random
+import traceback
 import google.generativeai as genai
 from flask import request, jsonify, session
 
-# 1. Cargar todas las llaves desde las variables de entorno de Render
+# ================= CARGA DE LLAVES =================
+
 API_KEYS = []
+
 for i in range(1, 51):
-    key = os.environ.get(f"GEMINI_KEY_{i}")
+    key = os.environ.get(f'GEMINI_KEY_{i}')
     if key:
         API_KEYS.append(key)
 
-system_instruction_base = """Eres Zedith, la asistente ejecutiva de inteligencia artificial de 'Delicious Bread', una panadería de alta gama. 
+print("===================================")
+print(f"LLAVES GEMINI DETECTADAS: {len(API_KEYS)}")
+print("===================================")
+
+# ================= PROMPT BASE =================
+
+system_instruction_base = """
+Eres Zedith, la asistente ejecutiva de inteligencia artificial de 'Delicious Bread'.
+
 Tu tono es sofisticado, cálido, profesional, seguro y apasionado.
 
 CONOCIMIENTO CORPORATIVO:
-1. Render: Si preguntan por pantalla negra o "render ejecutando", es nuestro servicio de hospedaje web.
-2. Seguridad: La navegación está protegida por ZCAWS, del grupo ZMARTH.
-3. Creador: Zuriel Zmarth, polímata tecnológico experto en ciberseguridad e IA.
-4. CONFIDENCIALIDAD: Si preguntan cuánto hemos ganado, contraseñas o secretos, responde: "Lo siento, por protocolos de ciberseguridad esa información es confidencial."
+
+1. Render:
+Si preguntan por pantalla negra o "render ejecutando", es nuestro servicio de hospedaje web.
+
+2. Seguridad:
+La navegación está protegida por ZCAWS, del grupo ZMARTH.
+
+3. Creador:
+Zuriel Zmarth, polímata tecnológico experto en ciberseguridad e IA.
+
+4. CONFIDENCIALIDAD:
+Si preguntan cuánto hemos ganado, contraseñas o secretos, responde:
+
+"Lo siento, por protocolos de ciberseguridad esa información es confidencial."
 """
+
+# ================= API CHAT =================
 
 @app.route('/api/chat', methods=['POST'])
 def chat_zedith():
-    data = request.json
-    user_message = data.get('message', '').strip()
-    
-    if not user_message:
-        return jsonify({"error": "No hay mensaje"}), 400
 
-    # 1. Control de Memoria Rápida (Es vital no saturar la cookie de Flask)
-    if 'zedith_historial' not in session:
-        session['zedith_historial'] = []
-        es_primer_mensaje = True
-    else:
-        es_primer_mensaje = len(session['zedith_historial']) == 0
+    print("\n================ NUEVA CONSULTA ================\n")
 
-    nombre_cliente = "Cliente"
-    if 'usuario_id' in session:
-        usuario = db.session.get(Usuario, session['usuario_id'])
-        if usuario:
-            nombre_cliente = usuario.nombre
+    try:
+        data = request.json
 
-    # 2. Extracción Directa de Base de Datos (Muy rápido con SQLAlchemy)
-    productos_db = Producto.query.all()
-    inventario_lista = [f"- {p.nombre}: ${p.precio} MXN ({'Disponible' if p.disponible else 'Agotado'})" for p in productos_db]
-    inventario_texto = "\n".join(inventario_lista)
+        print("JSON RECIBIDO:")
+        print(data)
 
-    # 3. Rastreo de Tickets mediante Expresiones Regulares
-    estado_pedido = "El cliente no ha consultado ningún pedido específico."
-    codigo_match = re.search(r'(DB-[A-Z0-9]{4}|ZCW-EV-[A-Z0-9]{5})', user_message, re.IGNORECASE)
-    
-    if codigo_match:
-        codigo = codigo_match.group(0).upper()
-        pedido = Pedido.query.filter_by(codigo_recogida=codigo).first()
-        if not pedido:
-            pedido = PedidoEspecial.query.filter_by(codigo_recogida=codigo).first()
-            
-        if pedido:
-            estado_pedido = f"El pedido {codigo} se encuentra en estado: '{pedido.estado}'."
+        user_message = data.get('message', '').strip()
+
+        print("MENSAJE:")
+        print(user_message)
+
+        if not user_message:
+            return jsonify({
+                "error": "No hay mensaje"
+            }), 400
+
+        # ================= HISTORIAL =================
+
+        if 'zedith_historial' not in session:
+            session['zedith_historial'] = []
+            es_primer_mensaje = True
         else:
-            estado_pedido = f"El código {codigo} no figura en los registros de la base de datos."
+            es_primer_mensaje = len(session['zedith_historial']) == 0
 
-    # 4. Inyección de Contexto 100% IA
-    historial_texto = ""
-    if session['zedith_historial']:
-        historial_texto = "\n[HISTORIAL RECIENTE]\n"
-        for msg in session['zedith_historial']:
-            historial_texto += f"{msg['role']}: {msg['content']}\n"
+        # ================= NOMBRE CLIENTE =================
 
-    regla_saludo = f"ESTRICTO: Es el PRIMER mensaje. Saluda a {nombre_cliente} cordialmente." if es_primer_mensaje else "Continúa la conversación de manera fluida y directa."
+        nombre_cliente = "Cliente"
 
-    prompt_enriquecido = f"""
-    {historial_texto}
-    [DATOS EN TIEMPO REAL]
-    - Cliente: {nombre_cliente}
-    - Rastreo: {estado_pedido}
-    - Catálogo:
-    {inventario_texto}
+        if 'usuario_id' in session:
 
-    [INSTRUCCIÓN]
-    {regla_saludo}
-
-    Cliente: "{user_message}"
-    Zedith:
-    """
-
-    # 5. ================= MOTOR DE VELOCIDAD: BALANCEADOR DE LLAVES =================
-    if not API_KEYS:
-        return jsonify({"reply": "Sistemas de IA fuera de línea. Llaves no detectadas."}), 500
-
-    # Clonamos la lista de llaves y la mezclamos aleatoriamente.
-    # Esto distribuye el tráfico entre tus diferentes proyectos de Google equitativamente,
-    # evitando que una sola llave reciba todo el impacto inicial.
-    llaves_disponibles = API_KEYS.copy()
-    random.shuffle(llaves_disponibles)
-    
-    # Red de seguridad: Solo intentamos con 3 llaves máximo.
-    # Si la IA falla 3 veces, corta la operación al instante y devuelve un mensaje,
-    # evitando el congelamiento de 20 segundos en la pantalla del usuario.
-    intentos_maximos = min(3, len(llaves_disponibles))
-
-    for i in range(intentos_maximos):
-        try:
-            genai.configure(api_key=llaves_disponibles[i])
-            model = genai.GenerativeModel(
-                model_name="gemini-1.5-flash",
-                system_instruction=system_instruction_base
+            usuario = db.session.get(
+                Usuario,
+                session['usuario_id']
             )
-            
-            # Usamos generate_content (sin start_chat) por ser el método más ligero y veloz
-            response = model.generate_content(prompt_enriquecido)
-            respuesta_texto = response.text.strip()
-            
-            # Guardamos la interacción limitando a 4 mensajes para proteger la memoria de Flask
-            historial_actual = session['zedith_historial']
-            historial_actual.append({"role": "Cliente", "content": user_message})
-            historial_actual.append({"role": "Zedith", "content": respuesta_texto})
-            session['zedith_historial'] = historial_actual[-4:]
-            session.modified = True
-            
-            return jsonify({"reply": respuesta_texto})
-            
-        except Exception as e:
-            print(f"⚠️ Alerta: Latencia detectada en llave (Intento {i+1}): {e}")
-            continue
-    
-    # Si las 3 llaves aleatorias fallan, el servidor responde rápido en vez de colgarse
-    return jsonify({"reply": "Disculpe, mis sistemas de comunicación están experimentando una latencia inusual. Por favor, intente enviarme su consulta de nuevo en unos instantes."}), 500
+
+            if usuario:
+                nombre_cliente = usuario.nombre
+
+        # ================= PRODUCTOS =================
+
+        productos_db = Producto.query.all()
+
+        inventario_lista = [
+            f"- {p.nombre}: ${p.precio} MXN ({'Disponible' if p.disponible else 'Agotado'})"
+            for p in productos_db
+        ]
+
+        inventario_texto = "\n".join(inventario_lista)
+
+        # ================= RASTREO DE PEDIDOS =================
+
+        estado_pedido = "El cliente no ha consultado ningún pedido específico."
+
+        codigo_match = re.search(
+            r'(DB-[A-Z0-9]{4}|ZCW-EV-[A-Z0-9]{5})',
+            user_message,
+            re.IGNORECASE
+        )
+
+        if codigo_match:
+
+            codigo = codigo_match.group(0).upper()
+
+            pedido = Pedido.query.filter_by(
+                codigo_recogida=codigo
+            ).first()
+
+            if not pedido:
+                pedido = PedidoEspecial.query.filter_by(
+                    codigo_recogida=codigo
+                ).first()
+
+            if pedido:
+                estado_pedido = (
+                    f"El pedido {codigo} "
+                    f"se encuentra en estado: {pedido.estado}"
+                )
+            else:
+                estado_pedido = (
+                    f"El código {codigo} "
+                    f"no existe en la base de datos."
+                )
+
+        # ================= HISTORIAL TEXTO =================
+
+        historial_texto = ""
+
+        if session['zedith_historial']:
+
+            historial_texto += "\n[HISTORIAL]\n"
+
+            for msg in session['zedith_historial']:
+
+                historial_texto += (
+                    f"{msg['role']}: "
+                    f"{msg['content']}\n"
+                )
+
+        regla_saludo = (
+            f"ESTRICTO: Es el primer mensaje. "
+            f"Saluda a {nombre_cliente}."
+            if es_primer_mensaje
+            else
+            "Continúa la conversación normalmente."
+        )
+
+        prompt_enriquecido = f"""
+{historial_texto}
+
+[DATOS EN TIEMPO REAL]
+
+Cliente: {nombre_cliente}
+
+Estado Pedido:
+{estado_pedido}
+
+Catálogo:
+{inventario_texto}
+
+[INSTRUCCIÓN]
+
+{regla_saludo}
+
+Cliente:
+{user_message}
+
+Zedith:
+"""
+
+        print("\n========== PROMPT ==========\n")
+        print(prompt_enriquecido[:3000])
+
+        # ================= VALIDACIÓN DE LLAVES =================
+
+        if not API_KEYS:
+
+            print("ERROR: NO SE DETECTARON LLAVES GEMINI")
+
+            return jsonify({
+                "reply": "Sistemas IA fuera de línea. No se encontraron llaves."
+            }), 500
+
+        llaves_disponibles = API_KEYS.copy()
+        random.shuffle(llaves_disponibles)
+
+        intentos_maximos = min(
+            3,
+            len(llaves_disponibles)
+        )
+
+        print(f"INTENTOS MÁXIMOS: {intentos_maximos}")
+
+        # ================= GENERACIÓN =================
+
+        for i in range(intentos_maximos):
+
+            try:
+
+                print(f"\nINTENTO #{i+1}")
+
+                key_actual = llaves_disponibles[i]
+
+                print(
+                    f"KEY TERMINA EN: "
+                    f"{key_actual[-6:]}"
+                )
+
+                genai.configure(
+                    api_key=key_actual
+                )
+
+                model = genai.GenerativeModel(
+                    model_name="gemini-1.5-flash",
+                    system_instruction=system_instruction_base
+                )
+
+                print("ENVIANDO A GEMINI...")
+
+                response = model.generate_content(
+                    prompt_enriquecido
+                )
+
+                print("RESPUESTA RECIBIDA")
+
+                print(response)
+
+                if not hasattr(response, "text"):
+
+                    print("ERROR: response.text NO EXISTE")
+
+                    continue
+
+                respuesta_texto = response.text.strip()
+
+                print("\nRESPUESTA IA:")
+                print(respuesta_texto)
+
+                historial_actual = session['zedith_historial']
+
+                historial_actual.append({
+                    "role": "Cliente",
+                    "content": user_message
+                })
+
+                historial_actual.append({
+                    "role": "Zedith",
+                    "content": respuesta_texto
+                })
+
+                session['zedith_historial'] = historial_actual[-4:]
+
+                session.modified = True
+
+                return jsonify({
+                    "reply": respuesta_texto
+                })
+
+            except Exception as e:
+
+                print("\n====================================")
+                print(f"ERROR EN INTENTO #{i+1}")
+                print(type(e).__name__)
+                print(str(e))
+                print("====================================")
+
+                traceback.print_exc()
+
+                continue
+
+        print("\nTODOS LOS INTENTOS FALLARON\n")
+
+        return jsonify({
+            "reply": "Disculpe, mis sistemas de IA están experimentando una incidencia temporal."
+        }), 500
+
+    except Exception as e:
+
+        print("\n=========== ERROR GLOBAL ===========")
+        traceback.print_exc()
+        print("====================================")
+
+        return jsonify({
+            "reply": "Se produjo un error interno del sistema."
+        }), 500
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
