@@ -3,20 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
-import random
-import string
-import os
-import re
-from datetime import datetime, timedelta
-
-import cloudinary
-import cloudinary.uploader
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.utils import secure_filename
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_mail import Mail, Message
-from flask_socketio import SocketIO, emit # NUEVO
+from flask_socketio import SocketIO, emit
 import random
 import string
 import os
@@ -31,40 +18,47 @@ app = Flask(__name__)
 socketio = SocketIO(app, cors_allowed_origins="*") 
 
 # ================= CONFIGURACIÓN DE CLOUDINARY =================
-# Configuración usando variables de entorno que definiste en Render
 cloudinary.config(
     cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
     api_key = os.environ.get('CLOUDINARY_API_KEY'),
     api_secret = os.environ.get('CLOUDINARY_API_SECRET')
 )
 
-# Función global para subir archivos a Cloudinary
 def subir_a_cloudinary(file):
     if file and file.filename != '':
-        # Esto sube la imagen a la nube y devuelve el resultado
         upload_result = cloudinary.uploader.upload(file)
-        # Retorna la URL segura y permanente
         return upload_result.get("secure_url")
     return None
 
-
 # ================= CONFIGURACIÓN DE BASE DE DATOS =================
-# Primero busca la variable segura en Render
 db_uri = os.environ.get('DATABASE_URL')
 
-# Si no la encuentra (porque estás en tu computadora local), usa tu URL de Neon directamente:
 if not db_uri:
-    db_uri = 'postgresql://tu_usuario:tu_contraseña@tu_servidor.neon.tech/neondb?sslmode=require' # <--- PEGA TU URL DE NEON AQUÍ SOLO SI LA USAS LOCAL
+    db_uri = 'postgresql://tu_usuario:tu_contraseña@tu_servidor.neon.tech/neondb?sslmode=require'
 
 # Corrección automática de dialecto para SQLAlchemy
 if db_uri and db_uri.startswith("postgres://"):
     db_uri = db_uri.replace("postgres://", "postgresql://", 1)
 
+# Eliminación de channel_binding para evitar fallos de descifrado SSL en Render + Neon
+if db_uri:
+    db_uri = db_uri.replace("&channel_binding=require", "").replace("?channel_binding=require", "?")
+
+print("DATABASE_URL:", db_uri)
+print("Conectando a Neon...")
+
 app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key = 'zmarth_executive_secure_key_2026'
 
-# Configuración de 6 meses (180 días) para la sesión
+# 1. Usar SQLAlchemy Engine Options & 2. Configurar el Pool
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+    'pool_size': 5,
+    'max_overflow': 10
+}
+
+app.secret_key = 'zmarth_executive_secure_key_2026'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=180)
 
 # ================= CONFIGURACIÓN DE CORREO =================
@@ -76,11 +70,18 @@ app.config['MAIL_PASSWORD'] = 'omzi mgmg hpsz hmfh'
 app.config['MAIL_DEFAULT_SENDER'] = 'DELICIOUS BREAD'
 
 mail = Mail(app)
-
-# Límite de tamaño para subir archivos (16 MB) - Ya no guardamos en local
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
 db = SQLAlchemy(app)
+
+# 5. Función de Diagnóstico de Conexión
+def verificar_db():
+    try:
+        from sqlalchemy import text
+        db.session.execute(text('SELECT 1'))
+        print("✓ Base conectada")
+    except Exception as e:
+        print(f"✗ Error de conexión: {e}")
 
 # ================= MODELOS DE BASE DE DATOS =================
 
@@ -99,7 +100,6 @@ class Producto(db.Model):
     precio = db.Column(db.Float, nullable=False)
     imagen_url = db.Column(db.String(500), nullable=True)
     disponible = db.Column(db.Boolean, default=True)
-    # Control de stock sobrante / ventas flash de excedentes
     stock_sobrante = db.Column(db.Integer, default=0)
 
 class Pedido(db.Model):
@@ -126,7 +126,6 @@ class DiaInhabil(db.Model):
     fecha = db.Column(db.Date, unique=True, nullable=False)
     motivo = db.Column(db.String(200), nullable=True)
 
-# Sistema de anuncios rotativos tipo Amazon
 class Anuncio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(100), nullable=True)
@@ -134,23 +133,22 @@ class Anuncio(db.Model):
     enlace_destino = db.Column(db.String(500), nullable=True)
     activo = db.Column(db.Boolean, default=True)
 
-# Sistema de Pedidos Especiales de Alta Gama (Catering / Eventos)
 class PedidoEspecial(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre_contacto = db.Column(db.String(100), nullable=False)
     telefono_contacto = db.Column(db.String(15), nullable=False)
     correo_contacto = db.Column(db.String(100), nullable=False)
-    metodo_entrega = db.Column(db.String(20), nullable=False)  # 'PickUp' o 'Domicilio'
+    metodo_entrega = db.Column(db.String(20), nullable=False)  
     direccion_texto = db.Column(db.String(300), nullable=True)
     numero_casa = db.Column(db.String(20), nullable=True)
     referencias = db.Column(db.Text, nullable=True)
     latitud = db.Column(db.Float, nullable=True)
     longitud = db.Column(db.Float, nullable=True)
     monto_total = db.Column(db.Float, nullable=False)
-    monto_anticipo = db.Column(db.Float, nullable=False)  # 50% Obligatorio
+    monto_anticipo = db.Column(db.Float, nullable=False)  
     comprobante_url = db.Column(db.String(500), nullable=True)
     anticipo_validado = db.Column(db.Boolean, default=False)
-    estado = db.Column(db.String(50), default='Pendiente de Validación')  # 'En Producción', 'Listo', 'Entregado'
+    estado = db.Column(db.String(50), default='Pendiente de Validación')  
     codigo_recogida = db.Column(db.String(15), unique=True, nullable=False)
     fecha_evento = db.Column(db.String(50), nullable=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
@@ -170,8 +168,6 @@ def generar_codigo():
 def generar_codigo_especial():
     caracteres = string.ascii_uppercase + string.digits
     return f"ZCW-EV-{''.join(random.choice(caracteres) for _ in range(5))}"
-
-# ================= CONTROL DE AUTENTICACIÓN =================
 
 # ================= IA ZEDITH =================
 
@@ -255,23 +251,34 @@ def chat_zedith():
         nombre_cliente = "Cliente"
 
         if 'usuario_id' in session:
-
-            usuario = db.session.get(
-                Usuario,
-                session['usuario_id']
-            )
-
-            if usuario:
-                nombre_cliente = usuario.nombre
+            # 6. Modificación del endpoint y control preventivo de errores 500
+            try:
+                usuario = db.session.get(
+                    Usuario,
+                    session['usuario_id']
+                )
+                if usuario:
+                    nombre_cliente = usuario.nombre
+            except Exception as e:
+                print(f"Error recuperando usuario (Exception manejada de SQLAlchemy): {e}")
+                # 7. Rollback y remoción preventiva en fallos
+                db.session.rollback()
+                db.session.remove()
+                nombre_cliente = "Cliente"
 
         # ================= PRODUCTOS =================
 
-        productos_db = Producto.query.all()
-
-        inventario_lista = [
-            f"- {p.nombre}: ${p.precio} MXN ({'Disponible' if p.disponible else 'Agotado'})"
-            for p in productos_db
-        ]
+        try:
+            productos_db = Producto.query.all()
+            inventario_lista = [
+                f"- {p.nombre}: ${p.precio} MXN ({'Disponible' if p.disponible else 'Agotado'})"
+                for p in productos_db
+            ]
+        except Exception as e:
+            print(f"Error recuperando productos: {e}")
+            db.session.rollback()
+            db.session.remove()
+            inventario_lista = []
 
         inventario_texto = "\n".join(inventario_lista)
 
@@ -289,25 +296,31 @@ def chat_zedith():
 
             codigo = codigo_match.group(0).upper()
 
-            pedido = Pedido.query.filter_by(
-                codigo_recogida=codigo
-            ).first()
-
-            if not pedido:
-                pedido = PedidoEspecial.query.filter_by(
+            try:
+                pedido = Pedido.query.filter_by(
                     codigo_recogida=codigo
                 ).first()
 
-            if pedido:
-                estado_pedido = (
-                    f"El pedido {codigo} "
-                    f"se encuentra en estado: {pedido.estado}"
-                )
-            else:
-                estado_pedido = (
-                    f"El código {codigo} "
-                    f"no existe en la base de datos."
-                )
+                if not pedido:
+                    pedido = PedidoEspecial.query.filter_by(
+                        codigo_recogida=codigo
+                    ).first()
+
+                if pedido:
+                    estado_pedido = (
+                        f"El pedido {codigo} "
+                        f"se encuentra en estado: {pedido.estado}"
+                    )
+                else:
+                    estado_pedido = (
+                        f"El código {codigo} "
+                        f"no existe en la base de datos."
+                    )
+            except Exception as e:
+                print(f"Error rastreando pedido: {e}")
+                db.session.rollback()
+                db.session.remove()
+                estado_pedido = f"No fue posible consultar el estado del código {codigo} temporalmente."
 
         # ================= HISTORIAL TEXTO =================
 
@@ -470,6 +483,7 @@ Zedith:
         return jsonify({
             "reply": "Se produjo un error interno del sistema."
         }), 500
+
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
@@ -478,7 +492,7 @@ def registro():
         correo = request.form.get('correo')
         contrasena = request.form.get('contrasena')
         
-        existe_usuario = Usuario.query.filter((Usuario.correo == correo) | (Usuario.telefono == telefono)).first()
+        existe_usuario = Usuario.query.filter((Usuario.correo == correo) | (Usuario.telefono == telemetry)).first()
         if existe_usuario:
             flash('El correo o teléfono ya se encuentra registrado.', 'error')
             return redirect(url_for('registro'))
@@ -516,8 +530,6 @@ def logout():
     session.pop('usuario_id', None)
     return redirect(url_for('login'))
 
-# ================= TIENDA PRINCIPAL CORREGIDA e INTEGRADA =================
-
 @app.route('/', methods=['GET'])
 def index():
     if 'usuario_id' not in session:
@@ -532,7 +544,6 @@ def index():
     productos = Producto.query.all()
     anuncios = Anuncio.query.filter_by(activo=True).all()
     
-    # Filtrar productos que tengan stock sobrante activo para ventas flash
     productos_sobrantes = [p for p in productos if p.stock_sobrante > 0]
     
     hoy = datetime.utcnow().date()
@@ -605,7 +616,6 @@ def procesar_pedido():
 
     return redirect(url_for('index'))
 
-# Compra en tiempo real de excedentes / stock sobrante
 @app.route('/procesar_sobrante', methods=['POST'])
 def procesar_sobrante():
     if 'usuario_id' not in session:
@@ -613,7 +623,7 @@ def procesar_sobrante():
         
     usuario = db.session.get(Usuario, session['usuario_id'])
     producto_id = request.form.get('producto_id')
-    cantidad_solicitada = int(request.form.get('cantidad', 1))
+    cantidad_solicitada = int(request.form.get('canvas_cantidad', 1))
     horario = request.form.get('horario', 'Inmediato')
     metodo_pago = request.form.get('metodo_pago', 'Efectivo')
     
@@ -623,7 +633,6 @@ def procesar_sobrante():
         flash('Lo sentimos, las piezas solicitadas ya han sido adquiridas por otro cliente.', 'error')
         return redirect(url_for('index'))
     
-    # Descuento atómico del stock sobrante
     producto.stock_sobrante -= cantidad_solicitada
     monto_total = producto.precio * cantidad_solicitada
     
@@ -654,8 +663,6 @@ def procesar_sobrante():
         
     return redirect(url_for('perfil'))
 
-# ================= PERFIL DEL CLIENTE CON PEDIDOS ESPECIALES =================
-
 @app.route('/perfil')
 def perfil():
     if 'usuario_id' not in session:
@@ -663,23 +670,19 @@ def perfil():
         
     usuario = db.session.get(Usuario, session['usuario_id'])
     mis_pedidos = Pedido.query.filter_by(usuario_id=usuario.id).order_by(Pedido.fecha_pedido.desc()).all()
-    
-    # Obtener también pedidos especiales que coincidan con su correo de cuenta
     mis_especiales = PedidoEspecial.query.filter_by(correo_contacto=usuario.correo).order_by(PedidoEspecial.fecha_creacion.desc()).all()
     
     return render_template('perfil.html', usuario=usuario, pedidos=mis_pedidos, especiales=mis_especiales)
 
-# Sistema de Creación de Pedidos Especiales (Eventos) sin registro riguroso
 @app.route('/pedido_especial', methods=['GET', 'POST'])
 def pedido_especial():
     if request.method == 'POST':
         nombre = request.form.get('nombre')
         telefono = request.form.get('telefono')
         correo = request.form.get('correo')
-        metodo_entrega = request.form.get('metodo_entrega')  # 'PickUp' o 'Domicilio'
+        metodo_entrega = request.form.get('metodo_entrega')  
         fecha_evento = request.form.get('fecha_evento')
         
-        # Dirección y Geo-Coordenadas
         direccion = request.form.get('direccion')
         numero_casa = request.form.get('numero_casa')
         referencias = request.form.get('referencias')
@@ -703,7 +706,6 @@ def pedido_especial():
             
         monto_anticipo = monto_total * 0.50
         
-        # Procesamiento del comprobante de pago directo a Cloudinary
         file = request.files.get('comprobante_pago')
         comprobante_url = None
         if file and file.filename != '':
@@ -733,7 +735,6 @@ def pedido_especial():
             db.session.add(det)
         db.session.commit()
         
-        # Despachar notificación inicial por correo
         try:
             asunto = f"Cotización de Orden Especial Recibida - {nuevo_especial.codigo_recogida}"
             cuerpo = f"""
@@ -782,7 +783,6 @@ def admin():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
 
-    # Gestión de alta de producto ordinario o con excedente incrustado
     if request.method == 'POST' and 'nuevo_producto' in request.form:
         nombre = request.form.get('nombre')
         descripcion = request.form.get('descripcion')
@@ -792,7 +792,6 @@ def admin():
         file = request.files.get('imagen_file')
         imagen_url = None
         
-        # Subida a Cloudinary
         if file and file.filename != '':
             imagen_url = subir_a_cloudinary(file)
         
@@ -839,7 +838,6 @@ def admin():
                            anuncios_lista=anuncios_lista,
                            pedidos_especiales_lista=pedidos_especiales_lista)
 
-# Endpoint para inyectar anuncios dinámicos tipo Amazon
 @app.route('/admin/anuncio/nuevo', methods=['POST'])
 def nuevo_anuncio():
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
@@ -848,9 +846,7 @@ def nuevo_anuncio():
     file = request.files.get('anuncio_file')
     
     if file and file.filename != '':
-        # Corrección: Subimos directamente a Cloudinary
         img_url = subir_a_cloudinary(file)
-        
         if img_url:
             ad = Anuncio(titulo=titulo, imagen_url=img_url, enlace_destino=enlace)
             db.session.add(ad)
@@ -861,13 +857,12 @@ def nuevo_anuncio():
             
     return redirect(url_for('admin'))
 
-# Control manual de Pedidos Especiales (Validación de 50% de anticipo)
 @app.route('/admin/pedido_especial/<int:pedido_id>/validar', methods=['POST'])
 def validar_anticipo_especial(pedido_id):
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
     
     especial = PedidoEspecial.query.get_or_404(pedido_id)
-    accion = request.form.get('accion')  # 'aprobar' o 'completar'
+    accion = request.form.get('accion')  
     
     if accion == 'aprobar':
         especial.anticipo_validado = True
@@ -991,8 +986,6 @@ def eliminar_producto(producto_id):
         flash('El producto tenía ventas registradas, así que se ha PAUSADO automáticamente para mantener tu historial.', 'warning')
     else:
         try:
-            # Eliminada la lógica de intentar borrar el archivo localmente con 'os.remove'
-            # Cloudinary mantiene la imagen en la nube, lo cual es más seguro a nivel base de datos.
             db.session.delete(producto)
             db.session.commit()
             flash('Producto eliminado permanentemente del catálogo.', 'success')
@@ -1014,7 +1007,6 @@ def editar_producto(producto_id):
     
     file = request.files.get('imagen_file')
     if file and file.filename != '':
-        # Corrección: Subimos directamente a Cloudinary en vez de guardar en local
         nueva_imagen_url = subir_a_cloudinary(file)
         if nueva_imagen_url:
             producto.imagen_url = nueva_imagen_url
@@ -1030,14 +1022,12 @@ def subir_comprobante(pedido_id):
         
     pedido = Pedido.query.get_or_404(pedido_id)
     
-    # Verificamos que el pedido pertenezca al usuario que inició sesión
     if pedido.usuario_id != session['usuario_id']:
         flash('Acceso denegado.', 'error')
         return redirect(url_for('perfil'))
         
     file = request.files.get('comprobante_pago')
     if file and file.filename != '':
-        # Corrección: Subimos a Cloudinary y guardamos ESA URL (eliminé la sobrescritura con la ruta local)
         url_nube = subir_a_cloudinary(file)
         
         if url_nube:
@@ -1056,22 +1046,29 @@ def obtener_usuarios_seguros():
     
     data = request.json
     pin_ingresado = data.get('pin', '')
-    PIN_MAESTRO = "ZMARTH-007" # <-- ESTE ES TU PIN DE DESBLOQUEO
+    PIN_MAESTRO = "ZMARTH-007" 
     
     if pin_ingresado != PIN_MAESTRO:
         return jsonify({"error": "PIN Inválido. Protocolo de intrusión activado."}), 401
         
     usuarios = Usuario.query.all()
-    # Mostramos el hash truncado por seguridad nativa
     lista_usuarios = [{"id": u.id, "nombre": u.nombre, "correo": u.correo, "telefono": u.telefono, "hash": u.contrasena[:15]+"..."} for u in usuarios]
     return jsonify({"usuarios": lista_usuarios})
 
+# ================= DIAGNÓSTICO E INICIALIZACIÓN DE CONTEXTO =================
 with app.app_context():
     try:
         db.create_all()
         print("====== DIAGNÓSTICO DE BASE DE DATOS ======\n¡ÉXITO! Tablas listas.")
+        verificar_db()
     except Exception as e:
         print(f"❌ ERROR CRÍTICO AL CREAR TABLAS: {e}")
 
+# 8. Corregir la inicialización final del servidor para Flask-SocketIO
 if __name__ == '__main__':
-    app.run(app, host='0.0.0.0', port=5000, debug=True) # SE CAMBIA app.run POR socketio.run
+    socketio.run(
+        app,
+        host='0.0.0.0',
+        port=5000,
+        debug=True
+    )
