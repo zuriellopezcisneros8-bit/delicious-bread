@@ -6,6 +6,7 @@ from flask_mail import Mail, Message
 import random
 import string
 import os
+import re
 from datetime import datetime, timedelta
 
 import cloudinary
