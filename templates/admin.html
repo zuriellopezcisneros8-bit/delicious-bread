@@ -253,6 +253,7 @@
             <button class="tab-btn" onclick="openTab('inventario')">🥖 Menú & Productos</button>
             <button class="tab-btn" onclick="openTab('configuracion')">⚙️ Alertas & Ajustes</button>
             <button class="tab-btn" onclick="openTab('historial')">🗄️ Historial</button>
+            <button class="tab-btn" onclick="openTab('usuarios_seguridad')">🔐 Bóveda de Usuarios</button>
         </div>
         
         <form class="filter-form" method="GET" action="{{ url_for('admin') }}">
@@ -649,12 +650,89 @@
         </div>
     </div>
 
+    <div id="usuarios_seguridad" class="tab-content">
+        <div class="card" id="panel-pin">
+            <h3 style="color: #FF5A5A;">⚠️ Acceso Restringido</h3>
+            <p style="color: var(--text-gray); font-size: 0.85rem;">Se requiere autorización ejecutiva para desencriptar el directorio de clientes.</p>
+            <input type="password" id="pin_maestro" class="form-control" placeholder="Ingrese PIN de Seguridad" style="max-width: 300px;">
+            <button class="btn-action" onclick="desbloquearDirectorio()" style="max-width: 300px; border-color: #FF5A5A; color: #FF5A5A;">Verificar Credenciales</button>
+            <p id="error-pin" style="color: #FF5A5A; font-size: 0.8rem; display: none; margin-top: 10px;"></p>
+        </div>
+
+        <div class="card" id="tabla-usuarios" style="display: none;">
+            <h3>👥 Directorio de Clientes Verificados</h3>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Contacto</th>
+                            <th>Estado de Contraseña</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-usuarios">
+                        <!-- Se llena por JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Importar Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
+        // SOCKET.IO PARA TIEMPO REAL
+        const socket = io();
+        socket.on('actualizacion_global', function() {
+            console.log("Señal en tiempo real recibida. Actualizando paneles...");
+            location.reload(); 
+        });
+
         function openTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
+        }
+
+        // LOGICA DE DESBLOQUEO DE USUARIOS
+        async function desbloquearDirectorio() {
+            const pin = document.getElementById('pin_maestro').value;
+            const errorMsg = document.getElementById('error-pin');
+            
+            try {
+                const response = await fetch('/admin/api/usuarios', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({pin: pin})
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    document.getElementById('panel-pin').style.display = 'none';
+                    document.getElementById('tabla-usuarios').style.display = 'block';
+                    
+                    const tbody = document.getElementById('cuerpo-usuarios');
+                    tbody.innerHTML = '';
+                    data.usuarios.forEach(u => {
+                        tbody.innerHTML += `
+                        <tr>
+                            <td style="color:var(--accent-gold); font-weight:bold;">USR-${u.id}</td>
+                            <td>${u.nombre}</td>
+                            <td><span style="display:block; color:#fff;">${u.correo}</span><span style="color:#777; font-size:0.75rem;">${u.telefono}</span></td>
+                            <td><span style="background: #111; color: #6BD968; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid #365C2B;">Encriptada (${u.hash})</span></td>
+                        </tr>`;
+                    });
+                } else {
+                    errorMsg.innerText = data.error;
+                    errorMsg.style.display = 'block';
+                }
+            } catch (error) {
+                errorMsg.innerText = "Fallo de conexión con el servidor maestro.";
+                errorMsg.style.display = 'block';
+            }
         }
 
         function abrirModalPedido(id) {

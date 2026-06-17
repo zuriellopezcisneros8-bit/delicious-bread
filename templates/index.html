@@ -967,5 +967,23 @@
             }
         }
     </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<script>
+    // Conexión al protocolo en tiempo real
+    const socket = io();
+    
+    socket.on('actualizacion_global', function() {
+        // En una tienda ultra premium, queremos actualizar el inventario dinámicamente sin que el cliente pierda lo que tiene en su carrito.
+        // Un enfoque elegante es hacer un "soft reload" que mantenga el estado.
+        console.log("ZMARTHNET: Datos en tiempo real sincronizados.");
+        
+        // Puedes optar por recargar la página para aplicar los cambios del admin
+        // O agregar notificaciones sutiles de UI.
+        const carritoAbierto = document.getElementById('sidebarCarrito').classList.contains('abierto');
+        if (!carritoAbierto) {
+            location.reload();
+        }
+    });
+</script>
 </body>
 </html>

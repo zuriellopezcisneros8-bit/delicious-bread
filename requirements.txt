@@ -7,3 +7,6 @@ psycopg2-binary
 email-validator
 cloudinary
 google-generativeai
+Flask-SocketIO
+python-socketio
+eventlet
