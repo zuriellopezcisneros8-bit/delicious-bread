@@ -613,57 +613,7 @@ from datetime import datetime, timedelta
 
 # (Las configuraciones iniciales de Cloudinary, DB, Mail y SocketIO se mantienen en la parte superior de su archivo)
 
-@app.route('/procesar_sobrante', methods=['POST'])
-def procesar_sobrante():
-    if 'usuario_id' not in session:
-        return jsonify({'success': False, 'error': 'No autorizado. Inicie sesión.'}), 401
-        
-    usuario = db.session.get(Usuario, session['usuario_id'])
-    
-    # Soporte para estructurar la petición tanto por JSON asíncrono como por formularios tradicionales
-    if request.is_json:
-        data = request.get_json()
-        producto_id = data.get('producto_id')
-        cantidad_solicitada = int(data.get('cantidad', 1))
-        horario = data.get('horario', 'Inmediato')
-        metodo_pago = data.get('metodo_pago', 'Efectivo / En Boutique')
-    else:
-        producto_id = request.form.get('producto_id')
-        cantidad_solicitada = int(request.form.get('canvas_cantidad', 1))
-        horario = request.form.get('horario', 'Inmediato')
-        metodo_pago = request.form.get('metodo_pago', 'Efectivo')
-    
-    producto = db.session.get(Producto, producto_id)
-    
-    if not producto or producto.stock_sobrante < cantidad_solicitada:
-        return jsonify({'success': False, 'error': 'Lo sentimos, las piezas solicitadas ya han sido adquiridas por otro cliente.'})
-    
-    producto.stock_sobrante -= cantidad_solicitada
-    monto_total = producto.precio * cantidad_solicitada
-    
-    nuevo_pedido = Pedido(
-        usuario_id=usuario.id,
-        horario_recogida=horario,
-        metodo_pago=metodo_pago,
-        monto_total=monto_total,
-        codigo_recogida=generar_codigo(),
-        estado='Venta Flash Excedente'
-    )
-    db.session.add(nuevo_pedido)
-    db.session.commit()
-    
-    detalle = DetallePedido(pedido_id=nuevo_pedido.id, producto_id=producto.id, cantidad=cantidad_solicitada)
-    db.session.add(detalle)
-    db.session.commit()
-    
-    # Sincronización global inmediata del stock remanente mediante WebSockets
-    socketio.emit('actualizacion_global')
-    
-    return jsonify({
-        'success': True,
-        'codigo': nuevo_pedido.codigo_recogida,
-        'mensaje': 'Adquisición Relámpago completada de forma exitosa. Puede pasar a la boutique a retirar su orden.'
-    })
+
 
 @app.route('/perfil')
 def perfil():
