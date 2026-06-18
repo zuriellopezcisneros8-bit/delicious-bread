@@ -567,11 +567,28 @@
                     </div>
 
                     <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px; background: var(--input-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-dark);">
-                        <input type="checkbox" name="anuncio_activo" id="anuncio_activo" value="1" {% if anuncio_activo %}checked{% endif %} style="accent-color: var(--accent-gold); width: 18px; height: 18px;">
+                        <input type="checkbox" name="anuncio_activo" id="anuncio_activo" value="1" checked style="accent-color: var(--accent-gold); width: 18px; height: 18px;">
                         <label for="anuncio_activo" style="color:var(--text-white); font-size: 0.85rem; cursor: pointer;">Publicar Anuncio en Tienda</label>
                     </div>
                     <button type="submit" class="btn-action">Desplegar Banner Multi-Media</button>
                 </form>
+
+                <h4 style="color: var(--accent-gold); margin-top: 35px; font-size: 0.85rem; text-transform: uppercase;">Banners Operativos</h4>
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                    {% for ad in anuncios_lista %}
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-dark);">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <img src="{{ ad.imagen_url }}" style="width: 70px; height: 45px; object-fit: cover; border-radius: 6px;">
+                            <span style="color: var(--text-white); font-size: 0.85rem; font-weight: bold;">{{ ad.titulo or 'Banner sin título' }}</span>
+                        </div>
+                        <form action="{{ url_for('eliminar_anuncio', anuncio_id=ad.id) }}" method="POST" onsubmit="return confirm('¿Retirar este banner corporativo del ecosistema?');" style="margin: 0;">
+                            <button type="submit" class="btn-small" style="border-color: #5C2B2B; color: #D96868; padding: 8px 15px;">Dar de Baja</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <span style="color: var(--text-gray); font-size: 0.8rem; text-align: center; padding: 10px;">No hay campañas activas.</span>
+                    {% endfor %}
+                </div>
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 20px;">

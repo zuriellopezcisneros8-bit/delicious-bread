@@ -451,13 +451,10 @@
                     <p style="color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.2rem; margin: 10px 0;">${{ "%.2f"|format(prod.precio) }} MXN</p>
                     <p style="color: #777; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Disponibilidad: <strong style="color: var(--skin-beige);">{{ prod.stock_sobrante }} u.</strong></p>
                     
-                    <form action="{{ url_for('procesar_sobrante') }}" method="POST">
-                        <input type="hidden" name="producto_id" value="{{ prod.id }}">
-                        <div style="display: flex; gap: 10px; justify-content: center; align-items: center; margin-top: 15px;">
-                            <input type="number" name="cantidad" min="1" max="{{ prod.stock_sobrante }}" value="1" style="width: 60px; padding: 10px; background: transparent; border: 1px solid #333; color: #fff; text-align: center; border-radius: 4px;">
-                            <button type="submit" class="btn-flash">Procesar Excedente</button>
-                        </div>
-                    </form>
+                    <div style="display: flex; gap: 10px; justify-content: center; align-items: center; margin-top: 15px;">
+                        <input type="number" id="flash_cant_{{ prod.id }}" min="1" max="{{ prod.stock_sobrante }}" value="1" style="width: 60px; padding: 10px; background: transparent; border: 1px solid #333; color: #fff; text-align: center; border-radius: 4px;">
+                        <button type="button" class="btn-flash" onclick="comprarRelampago('{{ prod.id }}')">Adquirir Instante</button>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
@@ -542,6 +539,10 @@
                 <div id="mensajeTransferencia">
                     Muestre el <b>comprobante electrónico</b> en caja al retirar.<br>
                     Use su <b>código de pedido</b> asignado en el concepto.
+                </div>
+
+                <div style="background: #1a0f0f; border: 1px solid #4a1d1d; color: #ff6b6b; padding: 15px; margin-top: 25px; margin-bottom: 20px; font-size: 0.75rem; text-align: center; border-radius: 4px; line-height: 1.6; letter-spacing: 1px;">
+                    ⚠️ <b>POLÍTICA DE RETIRO:</b> Dispone de <b>1 HORA EXACTA</b> a partir del horario seleccionado para recoger su pedido. Si no acude en ese lapso, el sistema <b>cancelará su orden automáticamente</b>. Si presenta un retraso, notifique de inmediato vía WhatsApp.
                 </div>
 
                 <div id="mensajeCierre"></div>
@@ -891,6 +892,62 @@
             btn.disabled = true;
 
             document.getElementById('pedidoForm').submit();
+        }
+
+
+
+// =========================================
+        // LÓGICA VENTA RELÁMPAGO (ANIMACIÓN Y CÓDIGO)
+        // =========================================
+        async function comprarRelampago(productoId) {
+            const cantidad = document.getElementById('flash_cant_' + productoId).value;
+            
+            // Iniciar empaquetado premium 3D
+            document.getElementById('modal-3d').style.display = 'flex';
+            
+            try {
+                const response = await fetch('/procesar_sobrante', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ producto_id: productoId, cantidad: cantidad })
+                });
+                const data = await response.json();
+                
+                setTimeout(() => {
+                    document.getElementById('modal-3d').style.display = 'none';
+                    if (data.success) {
+                        mostrarTicketRelampago(data.codigo, data.mensaje);
+                    } else {
+                        alert(data.error || "Error de sincronización con el Atelier.");
+                        location.reload();
+                    }
+                }, 3500); // Tiempo de la animación
+            } catch(e) {
+                document.getElementById('modal-3d').style.display = 'none';
+                alert("Fallo de red. Verifique su conexión con ZmarthNet.");
+            }
+        }
+
+        function mostrarTicketRelampago(codigo, mensaje) {
+            const ticketHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <span style="color: var(--luxury-gold); font-size: 2rem; font-family: 'Playfair Display', serif; letter-spacing: 3px;">${codigo}</span>
+                </div>
+                <p style="color: #a0a0a0; font-size: 0.85rem; text-align: center; margin-bottom: 30px;">${mensaje}</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="btn-enviar-ticket" onclick="copiarCodigoRelampago('${codigo}')">Copiar Código</button>
+                    <button class="btn-cancelar-ticket" onclick="location.reload()">Cerrar y Actualizar Tienda</button>
+                </div>
+            `;
+            document.getElementById('ticketDetalleItems').innerHTML = ticketHTML;
+            document.querySelector('.ticket-acciones').style.display = 'none'; // Ocultar botones de pedido normal
+            document.getElementById('modalTicket').style.display = 'flex';
+        }
+
+        function copiarCodigoRelampago(codigo) {
+            navigator.clipboard.writeText(codigo).then(() => {
+                alert("Código de retiro Zmarth copiado al portapapeles: " + codigo);
+            });
         }
 
         // =========================================

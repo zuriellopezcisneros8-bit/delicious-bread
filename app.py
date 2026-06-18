@@ -661,22 +661,44 @@ def procesar_pedido():
 
     return redirect(url_for('index'))
 
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_mail import Mail, Message
+from flask_socketio import SocketIO, emit
+import random
+import string
+import os
+import re
+from datetime import datetime, timedelta
+
+# (Las configuraciones iniciales de Cloudinary, DB, Mail y SocketIO se mantienen en la parte superior de su archivo)
+
 @app.route('/procesar_sobrante', methods=['POST'])
 def procesar_sobrante():
     if 'usuario_id' not in session:
-        return redirect(url_for('login'))
+        return jsonify({'success': False, 'error': 'No autorizado. Inicie sesión.'}), 401
         
     usuario = db.session.get(Usuario, session['usuario_id'])
-    producto_id = request.form.get('producto_id')
-    cantidad_solicitada = int(request.form.get('canvas_cantidad', 1))
-    horario = request.form.get('horario', 'Inmediato')
-    metodo_pago = request.form.get('metodo_pago', 'Efectivo')
+    
+    # Soporte para estructurar la petición tanto por JSON asíncrono como por formularios tradicionales
+    if request.is_json:
+        data = request.get_json()
+        producto_id = data.get('producto_id')
+        cantidad_solicitada = int(data.get('cantidad', 1))
+        horario = data.get('horario', 'Inmediato')
+        metodo_pago = data.get('metodo_pago', 'Efectivo / En Boutique')
+    else:
+        producto_id = request.form.get('producto_id')
+        cantidad_solicitada = int(request.form.get('canvas_cantidad', 1))
+        horario = request.form.get('horario', 'Inmediato')
+        metodo_pago = request.form.get('metodo_pago', 'Efectivo')
     
     producto = db.session.get(Producto, producto_id)
     
     if not producto or producto.stock_sobrante < cantidad_solicitada:
-        flash('Lo sentimos, las piezas solicitadas ya han sido adquiridas por otro cliente.', 'error')
-        return redirect(url_for('index'))
+        return jsonify({'success': False, 'error': 'Lo sentimos, las piezas solicitadas ya han sido adquiridas por otro cliente.'})
     
     producto.stock_sobrante -= cantidad_solicitada
     monto_total = producto.precio * cantidad_solicitada
@@ -696,17 +718,14 @@ def procesar_sobrante():
     db.session.add(detalle)
     db.session.commit()
     
-    try:
-        asunto = f"Ticket de Producto Excedente - {nuevo_pedido.codigo_recogida}"
-        msg = Message(asunto, recipients=[usuario.correo])
-        msg.html = render_template('correo_ticket.html', pedido=nuevo_pedido, usuario=usuario, detalles=[detalle])
-        mail.send(msg)
-        flash('¡Adquisición relámpago completada! Ticket enviado.', 'success')
-    except Exception as e:
-        print(f"Error correo venta flash: {e}")
-        flash('Adquisición procesada, error al despachar la notificación por correo.', 'warning')
-        
-    return redirect(url_for('perfil'))
+    # Sincronización global inmediata del stock remanente mediante WebSockets
+    socketio.emit('actualizacion_global')
+    
+    return jsonify({
+        'success': True,
+        'codigo': nuevo_pedido.codigo_recogida,
+        'mensaje': 'Adquisición Relámpago completada de forma exitosa. Puede pasar a la boutique a retirar su orden.'
+    })
 
 @app.route('/perfil')
 def perfil():
@@ -823,10 +842,53 @@ def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('index'))
 
+def cancelar_pedidos_vencidos():
+    """
+    Escanea pedidos activos y revoca automáticamente aquellos que superen 
+    el margen de tolerancia de 1 hora respecto a la hora acordada de retiro.
+    """
+    pedidos_activos = Pedido.query.filter(Pedido.estado.notin_(['Entregado', 'Cancelado', 'Venta Flash Excedente'])).all()
+    cambio_detectado = False
+    
+    for p in pedidos_activos:
+        try:
+            horario_str = p.horario_recogida.strip()
+            if horario_str == 'Inmediato':
+                continue
+            
+            try:
+                hora_dt = datetime.strptime(horario_str, "%I:%M %p").time()
+            except ValueError:
+                hora_dt = datetime.strptime(horario_str, "%H:%M").time()
+                
+            fecha_base = p.fecha_pedido.date()
+            fecha_hora_recogida_local = datetime.combine(fecha_base, hora_dt)
+            
+            # Cálculo exacto basado en la zona horaria de la sucursal (UTC -6)
+            hora_actual_local = datetime.utcnow() - timedelta(hours=6)
+            
+            if hora_actual_local > fecha_hora_recogida_local + timedelta(hours=1):
+                p.estado = 'Cancelado'
+                cambio_detectado = True
+                # Reincorporación automática de mercancía al stock de ofertas de oportunidad
+                for detalle in p.detalles:
+                    prod = db.session.get(Producto, detalle.producto_id)
+                    if prod:
+                        prod.stock_sobrante += detalle.cantidad
+        except Exception as e:
+            print(f"Error procesando el motor de expiración para pedido {p.id}: {e}")
+            
+    if cambio_detectado:
+        db.session.commit()
+        socketio.emit('actualizacion_global')
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
+
+    # Ejecución sistemática del motor de limpieza temporal de pedidos
+    cancelar_pedidos_vencidos()
 
     if request.method == 'POST' and 'nuevo_producto' in request.form:
         nombre = request.form.get('nombre')
@@ -843,6 +905,8 @@ def admin():
         nuevo_prod = Producto(nombre=nombre, descripcion=descripcion, precio=precio, imagen_url=imagen_url, stock_sobrante=stock_sob)
         db.session.add(nuevo_prod)
         db.session.commit()
+        
+        socketio.emit('actualizacion_global')
         return redirect(url_for('admin'))
 
     filtro = request.args.get('filtro', 'hoy')
@@ -902,6 +966,20 @@ def nuevo_anuncio():
             
     return redirect(url_for('admin'))
 
+@app.route('/admin/anuncio/eliminar/<int:anuncio_id>', methods=['POST'])
+def eliminar_anuncio(anuncio_id):
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('admin_login'))
+    
+    ad = db.session.get(Anuncio, anuncio_id)
+    if ad:
+        db.session.delete(ad)
+        db.session.commit()
+        flash('Anuncio publicitario removido con éxito.', 'success')
+    else:
+        flash('El anuncio especificado no pudo ser localizado.', 'error')
+        
+    return redirect(url_for('admin'))
 @app.route('/admin/pedido_especial/<int:pedido_id>/validar', methods=['POST'])
 def validar_anticipo_especial(pedido_id):
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
