@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_mail import Mail, Message
+
 from flask_socketio import SocketIO, emit
 import random
 import string
@@ -61,15 +61,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 app.secret_key = 'zmarth_executive_secure_key_2026'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=180)
 
-# ================= CONFIGURACIÓN DE CORREO =================
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'deliciousbread8@gmail.com'
-app.config['MAIL_PASSWORD'] = 'omzi mgmg hpsz hmfh'    
-app.config['MAIL_DEFAULT_SENDER'] = 'DELICIOUS BREAD'
 
-mail = Mail(app)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
 db = SQLAlchemy(app)
@@ -605,67 +597,13 @@ def index():
                            tienda_abierta=tienda_abierta,
                            motivo_cierre=motivo_cierre)
 
-@app.route('/procesar_pedido', methods=['POST'])
-def procesar_pedido():
-    if 'usuario_id' not in session:
-        return redirect(url_for('login'))
-        
-    hoy = datetime.utcnow().date()
-    if DiaInhabil.query.filter_by(fecha=hoy).first():
-        flash('La boutique está cerrada el día de hoy. No es posible procesar el pedido.', 'error')
-        return redirect(url_for('index'))
-        
-    usuario = db.session.get(Usuario, session['usuario_id'])
-    horario = request.form.get('horario')
-    metodo_pago = request.form.get('metodo_pago')
-    
-    productos = Producto.query.all()
-    monto_total = 0
-    detalles_a_crear = []
-    
-    for prod in productos:
-        cant = request.form.get(f'cantidad_{prod.id}', 0)
-        if cant and int(cant) > 0:
-            cantidad = int(cant)
-            monto_total += prod.precio * float(cantidad)
-            detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)
-            detalles_a_crear.append(detalle)
-            
-    if detalles_a_crear:
-        nuevo_pedido = Pedido(
-            usuario_id=usuario.id,
-            horario_recogida=horario,
-            metodo_pago=metodo_pago,
-            monto_total=monto_total,
-            codigo_recogida=generar_codigo()
-        )
-        db.session.add(nuevo_pedido)
-        db.session.commit()
-        
-        for d in detalles_a_crear:
-            d.pedido_id = nuevo_pedido.id
-            db.session.add(d)
-        db.session.commit()
-        
-        try:
-            asunto = f"Tu Ticket de Delicious Bread - {nuevo_pedido.codigo_recogida}"
-            msg = Message(asunto, recipients=[usuario.correo])
-            msg.html = render_template('correo_ticket.html', pedido=nuevo_pedido, usuario=usuario, detalles=detalles_a_crear)
-            mail.send(msg)
-            flash('Pedido procesado y ticket enviado a tu correo.', 'success')
-        except Exception as e:
-            print(f"Error enviando correo: {e}")
-            flash('Pedido procesado, pero hubo un error enviando el ticket al correo.', 'warning')
-        
-        return redirect(url_for('perfil'))
 
-    return redirect(url_for('index'))
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_mail import Mail, Message
+
 from flask_socketio import SocketIO, emit
 import random
 import string
@@ -738,89 +676,7 @@ def perfil():
     
     return render_template('perfil.html', usuario=usuario, pedidos=mis_pedidos, especiales=mis_especiales)
 
-@app.route('/pedido_especial', methods=['GET', 'POST'])
-def pedido_especial():
-    if request.method == 'POST':
-        nombre = request.form.get('nombre')
-        telefono = request.form.get('telefono')
-        correo = request.form.get('correo')
-        metodo_entrega = request.form.get('metodo_entrega')  
-        fecha_evento = request.form.get('fecha_evento')
-        
-        direccion = request.form.get('direccion')
-        numero_casa = request.form.get('numero_casa')
-        referencias = request.form.get('referencias')
-        lat = request.form.get('latitud')
-        lng = request.form.get('longitud')
-        
-        productos = Producto.query.all()
-        monto_total = 0
-        detalles_especiales = []
-        
-        for prod in productos:
-            cant = request.form.get(f'cantidad_especial_{prod.id}', 0)
-            if cant and int(cant) > 0:
-                cantidad = int(cant)
-                monto_total += prod.precio * float(cantidad)
-                detalles_especiales.append(DetallePedidoEspecial(producto_id=prod.id, cantidad=cantidad))
-                
-        if not detalles_especiales:
-            flash('Debe seleccionar al menos un producto para cotizar su evento.', 'error')
-            return redirect(url_for('pedido_especial'))
-            
-        monto_anticipo = monto_total * 0.50
-        
-        file = request.files.get('comprobante_pago')
-        comprobante_url = None
-        if file and file.filename != '':
-            comprobante_url = subir_a_cloudinary(file)
-            
-        nuevo_especial = PedidoEspecial(
-            nombre_contacto=nombre,
-            telefono_contacto=telefono,
-            correo_contacto=correo,
-            metodo_entrega=metodo_entrega,
-            direccion_texto=direccion,
-            numero_casa=numero_casa,
-            referencias=referencias,
-            latitud=float(lat) if lat else None,
-            longitud=float(lng) if lng else None,
-            monto_total=monto_total,
-            monto_anticipo=monto_anticipo,
-            comprobante_url=comprobante_url,
-            codigo_recogida=generar_codigo_especial(),
-            fecha_evento=fecha_evento
-        )
-        db.session.add(nuevo_especial)
-        db.session.commit()
-        
-        for det in detalles_especiales:
-            det.pedido_especial_id = nuevo_especial.id
-            db.session.add(det)
-        db.session.commit()
-        
-        try:
-            asunto = f"Cotización de Orden Especial Recibida - {nuevo_especial.codigo_recogida}"
-            cuerpo = f"""
-            <h2>Ecosistema Zmarth - Confirmación de Recepción</h2>
-            <p>Hola {nombre}, hemos registrado tu solicitud de pedido especial para el día {fecha_evento}.</p>
-            <p><strong>Código de Seguimiento:</strong> {nuevo_especial.codigo_recogida}</p>
-            <p><strong>Monto Total:</strong> ${monto_total:,.2f} MXN</p>
-            <p><strong>Anticipo Requerido (50%):</strong> ${monto_anticipo:,.2f} MXN</p>
-            <p>Tu comprobante está siendo evaluado manualmente en nuestro Atelier Administrativo. Te notificaremos vía correo en cuanto la producción sea iniciada.</p>
-            """
-            msg = Message(asunto, recipients=[correo])
-            msg.html = cuerpo
-            mail.send(msg)
-            flash('Solicitud de evento enviada. El comprobante está bajo verificación manual.', 'success')
-        except Exception as e:
-            print(f"Error correo orden especial: {e}")
-            flash('Solicitud guardada con éxito, pero la notificación por correo falló.', 'warning')
-            
-        return redirect(url_for('index'))
-        
-    productos = Producto.query.all()
-    return render_template('pedido_especial.html', productos=productos)
+
 
 # ================= PANEL ADMINISTRATIVO EXPANDIDO =================
 
@@ -980,82 +836,7 @@ def eliminar_anuncio(anuncio_id):
         flash('El anuncio especificado no pudo ser localizado.', 'error')
         
     return redirect(url_for('admin'))
-@app.route('/admin/pedido_especial/<int:pedido_id>/validar', methods=['POST'])
-def validar_anticipo_especial(pedido_id):
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    
-    especial = PedidoEspecial.query.get_or_404(pedido_id)
-    accion = request.form.get('accion')  
-    
-    if accion == 'aprobar':
-        especial.anticipo_validado = True
-        especial.estado = 'En Producción'
-        db.session.commit()
-        
-        try:
-            asunto = f"¡Producción Iniciada! Anticipo Validado - {especial.codigo_recogida}"
-            cuerpo = f"""
-            <div style="background-color: #0A0A0A; padding: 30px; font-family: Arial, sans-serif; text-align: center;">
-                <div style="background-color: #1A1A1A; max-width: 550px; margin: 0 auto; padding: 30px; border-radius: 12px; border: 1px solid #333; text-align: left;">
-                    <h2 style="color: #E8D8C8; text-align: center;">Anticipo Verificado</h2>
-                    <p style="color: #CCC;">Hola <strong>{especial.nombre_contacto}</strong>,</p>
-                    <p style="color: #CCC;">Hemos verificado con éxito tu depósito del 50% correspondiente a <strong>${especial.monto_anticipo:,.2f} MXN</strong>.</p>
-                    <p style="color: #E8D8C8; font-size: 16px; font-weight: bold; text-align: center; background: #222; padding: 10px; border-radius: 6px;">
-                        Estado de tu orden: COMENZAR A TRABAJAR PEDIDO
-                    </p>
-                    <p style="color: #AAA; font-size: 14px;">Tu entrega bajo modalidad <strong>{especial.metodo_entrega}</strong> está agendada para la fecha estipulada.</p>
-                    <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
-                    <p style="font-size: 11px; color: #666; text-align: center;">ZMARTH CREATIVE SERVICES — DELICIOUS BREAD ATELIER</p>
-                </div>
-            </div>
-            """
-            msg = Message(asunto, recipients=[especial.correo_contacto])
-            msg.html = cuerpo
-            mail.send(msg)
-            flash('Anticipo aprobado y orden enviada a la línea de producción.', 'success')
-        except Exception as e:
-            print(f"Error despachando correo de producción: {e}")
-            flash('Orden actualizada a producción, pero falló la notificación por correo.', 'warning')
-            
-    elif accion == 'completar':
-        especial.estado = 'Entregado'
-        db.session.commit()
-        flash('Pedido Especial marcado como entregado de manera definitiva.', 'success')
-        
-    return redirect(url_for('admin'))
 
-@app.route('/admin/pedido/<int:pedido_id>/estado', methods=['POST'])
-def actualizar_estado(pedido_id):
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    
-    pedido = Pedido.query.get_or_404(pedido_id)
-    if pedido:
-        nuevo_estado = request.form.get('estado')
-        pedido.estado = nuevo_estado
-        db.session.commit()
-
-        if nuevo_estado == 'Listo':
-            try:
-                asunto = f"Tu pedido está listo - {pedido.codigo_recogida}"
-                cuerpo = f"""
-                <div style="background-color: #0A0A0A; padding: 30px; font-family: Arial, sans-serif; text-align: center;">
-                    <div style="background-color: #2B1D14; max-width: 500px; margin: 0 auto; padding: 30px; border-radius: 16px; border: 1px solid #4A3320;">
-                        <h2 style="color: #E8D8C8; margin-top: 0;">¡Tu pedido está listo!</h2>
-                        <p style="color: #C2B2A3; font-size: 16px;">Hola <strong>{pedido.cliente.nombre}</strong>,</p>
-                        <p style="color: #C2B2A3; font-size: 16px;">Tu orden <strong style="color: #E8D8C8;">{pedido.codigo_recogida}</strong> ya te está esperando.</p>
-                        <p style="color: #C2B2A3; font-size: 16px;">Ya puedes pasar a recogerlo.</p>
-                        <hr style="border: none; border-top: 1px solid #4A3320; margin: 20px 0;">
-                        <p style="font-size: 12px; color: #888;">Ecosistema Zmarth - Delicious Bread</p>
-                    </div>
-                </div>
-                """
-                msg = Message(asunto, recipients=[pedido.cliente.correo])
-                msg.html = cuerpo
-                mail.send(msg)
-            except Exception as e:
-                print(f"Error correo: {e}")
-
-    return redirect(url_for('admin'))
 
 @app.route('/admin/inhabilitar_dias', methods=['POST'])
 def inhabilitar_dias():
@@ -1161,6 +942,184 @@ def subir_comprobante(pedido_id):
             flash('Hubo un error al procesar el comprobante.', 'error')
         
     return redirect(url_for('perfil'))
+
+@app.route('/procesar_pedido', methods=['POST'])
+def procesar_pedido():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+        
+    hoy = datetime.utcnow().date()
+    if DiaInhabil.query.filter_by(fecha=hoy).first():
+        flash('La boutique está cerrada el día de hoy. No es posible procesar el pedido.', 'error')
+        return redirect(url_for('index'))
+        
+    usuario = db.session.get(Usuario, session['usuario_id'])
+    horario = request.form.get('horario')
+    metodo_pago = request.form.get('metodo_pago')
+    
+    productos = Producto.query.all()
+    monto_total = 0
+    detalles_a_crear = []
+    
+    for prod in productos:
+        cant = request.form.get(f'cantidad_{prod.id}', 0)
+        if cant and int(cant) > 0:
+            cantidad = int(cant)
+            monto_total += prod.precio * float(cantidad)
+            detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)
+            detalles_a_crear.append(detalle)
+            
+    if detalles_a_crear:
+        nuevo_pedido = Pedido(
+            usuario_id=usuario.id,
+            horario_recogida=horario,
+            metodo_pago=metodo_pago,
+            monto_total=monto_total,
+            codigo_recogida=generar_codigo()
+        )
+        db.session.add(nuevo_pedido)
+        db.session.commit()
+        
+        for d in detalles_a_crear:
+            d.pedido_id = nuevo_pedido.id
+            db.session.add(d)
+        db.session.commit()
+        
+        flash('Pedido procesado con éxito.', 'success')
+        return redirect(url_for('perfil'))
+
+    return redirect(url_for('index'))
+
+@app.route('/procesar_sobrante', methods=['POST'])
+def procesar_sobrante():
+    if 'usuario_id' not in session:
+        return jsonify({'success': False, 'error': 'No autorizado. Inicie sesión.'}), 401
+        
+    usuario = db.session.get(Usuario, session['usuario_id'])
+    
+    # Soporte para estructurar la petición tanto por JSON asíncrono como por formularios tradicionales
+    if request.is_json:
+        data = request.get_json()
+        producto_id = data.get('producto_id')
+        cantidad_solicitada = int(data.get('cantidad', 1))
+        horario = data.get('horario', 'Inmediato')
+        metodo_pago = data.get('metodo_pago', 'Efectivo / En Boutique')
+    else:
+        producto_id = request.form.get('producto_id')
+        cantidad_solicitada = int(request.form.get('canvas_cantidad', 1))
+        horario = request.form.get('horario', 'Inmediato')
+        metodo_pago = request.form.get('metodo_pago', 'Efectivo')
+    
+    producto = db.session.get(Producto, producto_id)
+    
+    if not producto or producto.stock_sobrante < cantidad_solicitada:
+        return jsonify({'success': False, 'error': 'Lo sentimos, las piezas solicitadas ya han sido adquiridas por otro cliente.'})
+    
+    producto.stock_sobrante -= cantidad_solicitada
+    monto_total = producto.precio * cantidad_solicitada
+    
+    nuevo_pedido = Pedido(
+        usuario_id=usuario.id,
+        horario_recogida=horario,
+        metodo_pago=metodo_pago,
+        monto_total=monto_total,
+        codigo_recogida=generar_codigo(),
+        estado='Venta Flash Excedente'
+    )
+    db.session.add(nuevo_pedido)
+    db.session.commit()
+    
+    detalle = DetallePedido(pedido_id=nuevo_pedido.id, producto_id=producto.id, cantidad=cantidad_solicitada)
+    db.session.add(detalle)
+    db.session.commit()
+    
+    # Sincronización global inmediata del stock remanente mediante WebSockets
+    socketio.emit('actualizacion_global')
+    
+    return jsonify({
+        'success': True,
+        'codigo': nuevo_pedido.codigo_recogida,
+        'mensaje': 'Adquisición Relámpago completada de forma exitosa. Puede pasar a la boutique a retirar su orden.'
+    })
+
+@app.route('/pedido_especial', methods=['GET', 'POST'])
+def pedido_especial():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        telefono = request.form.get('telefono')
+        correo = request.form.get('correo')
+        metodo_entrega = request.form.get('metodo_entrega')  
+        fecha_evento = request.form.get('fecha_evento')
+        
+        direccion = request.form.get('direccion')
+        numero_casa = request.form.get('numero_casa')
+        referencias = request.form.get('referencias')
+        lat = request.form.get('latitud')
+        lng = request.form.get('longitud')
+        
+        productos = Producto.query.all()
+        monto_total = 0
+        detalles_especiales = []
+        
+        for prod in productos:
+            cant = request.form.get(f'cantidad_especial_{prod.id}', 0)
+            if cant and int(cant) > 0:
+                cantidad = int(cant)
+                monto_total += prod.precio * float(cantidad)
+                detalles_especiales.append(DetallePedidoEspecial(producto_id=prod.id, cantidad=cantidad))
+                
+        if not detalles_especiales:
+            flash('Debe seleccionar al menos un producto para cotizar su evento.', 'error')
+            return redirect(url_for('pedido_especial'))
+            
+        monto_anticipo = monto_total * 0.50
+        
+        file = request.files.get('comprobante_pago')
+        comprobante_url = None
+        if file and file.filename != '':
+            comprobante_url = subir_a_cloudinary(file)
+            
+        nuevo_especial = PedidoEspecial(
+            nombre_contacto=nombre,
+            telefono_contacto=telefono,
+            correo_contacto=correo,
+            metodo_entrega=metodo_entrega,
+            direccion_texto=direccion,
+            numero_casa=numero_casa,
+            referencias=referencias,
+            latitud=float(lat) if lat else None,
+            longitud=float(lng) if lng else None,
+            monto_total=monto_total,
+            monto_anticipo=monto_anticipo,
+            comprobante_url=comprobante_url,
+            codigo_recogida=generar_codigo_especial(),
+            fecha_evento=fecha_evento
+        )
+        db.session.add(nuevo_especial)
+        db.session.commit()
+        
+        for det in detalles_especiales:
+            det.pedido_especial_id = nuevo_especial.id
+            db.session.add(det)
+        db.session.commit()
+        
+        flash('Solicitud de evento enviada. El comprobante está bajo verificación manual.', 'success')
+        return redirect(url_for('index'))
+        
+    productos = Producto.query.all()
+    return render_template('pedido_especial.html', productos=productos)
+
+@app.route('/admin/pedido/<int:pedido_id>/estado', methods=['POST'])
+def actualizar_estado(pedido_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    
+    pedido = Pedido.query.get_or_404(pedido_id)
+    if pedido:
+        nuevo_estado = request.form.get('estado')
+        pedido.estado = nuevo_estado
+        db.session.commit()
+
+    return redirect(url_for('admin'))
 
 # ================= CIBERSEGURIDAD BÓVEDA DE USUARIOS =================
 @app.route('/admin/api/usuarios', methods=['POST'])

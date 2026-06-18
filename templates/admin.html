@@ -332,7 +332,7 @@
                                     
                                     <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
                                         <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
-                                        <select name="estado" class="form-control" style="margin-bottom: 0;" onchange="this.form.submit()">
+                                        <select name="estado" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre }}', '{{ pedido.codigo_recogida }}')">
                                             <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
                                             <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>Horneando</option>
                                             <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para entregar</option>
@@ -765,6 +765,25 @@
                 event.target.style.display = 'none';
             }
         }
+function notificarWhatsApp(selectElement, telefono, nombre, codigo) {
+    if (selectElement.value === 'Listo') {
+        // Limpiamos el número de cualquier espacio o guión
+        let numLimpiado = telefono.replace(/\D/g, '');
+        
+        // Agregamos automáticamente la lada local (52) para la API de WhatsApp
+        let numeroFinal = "52" + numLimpiado;
+        
+        // Armamos el mensaje
+        let mensaje = `Hola ${nombre}, tu orden ${codigo} ya te está esperando. Ya puedes pasar a recogerlo.`;
+        
+        // Generamos la URL y la abrimos en una pestaña nueva
+        let url = `https://wa.me/${numeroFinal}?text=${encodeURIComponent(mensaje)}`;
+        window.open(url, '_blank');
+    }
+    
+    // Finalmente, enviamos el formulario para actualizar la base de datos
+    selectElement.form.submit();
+}
     </script>
 </body>
 </html>

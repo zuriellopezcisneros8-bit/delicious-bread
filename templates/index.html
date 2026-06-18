@@ -596,23 +596,17 @@
             </div>
             <div class="ticket-detalle" id="ticketDetalleItems"></div>
             <div class="ticket-acciones">
-                <button type="button" class="btn-enviar-ticket" onclick="enviarAlBackend()">Confirmar Orden y Notificar</button>
+                <button type="button" class="btn-enviar-ticket" onclick="enviarAlBackend()">Confirmar Orden en Sistema</button>
                 <button type="button" class="btn-cancelar-ticket" onclick="cerrarTicket()">Modificar Selección</button>
             </div>
         </div>
     </div>
 
-    <!-- =========================================
-         BOTÓN TRIGGER ZEDITH
-         ========================================= -->
     <div class="btn-zedith-trigger" onclick="toggleZedith()">
         <div class="zedith-dot"></div>
         <span class="zedith-texto">ZEDITH IA</span>
     </div>
 
-    <!-- =========================================
-         MODAL ZEDITH
-         ========================================= -->
     <div id="zedithModal" class="zedith-modal">
         <div class="zedith-header">
             <h3>Conciërge Virtual</h3>
@@ -894,9 +888,7 @@
             document.getElementById('pedidoForm').submit();
         }
 
-
-
-// =========================================
+        // =========================================
         // LÓGICA VENTA RELÁMPAGO (ANIMACIÓN Y CÓDIGO)
         // =========================================
         async function comprarRelampago(productoId) {
