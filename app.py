@@ -522,6 +522,7 @@ Zedith:
             "reply": "Se produjo un error interno del sistema."
         }), 500
 
+# --- CÓDIGO CORREGIDO ---
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if request.method == 'POST':
@@ -530,7 +531,9 @@ def registro():
         correo = request.form.get('correo')
         contrasena = request.form.get('contrasena')
         
-        existe_usuario = Usuario.query.filter((Usuario.correo == correo) | (Usuario.telefono == telemetry)).first()
+        # ERROR DETECTADO AQUÍ: 'telemetry' no existe, debe ser 'telefono'
+        existe_usuario = Usuario.query.filter((Usuario.correo == correo) | (Usuario.telefono == telefono)).first()
+        
         if existe_usuario:
             flash('El correo o teléfono ya se encuentra registrado.', 'error')
             return redirect(url_for('registro'))
