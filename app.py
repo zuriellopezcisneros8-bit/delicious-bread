@@ -949,11 +949,11 @@ def procesar_sobrante():
     
     # Soporte para estructurar la petición tanto por JSON asíncrono como por formularios tradicionales
     if request.is_json:
-    data = request.get_json()
-    producto_id = data.get('producto_id')
-    cantidad_solicitada = int(data.get('cantidad', 1))
-    horario = data.get('horario', 'Inmediato')
-    metodo_pago = data.get('metodo_pago', 'Efectivo') # Máximo de seguridad de 20 caracteres
+        data = request.get_json()
+        producto_id = data.get('producto_id')
+        cantidad_solicitada = int(data.get('cantidad', 1))
+        horario = data.get('horario', 'Inmediato')
+        metodo_pago = data.get('metodo_pago', 'Efectivo') # Máximo de seguridad de 20 caracteres
     else:
         producto_id = request.form.get('producto_id')
         cantidad_solicitada = int(request.form.get('canvas_cantidad', 1))
