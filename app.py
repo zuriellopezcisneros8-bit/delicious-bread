@@ -105,6 +105,7 @@ class Pedido(db.Model):
     fecha_pedido = db.Column(db.DateTime, default=datetime.utcnow)
     detalles = db.relationship('DetallePedido', backref='pedido', lazy=True)
     comprobante_url = db.Column(db.String(500), nullable=True)
+    es_relampago = db.Column(db.Boolean, default=False)
 
 class DetallePedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -974,7 +975,8 @@ def procesar_sobrante():
         metodo_pago=metodo_pago,
         monto_total=monto_total,
         codigo_recogida=generar_codigo(),
-        estado='Venta Flash Excedente'
+        estado='Venta Flash Excedente',
+        es_relampago=True
     )
     db.session.add(nuevo_pedido)
     db.session.commit()

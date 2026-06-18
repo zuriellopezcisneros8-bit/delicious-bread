@@ -641,32 +641,45 @@
         <div class="card">
             <h3>🗃️ Cajas Cerradas (Completados)</h3>
             <div class="table-wrapper">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Ticket</th>
-                            <th>Cliente</th>
-                            <th>Monto</th>
-                            <th>Estatus</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for pedido in pedidos_entregados %}
-                        <tr>
-                            <td style="color:var(--text-gray); font-weight: bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
-                            <td style="font-weight: bold; font-size: 0.85rem;">{{ pedido.cliente.nombre }}</td>
-                            <td style="font-weight:bold; color: var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</td>
-                            <td><span style="background: #1F2E1A; color: #6BD968; padding: 4px 8px; border-radius: 10px; font-size: 0.65rem; border: 1px solid #365C2B;">ENTREGADO</span></td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">Sin historial en esta fecha.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
+                <div class="admin-table-container">
+    <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="border-bottom: 1px solid var(--light-brown);">
+                <th style="padding: 12px; text-align: left; color: var(--skin-beige);">Tipo</th>
+                <th style="padding: 12px; text-align: left; color: var(--skin-beige);">Ticket</th>
+                <th style="padding: 12px; text-align: left; color: var(--skin-beige);">Cliente</th>
+                <th style="padding: 12px; text-align: left; color: var(--skin-beige);">Monto</th>
+                <th style="padding: 12px; text-align: left; color: var(--skin-beige);">Estatus</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pedido in pedidos_entregados %}
+            <tr style="border-bottom: 1px solid #222; {% if pedido.es_relampago %}background: rgba(184, 134, 11, 0.05);{% endif %}">
+                <td style="padding: 12px;">
+                    {% if pedido.es_relampago %}
+                        <span style="color: var(--accent-gold); font-size: 0.65rem; font-weight: bold; border: 1px solid var(--accent-gold); padding: 2px 6px; border-radius: 4px;">⚡ FLASH</span>
+                    {% else %}
+                        <span style="color: var(--text-gray); font-size: 0.65rem; font-weight: normal; border: 1px solid #333; padding: 2px 6px; border-radius: 4px;">NORMAL</span>
+                    {% endif %}
+                </td>
+                
+                <td style="padding: 12px; color: var(--text-gray); font-weight: bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
+                <td style="padding: 12px; font-weight: bold; font-size: 0.85rem; color: var(--skin-beige);">{{ pedido.cliente.nombre }}</td>
+                <td style="padding: 12px; font-weight:bold; color: var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</td>
+                <td style="padding: 12px;">
+                    <span style="background: #1F2E1A; color: #6BD968; padding: 4px 8px; border-radius: 10px; font-size: 0.65rem; border: 1px solid #365C2B;">ENTREGADO</span>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align:center; color:var(--text-gray); padding: 30px;">
+                    Sin historial en esta fecha.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
     <div id="usuarios_seguridad" class="tab-content">
         <div class="card" id="panel-pin">
             <h3 style="color: #FF5A5A;">⚠️ Acceso Restringido</h3>
