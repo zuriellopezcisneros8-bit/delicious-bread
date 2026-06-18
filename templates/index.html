@@ -453,7 +453,7 @@
                     
                     <div style="display: flex; gap: 10px; justify-content: center; align-items: center; margin-top: 15px;">
                         <input type="number" id="flash_cant_{{ prod.id }}" min="1" max="{{ prod.stock_sobrante }}" value="1" style="width: 60px; padding: 10px; background: transparent; border: 1px solid #333; color: #fff; text-align: center; border-radius: 4px;">
-                        <button type="button" class="btn-flash" onclick="comprarRelampago('{{ prod.id }}')">Adquirir Instante</button>
+                        <button type="button" class="btn-flash" onclick="abrirModalPagoRelampago('{{ prod.id }}')">Adquirir Instante</button>
                     </div>
                 </div>
                 {% endfor %}
@@ -587,6 +587,29 @@
         <h2 style="font-family: 'Playfair Display', serif; font-weight: 400; color: var(--skin-beige); letter-spacing: 1px;">Estructurando su Selección</h2>
         <p style="color: var(--luxury-gold); margin-top: 15px; letter-spacing: 3px; font-size: 0.75rem; text-transform: uppercase;">Empacando bajo estándares de alta repostería...</p>
     </div>
+
+<div id="modalPagoRelampago" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 5000; align-items: center; justify-content: center; padding: 20px;">
+        <div class="ticket-contenido">
+            <div class="ticket-header">
+                <h2>Método de Pago</h2>
+                <p>ADQUISICIÓN RELÁMPAGO</p>
+            </div>
+            
+            <div class="grupo-campo" style="text-align: left; margin-bottom: 30px;">
+                <label for="metodoPagoRelampago" style="color: var(--light-brown);">Seleccione su formato</label>
+                <select id="metodoPagoRelampago" style="width: 100%; padding: 12px 0; background: transparent; border: none; border-bottom: 1px solid var(--light-brown); color: var(--skin-beige); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; outline: none; margin-top: 10px; cursor: pointer;">
+                    <option value="Efectivo" style="background: #121212; color: var(--skin-beige);">Efectivo en Boutique</option>
+                    <option value="Transferencia" style="background: #121212; color: var(--skin-beige);">Transferencia Electrónica</option>
+                </select>
+            </div>
+
+            <div class="ticket-acciones">
+                <button type="button" class="btn-enviar-ticket" onclick="procesarCompraRelampago()">Confirmar y Empacar</button>
+                <button type="button" class="btn-cancelar-ticket" onclick="cerrarModalPagoRelampago()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
 
     <div id="modalTicket">
         <div class="ticket-contenido">
@@ -891,9 +914,28 @@
         // =========================================
         // LÓGICA VENTA RELÁMPAGO (ANIMACIÓN Y CÓDIGO)
         // =========================================
-        async function comprarRelampago(productoId) {
-            const cantidad = document.getElementById('flash_cant_' + productoId).value;
+        
+        let relampagoActivoId = null;
+        let relampagoActivoCantidad = 1;
+
+        function abrirModalPagoRelampago(productoId) {
+            relampagoActivoId = productoId;
+            relampagoActivoCantidad = document.getElementById('flash_cant_' + productoId).value;
+            document.getElementById('modalPagoRelampago').style.display = 'flex';
+        }
+
+        function cerrarModalPagoRelampago() {
+            document.getElementById('modalPagoRelampago').style.display = 'none';
+            relampagoActivoId = null;
+        }
+
+        async function procesarCompraRelampago() {
+            // Capturar el método de pago seleccionado
+            const metodoPagoSeleccionado = document.getElementById('metodoPagoRelampago').value;
             
+            // Cerrar el modal de pago
+            cerrarModalPagoRelampago();
+
             // Iniciar empaquetado premium 3D
             document.getElementById('modal-3d').style.display = 'flex';
             
@@ -901,8 +943,13 @@
                 const response = await fetch('/procesar_sobrante', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ producto_id: productoId, cantidad: cantidad })
+                    body: JSON.stringify({ 
+                        producto_id: relampagoActivoId, 
+                        cantidad: relampagoActivoCantidad,
+                        metodo_pago: metodoPagoSeleccionado // <-- Aquí enviamos el método
+                    })
                 });
+                
                 const data = await response.json();
                 
                 setTimeout(() => {
@@ -914,32 +961,11 @@
                         location.reload();
                     }
                 }, 3500); // Tiempo de la animación
+                
             } catch(e) {
                 document.getElementById('modal-3d').style.display = 'none';
                 alert("Fallo de red. Verifique su conexión con ZmarthNet.");
             }
-        }
-
-        function mostrarTicketRelampago(codigo, mensaje) {
-            const ticketHTML = `
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <span style="color: var(--luxury-gold); font-size: 2rem; font-family: 'Playfair Display', serif; letter-spacing: 3px;">${codigo}</span>
-                </div>
-                <p style="color: #a0a0a0; font-size: 0.85rem; text-align: center; margin-bottom: 30px;">${mensaje}</p>
-                <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <button class="btn-enviar-ticket" onclick="copiarCodigoRelampago('${codigo}')">Copiar Código</button>
-                    <button class="btn-cancelar-ticket" onclick="location.reload()">Cerrar y Actualizar Tienda</button>
-                </div>
-            `;
-            document.getElementById('ticketDetalleItems').innerHTML = ticketHTML;
-            document.querySelector('.ticket-acciones').style.display = 'none'; // Ocultar botones de pedido normal
-            document.getElementById('modalTicket').style.display = 'flex';
-        }
-
-        function copiarCodigoRelampago(codigo) {
-            navigator.clipboard.writeText(codigo).then(() => {
-                alert("Código de retiro Zmarth copiado al portapapeles: " + codigo);
-            });
         }
 
         // =========================================
