@@ -793,19 +793,40 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
-        // SOCKET.IO PARA TIEMPO REAL
-        const socket = io();
-        socket.on('actualizacion_global', function() {
-            console.log("Señal en tiempo real recibida. Actualizando paneles...");
-            location.reload(); 
+        // MANTENER LA PESTAÑA ACTIVA DURANTE LA RECARGA EN TIEMPO REAL
+        document.addEventListener("DOMContentLoaded", function() {
+            let lastTab = sessionStorage.getItem("adminActiveTab") || "activos";
+            openTab(lastTab);
         });
 
         function openTab(tabId) {
+            // Ocultar todos los contenidos y quitar estado activo a botones
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+            
+            // Mostrar la pestaña seleccionada
+            const tabElement = document.getElementById(tabId);
+            if (tabElement) {
+                tabElement.classList.add('active');
+            }
+            
+            // Activar el botón correspondiente
+            const btnElement = document.querySelector(`button[onclick="openTab('${tabId}')"]`);
+            if (btnElement) {
+                btnElement.classList.add('active');
+            }
+
+            // Guardar la pestaña en la memoria del navegador
+            sessionStorage.setItem("adminActiveTab", tabId);
         }
+
+        // SOCKET.IO PARA TIEMPO REAL
+        const socket = io();
+        socket.on('actualizacion_global', function() {
+            console.log("Señal de ZMARTHNET recibida. Sincronizando datos en tiempo real...");
+            // La página se recarga suavemente y el código de arriba recordará en qué pestaña estabas
+            location.reload(); 
+        });
 
         // LÓGICA DE DESBLOQUEO DE USUARIOS
         async function desbloquearDirectorio() {
@@ -861,19 +882,13 @@
         
         function notificarWhatsApp(selectElement, telefono, nombre, codigo) {
             if (selectElement.value === 'Listo') {
-                // Limpiamos el número de cualquier espacio o guión
                 let numLimpiado = telefono.replace(/\D/g, '');
-                // Agregamos automáticamente la lada local (52) para la API de WhatsApp
                 let numeroFinal = "52" + numLimpiado;
-                // Armamos el mensaje
-                let mensaje = `Hola ${nombre}, tu orden ${codigo} ya te está esperando. Ya puedes pasar a recogerlo.`;
+                let mensaje = `👋Hola ${nombre}, tu orden ${codigo} ya te está esperando en Delicious Bread. Ya puedes pasar a recogerlo.`;
                 
-                // Generamos la URL y la abrimos en una pestaña nueva
                 let url = `https://wa.me/${numeroFinal}?text=${encodeURIComponent(mensaje)}`;
                 window.open(url, '_blank');
             }
-            
-            // Finalmente, enviamos el formulario para actualizar la base de datos
             selectElement.form.submit();
         }
     </script>

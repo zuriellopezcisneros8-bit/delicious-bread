@@ -897,60 +897,6 @@ def subir_comprobante(pedido_id):
         
     return redirect(url_for('perfil'))
 
-@app.route('/procesar_pedido', methods=['POST'])
-def procesar_pedido():
-    # 1. Validación de sesión
-    if 'usuario_id' not in session:
-        return jsonify({'success': False, 'message': 'No autorizado'}), 401
-        
-    # 2. Validación de día inhábil
-    hoy = datetime.utcnow().date()
-    if DiaInhabil.query.filter_by(fecha=hoy).first():
-        return jsonify({'success': False, 'message': 'La boutique está cerrada hoy.'}), 403
-        
-    usuario = db.session.get(Usuario, session['usuario_id'])
-    horario = request.form.get('horario')
-    metodo_pago = request.form.get('metodo_pago')
-    
-    productos = Producto.query.all()
-    monto_total = 0
-    detalles_a_crear = []
-    
-    # 3. Procesamiento de productos
-    for prod in productos:
-        cant = request.form.get(f'cantidad_{prod.id}', 0)
-        if cant and int(cant) > 0:
-            cantidad = int(cant)
-            monto_total += prod.precio * float(cantidad)
-            detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)
-            detalles_a_crear.append(detalle)
-            
-    # 4. Creación del pedido
-    if detalles_a_crear:
-        nuevo_pedido = Pedido(
-            usuario_id=usuario.id,
-            horario_recogida=horario,
-            metodo_pago=metodo_pago,
-            monto_total=monto_total,
-            codigo_recogida=generar_codigo()
-        )
-        db.session.add(nuevo_pedido)
-        db.session.commit()
-        
-        # 5. Asignación de detalles
-        for d in detalles_a_crear:
-            d.pedido_id = nuevo_pedido.id
-            db.session.add(d)
-        db.session.commit()
-        
-        # 6. Respuesta JSON para el Frontend
-        return jsonify({
-            'success': True,
-            'codigo': nuevo_pedido.codigo_recogida
-        })
-
-    # Caso en que no haya productos seleccionados
-    return jsonify({'success': False, 'message': 'Pedido vacío'}), 400
 
 @app.route('/procesar_sobrante', methods=['POST'])
 def procesar_sobrante():
@@ -1004,6 +950,66 @@ def procesar_sobrante():
         'codigo': nuevo_pedido.codigo_recogida,
         'mensaje': 'Adquisición Relámpago completada de forma exitosa. Puede pasar a la boutique a retirar su orden.'
     })
+
+
+@app.route('/procesar_pedido', methods=['POST'])
+def procesar_pedido():
+    # 1. Validación de sesión
+    if 'usuario_id' not in session:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 401
+        
+    # 2. Validación de día inhábil
+    hoy = datetime.utcnow().date()
+    if DiaInhabil.query.filter_by(fecha=hoy).first():
+        return jsonify({'success': False, 'message': 'La boutique está cerrada hoy.'}), 403
+        
+    usuario = db.session.get(Usuario, session['usuario_id'])
+    horario = request.form.get('horario')
+    metodo_pago = request.form.get('metodo_pago')
+    
+    productos = Producto.query.all()
+    monto_total = 0
+    detalles_a_crear = []
+    
+    # 3. Procesamiento de productos
+    for prod in productos:
+        cant = request.form.get(f'cantidad_{prod.id}', 0)
+        if cant and int(cant) > 0:
+            cantidad = int(cant)
+            monto_total += prod.precio * float(cantidad)
+            detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)
+            detalles_a_crear.append(detalle)
+            
+    # 4. Creación del pedido
+    if detalles_a_crear:
+        nuevo_pedido = Pedido(
+            usuario_id=usuario.id,
+            horario_recogida=horario,
+            metodo_pago=metodo_pago,
+            monto_total=monto_total,
+            codigo_recogida=generar_codigo()
+        )
+        db.session.add(nuevo_pedido)
+        db.session.commit()
+        
+        # 5. Asignación de detalles
+        for d in detalles_a_crear:
+            d.pedido_id = nuevo_pedido.id
+            db.session.add(d)
+        db.session.commit()
+        
+        # ---> SINCRONIZACIÓN EN TIEMPO REAL ZMARTHNET <---
+        socketio.emit('actualizacion_global')
+        
+        # 6. Respuesta JSON para el Frontend
+        return jsonify({
+            'success': True,
+            'codigo': nuevo_pedido.codigo_recogida
+        })
+
+    # Caso en que no haya productos seleccionados
+    return jsonify({'success': False, 'message': 'Pedido vacío'}), 400
+
 
 @app.route('/pedido_especial', methods=['GET', 'POST'])
 def pedido_especial():
@@ -1066,6 +1072,9 @@ def pedido_especial():
             db.session.add(det)
         db.session.commit()
         
+        # ---> SINCRONIZACIÓN EN TIEMPO REAL ZMARTHNET <---
+        socketio.emit('actualizacion_global')
+        
         flash('Solicitud de evento enviada. El comprobante está bajo verificación manual.', 'success')
         return redirect(url_for('index'))
         
@@ -1082,7 +1091,12 @@ def actualizar_estado(pedido_id):
         pedido.estado = nuevo_estado
         db.session.commit()
 
+        # ---> SINCRONIZACIÓN EN TIEMPO REAL ZMARTHNET <---
+        socketio.emit('actualizacion_global')
+
     return redirect(url_for('admin'))
+
+
 
 # ================= CIBERSEGURIDAD BÓVEDA DE USUARIOS =================
 @app.route('/admin/api/usuarios', methods=['POST'])
