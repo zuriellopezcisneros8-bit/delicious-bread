@@ -9,6 +9,8 @@ import string
 import os
 import re
 from datetime import datetime, timedelta
+import eventlet
+eventlet.monkey_patch()
 
 import cloudinary
 import cloudinary.uploader
