@@ -930,43 +930,45 @@
         }
 
         async function procesarCompraRelampago() {
-            // Capturar el método de pago seleccionado
-            const metodoPagoSeleccionado = document.getElementById('metodoPagoRelampago').value;
-            
-            // Cerrar el modal de pago
-            cerrarModalPagoRelampago();
+    // 1. Capturar los datos MIENTRAS el modal sigue abierto y las variables existen
+    const metodoPagoSeleccionado = document.getElementById('metodoPagoRelampago').value;
+    const idProductoAEnviar = relampagoActivoId; 
+    const cantidadAEnviar = relampagoActivoCantidad;
 
-            // Iniciar empaquetado premium 3D
-            document.getElementById('modal-3d').style.display = 'flex';
-            
-            try {
-                const response = await fetch('/procesar_sobrante', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        producto_id: relampagoActivoId, 
-                        cantidad: relampagoActivoCantidad,
-                        metodo_pago: metodoPagoSeleccionado // <-- Aquí enviamos el método
-                    })
-                });
-                
-                const data = await response.json();
-                
-                setTimeout(() => {
-                    document.getElementById('modal-3d').style.display = 'none';
-                    if (data.success) {
-                        mostrarTicketRelampago(data.codigo, data.mensaje);
-                    } else {
-                        alert(data.error || "Error de sincronización con el Atelier.");
-                        location.reload();
-                    }
-                }, 3500); // Tiempo de la animación
-                
-            } catch(e) {
-                document.getElementById('modal-3d').style.display = 'none';
-                alert("Fallo de red. Verifique su conexión con ZmarthNet.");
+    // 2. Ahora sí, cerrar el modal con seguridad
+    cerrarModalPagoRelampago();
+    
+    // 3. Iniciar empaquetado premium 3D
+    document.getElementById('modal-3d').style.display = 'flex';
+    
+    try {
+        const response = await fetch('/procesar_sobrante', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                producto_id: idProductoAEnviar, // <-- Usamos la variable respaldada
+                cantidad: cantidadAEnviar,
+                metodo_pago: metodoPagoSeleccionado 
+            })
+        });
+        
+        const data = await response.json();
+        
+        setTimeout(() => {
+            document.getElementById('modal-3d').style.display = 'none';
+            if (data.success) {
+                mostrarTicketRelampago(data.codigo, data.mensaje);
+            } else {
+                alert(data.error || "Error de sincronización con el Atelier.");
+                location.reload();
             }
-        }
+        }, 3500);
+        
+    } catch(e) {
+        document.getElementById('modal-3d').style.display = 'none';
+        alert("Fallo de red. Verifique su conexión con ZmarthNet.");
+    }
+}
 
         // =========================================
         // LÓGICA ZEDITH IA
