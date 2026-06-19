@@ -902,13 +902,77 @@
             abrirCarrito(); 
         }
 
-        function enviarAlBackend() {
+        // =========================================
+        // SISTEMA DE ENVÍO ASÍNCRONO Y MODAL DE CÓDIGO
+        // =========================================
+
+        async function enviarAlBackend() {
             const btn = document.querySelector('.btn-enviar-ticket');
             btn.innerText = "Transmitiendo Orden...";
             btn.style.opacity = "0.6";
             btn.disabled = true;
 
-            document.getElementById('pedidoForm').submit();
+            const form = document.getElementById('pedidoForm');
+            const formData = new FormData(form);
+
+            try {
+                // Envío asíncrono para evitar la recarga de página
+                const response = await fetch('/procesar_pedido', {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    // Ocultamos el ticket anterior y mostramos el nuevo modal cinemático
+                    document.getElementById('modalTicket').style.display = 'none';
+                    mostrarModalCodigo(data.codigo);
+                } else {
+                    alert("Hubo un problema al procesar la orden.");
+                    window.location.reload();
+                }
+            } catch (error) {
+                console.error("Error en transmisión:", error);
+                // Fallback de seguridad
+                form.submit(); 
+            }
+        }
+
+        // Definición de la función faltante para pedidos relámpago
+        function mostrarTicketRelampago(codigo, mensaje) {
+            mostrarModalCodigo(codigo);
+        }
+
+        // Animación de entrada y renderizado del código
+        function mostrarModalCodigo(codigo) {
+            document.getElementById('codigoExitoTexto').innerText = codigo;
+            const modal = document.getElementById('modalCodigoExito');
+            modal.style.display = 'flex';
+            
+            // Retardo mínimo para activar la transición CSS
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.querySelector('.ticket-contenido').style.transform = 'translateY(0)';
+            }, 50);
+        }
+
+        function copiarCodigo() {
+            const codigo = document.getElementById('codigoExitoTexto').innerText;
+            navigator.clipboard.writeText(codigo).then(() => {
+                const btnTexto = document.getElementById('btnCopiarTexto');
+                btnTexto.innerText = "Copiado Exitosamente";
+                setTimeout(() => { 
+                    btnTexto.innerText = "Copiar Código"; 
+                }, 3000);
+            }).catch(err => {
+                console.error('Error al copiar: ', err);
+            });
+        }
+
+        function cerrarModalYPerfil() {
+            // Ejecutamos la redirección final solicitada
+            window.location.href = "{{ url_for('perfil') }}";
         }
 
         // =========================================
@@ -930,45 +994,45 @@
         }
 
         async function procesarCompraRelampago() {
-    // 1. Capturar los datos MIENTRAS el modal sigue abierto y las variables existen
-    const metodoPagoSeleccionado = document.getElementById('metodoPagoRelampago').value;
-    const idProductoAEnviar = relampagoActivoId; 
-    const cantidadAEnviar = relampagoActivoCantidad;
+            // 1. Capturar los datos MIENTRAS el modal sigue abierto y las variables existen
+            const metodoPagoSeleccionado = document.getElementById('metodoPagoRelampago').value;
+            const idProductoAEnviar = relampagoActivoId; 
+            const cantidadAEnviar = relampagoActivoCantidad;
 
-    // 2. Ahora sí, cerrar el modal con seguridad
-    cerrarModalPagoRelampago();
-    
-    // 3. Iniciar empaquetado premium 3D
-    document.getElementById('modal-3d').style.display = 'flex';
-    
-    try {
-        const response = await fetch('/procesar_sobrante', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                producto_id: idProductoAEnviar, // <-- Usamos la variable respaldada
-                cantidad: cantidadAEnviar,
-                metodo_pago: metodoPagoSeleccionado 
-            })
-        });
-        
-        const data = await response.json();
-        
-        setTimeout(() => {
-            document.getElementById('modal-3d').style.display = 'none';
-            if (data.success) {
-                mostrarTicketRelampago(data.codigo, data.mensaje);
-            } else {
-                alert(data.error || "Error de sincronización con el Atelier.");
-                location.reload();
+            // 2. Ahora sí, cerrar el modal con seguridad
+            cerrarModalPagoRelampago();
+            
+            // 3. Iniciar empaquetado premium 3D
+            document.getElementById('modal-3d').style.display = 'flex';
+            
+            try {
+                const response = await fetch('/procesar_sobrante', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        producto_id: idProductoAEnviar, // <-- Usamos la variable respaldada
+                        cantidad: cantidadAEnviar,
+                        metodo_pago: metodoPagoSeleccionado 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                setTimeout(() => {
+                    document.getElementById('modal-3d').style.display = 'none';
+                    if (data.success) {
+                        mostrarTicketRelampago(data.codigo, data.mensaje);
+                    } else {
+                        alert(data.error || "Error de sincronización con el Atelier.");
+                        location.reload();
+                    }
+                }, 3500);
+                
+            } catch(e) {
+                document.getElementById('modal-3d').style.display = 'none';
+                alert("Fallo de red. Verifique su conexión con ZmarthNet.");
             }
-        }, 3500);
-        
-    } catch(e) {
-        document.getElementById('modal-3d').style.display = 'none';
-        alert("Fallo de red. Verifique su conexión con ZmarthNet.");
-    }
-}
+        }
 
         // =========================================
         // LÓGICA ZEDITH IA
@@ -1062,5 +1126,26 @@
         }
     });
 </script>
+
+<div id="modalCodigoExito" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); z-index: 6000; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div class="ticket-contenido" style="border: 1px solid var(--luxury-gold); background: var(--card-black); max-width: 420px; width: 100%; padding: 45px 35px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.9); transform: translateY(20px); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 4px;">
+            
+            <h2 style="font-family: 'Playfair Display', serif; color: var(--skin-beige); font-size: 1.6rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">Recepción Confirmada</h2>
+            <p style="color: #888; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; line-height: 1.6; margin-bottom: 30px; font-weight: 300;">Presente la siguiente llave criptográfica en la sucursal para la entrega de su alta selección.</p>
+
+            <div style="background: #0A0A0A; border: 1px dashed #333; padding: 25px; border-radius: 4px; margin-bottom: 35px; position: relative;">
+                <span style="display: block; font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px;">Código de Identificación</span>
+                <span id="codigoExitoTexto" style="font-family: 'Playfair Display', serif; font-size: 2.4rem; color: var(--luxury-gold); letter-spacing: 5px; font-weight: 500;">DB-XXXX</span>
+            </div>
+
+            <div style="display: flex; gap: 12px; flex-direction: column;">
+                <button type="button" onclick="copiarCodigo()" style="background: var(--luxury-gold); color: var(--card-black); border: none; padding: 18px; font-family: 'Montserrat', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; font-size: 0.8rem; border-radius: 4px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span id="btnCopiarTexto">Copiar Código</span>
+                </button>
+                <button type="button" onclick="cerrarModalYPerfil()" style="background: transparent; color: #777; border: 1px solid #222; padding: 15px; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; border-radius: 4px;">Continuar a mi Perfil</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

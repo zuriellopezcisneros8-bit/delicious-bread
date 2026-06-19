@@ -899,13 +899,14 @@ def subir_comprobante(pedido_id):
 
 @app.route('/procesar_pedido', methods=['POST'])
 def procesar_pedido():
+    # 1. Validación de sesión
     if 'usuario_id' not in session:
-        return redirect(url_for('login'))
+        return jsonify({'success': False, 'message': 'No autorizado'}), 401
         
+    # 2. Validación de día inhábil
     hoy = datetime.utcnow().date()
     if DiaInhabil.query.filter_by(fecha=hoy).first():
-        flash('La boutique está cerrada el día de hoy. No es posible procesar el pedido.', 'error')
-        return redirect(url_for('index'))
+        return jsonify({'success': False, 'message': 'La boutique está cerrada hoy.'}), 403
         
     usuario = db.session.get(Usuario, session['usuario_id'])
     horario = request.form.get('horario')
@@ -915,6 +916,7 @@ def procesar_pedido():
     monto_total = 0
     detalles_a_crear = []
     
+    # 3. Procesamiento de productos
     for prod in productos:
         cant = request.form.get(f'cantidad_{prod.id}', 0)
         if cant and int(cant) > 0:
@@ -923,6 +925,7 @@ def procesar_pedido():
             detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)
             detalles_a_crear.append(detalle)
             
+    # 4. Creación del pedido
     if detalles_a_crear:
         nuevo_pedido = Pedido(
             usuario_id=usuario.id,
@@ -934,15 +937,20 @@ def procesar_pedido():
         db.session.add(nuevo_pedido)
         db.session.commit()
         
+        # 5. Asignación de detalles
         for d in detalles_a_crear:
             d.pedido_id = nuevo_pedido.id
             db.session.add(d)
         db.session.commit()
         
-        flash('Pedido procesado con éxito.', 'success')
-        return redirect(url_for('perfil'))
+        # 6. Respuesta JSON para el Frontend
+        return jsonify({
+            'success': True,
+            'codigo': nuevo_pedido.codigo_recogida
+        })
 
-    return redirect(url_for('index'))
+    # Caso en que no haya productos seleccionados
+    return jsonify({'success': False, 'message': 'Pedido vacío'}), 400
 
 @app.route('/procesar_sobrante', methods=['POST'])
 def procesar_sobrante():
