@@ -202,7 +202,7 @@
         .ticket-total { display: flex; justify-content: space-between; font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--luxury-gold); margin-top: 25px; letter-spacing: 0.5px; }
         .ticket-acciones { display: flex; flex-direction: column; gap: 12px; }
         .btn-enviar-ticket { background: var(--luxury-gold); color: var(--card-black); border: none; padding: 18px; font-family: 'Montserrat', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; font-size: 0.8rem; border-radius: 4px;}
-        .btn-enviar-ticket:hover { background: var(--skin-beige); }
+        .btn-enviar-ticket:hover:not(:disabled) { background: var(--skin-beige); }
         .btn-cancelar-ticket { background: transparent; color: #777; border: 1px solid #222; padding: 14px; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; border-radius: 4px;}
         .btn-cancelar-ticket:hover { color: var(--skin-beige); border-color: var(--light-brown); }
 
@@ -553,7 +553,8 @@
                     <span>Total Estimado</span>
                     <span id="montoSidebar">$0.00</span>
                 </div>
-                <button type="button" id="btnProcesar" class="btn-confirmar" onclick="ejecutarEmpacado3D()">
+                <!-- Cambiado para mostrar primero el ticket de confirmación -->
+                <button type="button" id="btnProcesar" class="btn-confirmar" onclick="prepararTicketConfirmacion()">
                     Procesar Pedido
                 </button>
             </div>
@@ -588,7 +589,7 @@
         <p style="color: var(--luxury-gold); margin-top: 15px; letter-spacing: 3px; font-size: 0.75rem; text-transform: uppercase;">Empacando bajo estándares de alta repostería...</p>
     </div>
 
-<div id="modalPagoRelampago" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 5000; align-items: center; justify-content: center; padding: 20px;">
+    <div id="modalPagoRelampago" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 5000; align-items: center; justify-content: center; padding: 20px;">
         <div class="ticket-contenido">
             <div class="ticket-header">
                 <h2>Método de Pago</h2>
@@ -837,21 +838,20 @@
             }
         }
 
-        function ejecutarEmpacado3D() {
+        // =========================================
+        // PREPARACIÓN DE TICKET (NUEVO FLUJO)
+        // =========================================
+        function prepararTicketConfirmacion() {
             var form = document.getElementById('pedidoForm');
             if (!form.checkValidity()) {
                 form.reportValidity(); 
                 return;
             }
             
+            // Cerramos el carrito y pasamos directo al Ticket de confirmación
             document.getElementById('sidebarCarrito').classList.remove('abierto');
-            document.getElementById('modal-3d').style.display = 'flex';
-            
-            setTimeout(() => {
-                document.getElementById('modal-3d').style.display = 'none';
-                generarTicketVista();
-                document.getElementById('modalTicket').style.display = 'flex';
-            }, 3500);
+            generarTicketVista();
+            document.getElementById('modalTicket').style.display = 'flex';
         }
 
         function generarTicketVista() {
@@ -899,6 +899,13 @@
 
         function cerrarTicket() {
             document.getElementById('modalTicket').style.display = 'none';
+            
+            // Restauramos el botón por si se vuelve a abrir
+            const btn = document.querySelector('#modalTicket .btn-enviar-ticket');
+            btn.innerText = "Confirmar Orden en Sistema";
+            btn.style.opacity = "1";
+            btn.disabled = false;
+            
             abrirCarrito(); 
         }
 
@@ -907,26 +914,36 @@
         // =========================================
 
         async function enviarAlBackend() {
-            const btn = document.querySelector('.btn-enviar-ticket');
-            btn.innerText = "Transmitiendo Orden...";
+            // Bloqueamos el botón inmediatamente para evitar el doble clic
+            const btn = document.querySelector('#modalTicket .btn-enviar-ticket');
+            btn.innerText = "Procesando...";
             btn.style.opacity = "0.6";
             btn.disabled = true;
 
             const form = document.getElementById('pedidoForm');
             const formData = new FormData(form);
 
+            // Ocultamos ticket y mostramos la Animación 3D de empaquetado
+            document.getElementById('modalTicket').style.display = 'none';
+            document.getElementById('modal-3d').style.display = 'flex';
+
             try {
-                // Envío asíncrono para evitar la recarga de página
-                const response = await fetch('/procesar_pedido', {
+                // Ejecutamos la petición al servidor y un temporizador en paralelo 
+                // para asegurar que la animación se vea al menos 3.5 segundos.
+                const fetchPromise = fetch('/procesar_pedido', {
                     method: 'POST',
                     headers: { 'Accept': 'application/json' },
                     body: formData
-                });
-                const data = await response.json();
+                }).then(res => res.json());
+
+                const animPromise = new Promise(resolve => setTimeout(resolve, 3500));
+
+                // Esperamos a que ambos terminen
+                const [data] = await Promise.all([fetchPromise, animPromise]);
+
+                document.getElementById('modal-3d').style.display = 'none';
 
                 if (data.success) {
-                    // Ocultamos el ticket anterior y mostramos el nuevo modal cinemático
-                    document.getElementById('modalTicket').style.display = 'none';
                     mostrarModalCodigo(data.codigo);
                 } else {
                     alert("Hubo un problema al procesar la orden.");
@@ -934,12 +951,12 @@
                 }
             } catch (error) {
                 console.error("Error en transmisión:", error);
-                // Fallback de seguridad
+                // Fallback de seguridad si falla el fetch
                 form.submit(); 
             }
         }
 
-        // Definición de la función faltante para pedidos relámpago
+        // Función para pedidos relámpago
         function mostrarTicketRelampago(codigo, mensaje) {
             mostrarModalCodigo(codigo);
         }
@@ -971,7 +988,6 @@
         }
 
         function cerrarModalYPerfil() {
-            // Ejecutamos la redirección final solicitada
             window.location.href = "{{ url_for('perfil') }}";
         }
 
@@ -991,46 +1007,61 @@
         function cerrarModalPagoRelampago() {
             document.getElementById('modalPagoRelampago').style.display = 'none';
             relampagoActivoId = null;
+            
+            // Restaurar estado del botón
+            const btn = document.querySelector('#modalPagoRelampago .btn-enviar-ticket');
+            btn.innerText = "Confirmar y Empacar";
+            btn.style.opacity = "1";
+            btn.disabled = false;
         }
 
         async function procesarCompraRelampago() {
-            // 1. Capturar los datos MIENTRAS el modal sigue abierto y las variables existen
+            // Bloqueamos botón para evitar doble clic
+            const btn = document.querySelector('#modalPagoRelampago .btn-enviar-ticket');
+            btn.innerText = "Procesando...";
+            btn.style.opacity = "0.6";
+            btn.disabled = true;
+
             const metodoPagoSeleccionado = document.getElementById('metodoPagoRelampago').value;
             const idProductoAEnviar = relampagoActivoId; 
             const cantidadAEnviar = relampagoActivoCantidad;
 
-            // 2. Ahora sí, cerrar el modal con seguridad
-            cerrarModalPagoRelampago();
-            
-            // 3. Iniciar empaquetado premium 3D
+            // Cerramos modal y mostramos animación 3D
+            document.getElementById('modalPagoRelampago').style.display = 'none';
             document.getElementById('modal-3d').style.display = 'flex';
             
             try {
-                const response = await fetch('/procesar_sobrante', {
+                // Petición al backend y tiempo de animación en paralelo
+                const fetchPromise = fetch('/procesar_sobrante', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
-                        producto_id: idProductoAEnviar, // <-- Usamos la variable respaldada
+                        producto_id: idProductoAEnviar, 
                         cantidad: cantidadAEnviar,
                         metodo_pago: metodoPagoSeleccionado 
                     })
-                });
-                
-                const data = await response.json();
-                
-                setTimeout(() => {
-                    document.getElementById('modal-3d').style.display = 'none';
-                    if (data.success) {
-                        mostrarTicketRelampago(data.codigo, data.mensaje);
-                    } else {
-                        alert(data.error || "Error de sincronización con el Atelier.");
-                        location.reload();
-                    }
-                }, 3500);
+                }).then(res => res.json());
+
+                const animPromise = new Promise(resolve => setTimeout(resolve, 3500));
+
+                const [data] = await Promise.all([fetchPromise, animPromise]);
+
+                document.getElementById('modal-3d').style.display = 'none';
+
+                if (data.success) {
+                    mostrarTicketRelampago(data.codigo, data.mensaje);
+                } else {
+                    alert(data.error || "Error de sincronización con el Atelier.");
+                    location.reload();
+                }
                 
             } catch(e) {
                 document.getElementById('modal-3d').style.display = 'none';
                 alert("Fallo de red. Verifique su conexión con ZmarthNet.");
+                // Si falla, restaurar el botón y dejar que intente de nuevo
+                btn.innerText = "Confirmar y Empacar";
+                btn.style.opacity = "1";
+                btn.disabled = false;
             }
         }
 
