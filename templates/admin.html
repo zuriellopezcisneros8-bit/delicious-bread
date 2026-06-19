@@ -14,7 +14,7 @@
     <style>
         :root { 
             /* Paleta Ecosistema Zmarth */
-            --bg-beige: #F3EBE0; 
+            --bg-beige: #F3EBE0;
             --card-black: #100F0D; 
             --input-bg: #1A1815;
             --accent-gold: #CBA573; 
@@ -26,7 +26,7 @@
         }
         
         body { 
-            background-color: var(--bg-beige); 
+            background-color: var(--bg-beige);
             font-family: 'Arial', sans-serif; 
             color: var(--card-black); 
             margin: 0; 
@@ -36,16 +36,16 @@
         
         /* HEADER & NAVBAR */
         .top-bar { 
-            text-align: center; 
+            text-align: center;
             padding: 20px 15px 15px; 
         }
         .top-bar h1 { 
-            margin: 0; 
+            margin: 0;
             font-size: 1.2rem; 
             color: #1A1A1A; 
             letter-spacing: 2px; 
             text-transform: uppercase; 
-            font-weight: 900; 
+            font-weight: 900;
         }
         .auth-links {
             display: flex;
@@ -55,7 +55,7 @@
             margin-top: 15px;
         }
         .auth-links a { 
-            background: var(--card-black); 
+            background: var(--card-black);
             border: 1px solid var(--accent-gold); 
             border-radius: 30px; 
             padding: 10px 20px; 
@@ -72,7 +72,7 @@
         
         /* CONTROLES SUPERIORES */
         .controls-container { 
-            max-width: 1200px; 
+            max-width: 1200px;
             margin: 10px auto; 
             padding: 0 15px; 
             display: flex; 
@@ -84,7 +84,7 @@
         }
 
         .tabs { 
-            display: flex; 
+            display: flex;
             gap: 5px; 
             background: var(--card-black);
             padding: 6px;
@@ -96,7 +96,7 @@
         }
         .tabs::-webkit-scrollbar { display: none; }
         .tab-btn { 
-            background: transparent; 
+            background: transparent;
             border: none; 
             color: var(--text-gray); 
             padding: 10px 15px; 
@@ -105,14 +105,14 @@
             font-size: 0.8rem; 
             text-transform: uppercase; 
             font-weight: bold; 
-            transition: 0.3s; 
+            transition: 0.3s;
             flex: 0 0 auto;
         }
         .tab-btn.active { background: var(--accent-gold); color: var(--card-black); }
         
         .filter-form { width: 100%; }
         .filter-form select { 
-            background: var(--card-black); 
+            background: var(--card-black);
             border: 1px solid var(--accent-gold); 
             color: var(--accent-gold); 
             padding: 12px 20px; 
@@ -135,7 +135,7 @@
         @media (min-width: 900px) { .admin-grid { grid-template-columns: 1fr 2.5fr; gap: 25px; } }
         
         .card { 
-            background: var(--card-black); 
+            background: var(--card-black);
             padding: 20px; 
             border-radius: var(--radius); 
             border: 1px solid var(--border-dark); 
@@ -146,7 +146,7 @@
         @media (min-width: 768px) { .card { padding: 30px; } }
         
         .card h3 { 
-            margin-top: 0; 
+            margin-top: 0;
             color: var(--accent-gold); 
             text-transform: uppercase; 
             letter-spacing: 1px; 
@@ -169,7 +169,8 @@
         
         /* INVENTARIO Y LISTAS */
         .inv-item { 
-            display: flex; flex-direction: column; 
+            display: flex;
+            flex-direction: column; 
             background: var(--input-bg); padding: 15px; margin-bottom: 15px; 
             border-radius: 16px; border: 1px solid var(--border-dark); 
             gap: 15px;
@@ -183,43 +184,51 @@
        
         /* FORMULARIOS */
         .form-control { 
-            width: 100%; padding: 12px 15px; background: var(--input-bg); 
+            width: 100%;
+            padding: 12px 15px; background: var(--input-bg); 
             border: 1px solid var(--border-dark); color: var(--text-white); 
             border-radius: 12px; box-sizing: border-box; margin-bottom: 15px; 
-            font-size: 0.9rem; -webkit-appearance: none;
+            font-size: 0.9rem;
+            -webkit-appearance: none;
         }
         .form-control:focus { border-color: var(--accent-gold); outline: none; }
         .edit-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
         @media (min-width: 768px) { .edit-grid { grid-template-columns: 1fr 1fr; } }
         
         .btn-action { 
-            width: 100%; padding: 15px; background: transparent; 
+            width: 100%;
+            padding: 15px; background: transparent; 
             color: var(--accent-gold); border: 1px solid var(--accent-gold); 
             font-weight: bold; border-radius: 12px; cursor: pointer; 
-            text-transform: uppercase; font-size: 0.85rem; transition: 0.3s; 
+            text-transform: uppercase; font-size: 0.85rem;
+            transition: 0.3s; 
         }
         .btn-action:hover { background: var(--accent-gold); color: var(--card-black); }
         
         .btn-small { 
-            background: transparent; border: 1px solid var(--border-dark); 
+            background: transparent;
+            border: 1px solid var(--border-dark); 
             color: var(--text-gray); padding: 10px 15px; cursor: pointer; 
-            font-size: 0.75rem; border-radius: 12px; text-transform: uppercase; font-weight: bold; flex: 1; text-align: center;
+            font-size: 0.75rem; border-radius: 12px; text-transform: uppercase; font-weight: bold;
+            flex: 1; text-align: center;
         }
         .btn-small:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
 
         /* MODALES OPTIMIZADOS PARA MÓVIL */
         .modal-overlay { 
-            display: none; position: fixed; top: 0; left: 0; 
+            display: none;
+            position: fixed; top: 0; left: 0; 
             width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); 
-            backdrop-filter: blur(5px); z-index: 9999; 
+            backdrop-filter: blur(5px); z-index: 9999;
             justify-content: center; align-items: flex-end; 
         }
         @media (min-width: 768px) { .modal-overlay { align-items: center; } }
         
         .modal-content { 
-            background: var(--card-black); border: 1px solid var(--accent-gold); 
+            background: var(--card-black);
+            border: 1px solid var(--accent-gold); 
             border-radius: 25px 25px 0 0; width: 100%; max-height: 90vh; 
-            padding: 30px 20px; position: relative; color: var(--text-white); 
+            padding: 30px 20px; position: relative; color: var(--text-white);
             overflow-y: auto; box-sizing: border-box; animation: modalSlideUp 0.3s ease;
         }
         @media (min-width: 768px) { .modal-content { border-radius: var(--radius); width: 90%; max-width: 550px; padding: 35px; } }
@@ -281,72 +290,153 @@
                 </div>
             </div>
 
-            <div class="card">
-                <h3>🛰️ Radar de Entregas</h3>
-                <div class="table-wrapper">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Ticket</th>
-                                <th>Cliente</th>
-                                <th>Total</th>
-                                <th>Acción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for pedido in pedidos_activos %}
-                            <tr>
-                                <td style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
-                                <td><div style="font-weight: bold;">{{ pedido.cliente.nombre }}</div></td>
-                                <td><strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong></td>
-                                <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem;" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket</button></td>
-                            </tr>
-                            
-                            <div id="modal-{{ pedido.id }}" class="modal-overlay">
-                                <div class="modal-content">
-                                    <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
-                                    <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">TICKET: SMART-{{ pedido.codigo_recogida }}</h2>
-                                    <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
-                                    <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
-                                    
-                                    <div style="background:var(--input-bg); padding:15px; border-radius:12px; margin:15px 0; border:1px solid var(--border-dark);">
-                                        <h4 style="margin:0 0 10px 0; color:var(--text-white); font-size:0.75rem; text-transform:uppercase;">Artículos:</h4>
-                                        <div class="list-scroll">
-                                            {% for d in pedido.detalles %}
-                                            <div class="modal-list-item">
-                                                <span style="color:var(--text-gray);">{{ d.producto.nombre }}</span>
-                                                <strong style="color:var(--accent-gold);">x{{ d.cantidad }}</strong>
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                
+                <div class="card">
+                    <h3>🛰️ Radar: Órdenes Anticipadas</h3>
+                    <div class="table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticket</th>
+                                    <th>Cliente</th>
+                                    <th>Total</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set ns_normal = namespace(hay_pedidos=false) %}
+                                {% for pedido in pedidos_activos %}
+                                    {% if not pedido.es_relampago %}
+                                        {% set ns_normal.hay_pedidos = true %}
+                                        <tr>
+                                            <td style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
+                                            <td><div style="font-weight: bold;">{{ pedido.cliente.nombre }}</div></td>
+                                            <td><strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong></td>
+                                            <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem;" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket</button></td>
+                                        </tr>
+                                        
+                                        <div id="modal-{{ pedido.id }}" class="modal-overlay">
+                                            <div class="modal-content">
+                                                <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
+                                                <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">TICKET: SMART-{{ pedido.codigo_recogida }}</h2>
+                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
+                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
+                                                
+                                                <div style="background:var(--input-bg); padding:15px; border-radius:12px; margin:15px 0; border:1px solid var(--border-dark);">
+                                                    <h4 style="margin:0 0 10px 0; color:var(--text-white); font-size:0.75rem; text-transform:uppercase;">Artículos:</h4>
+                                                    <div class="list-scroll">
+                                                        {% for d in pedido.detalles %}
+                                                        <div class="modal-list-item">
+                                                            <span style="color:var(--text-gray);">{{ d.producto.nombre }}</span>
+                                                            <strong style="color:var(--accent-gold);">x{{ d.cantidad }}</strong>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:1rem; font-weight:bold; border-top: 1px solid var(--border-dark); padding-top: 10px;">
+                                                        <span>Monto Total</span>
+                                                        <strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:20px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px;">
+                                                    ⏱️ Recogida: <strong style="color:var(--text-white);">{{ pedido.horario_recogida }} hrs</strong><br>
+                                                    💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong>
+                                                </div>
+                                                
+                                                <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
+                                                    <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
+                                                    <select name="estado" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre }}', '{{ pedido.codigo_recogida }}')">
+                                                        <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                                        <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>Horneando</option>
+                                                        <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para entregar</option>
+                                                        <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado (Cerrar)</option>
+                                                    </select>
+                                                </form>
                                             </div>
-                                            {% endfor %}
                                         </div>
-                                        <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:1rem; font-weight:bold; border-top: 1px solid var(--border-dark); padding-top: 10px;">
-                                            <span>Monto Total</span>
-                                            <strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong>
-                                        </div>
-                                    </div>
-                                    
-                                    <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:20px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px;">
-                                        ⏱️ Recogida: <strong style="color:var(--text-white);">{{ pedido.horario_recogida }} hrs</strong><br>
-                                        💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong>
-                                    </div>
-                                    
-                                    <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
-                                        <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
-                                        <select name="estado" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre }}', '{{ pedido.codigo_recogida }}')">
-                                            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                                            <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>Horneando</option>
-                                            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para entregar</option>
-                                            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado (Cerrar)</option>
-                                        </select>
-                                    </form>
-                                </div>
-                            </div>
-                            {% else %}
-                            <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay pedidos en el radar.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if not ns_normal.hay_pedidos %}
+                                    <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay órdenes anticipadas en curso.</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
+
+                <div class="card" style="border: 1px solid var(--accent-gold);">
+                    <h3 style="color: var(--accent-gold);">⚡ Radar: Adquisición Relámpago</h3>
+                    <div class="table-wrapper">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticket</th>
+                                    <th>Cliente</th>
+                                    <th>Total</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set ns_flash = namespace(hay_pedidos=false) %}
+                                {% for pedido in pedidos_activos %}
+                                    {% if pedido.es_relampago %}
+                                        {% set ns_flash.hay_pedidos = true %}
+                                        <tr>
+                                            <td style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
+                                            <td><div style="font-weight: bold; color: var(--text-white);">{{ pedido.cliente.nombre }}</div></td>
+                                            <td><strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong></td>
+                                            <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket ⚡</button></td>
+                                        </tr>
+                                        
+                                        <div id="modal-{{ pedido.id }}" class="modal-overlay">
+                                            <div class="modal-content" style="border: 1px solid var(--accent-gold);">
+                                                <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
+                                                <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">⚡ TICKET: SMART-{{ pedido.codigo_recogida }}</h2>
+                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
+                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
+                                                
+                                                <div style="background:var(--input-bg); padding:15px; border-radius:12px; margin:15px 0; border:1px solid var(--accent-gold);">
+                                                    <h4 style="margin:0 0 10px 0; color:var(--accent-gold); font-size:0.75rem; text-transform:uppercase;">Artículos Relámpago:</h4>
+                                                    <div class="list-scroll">
+                                                        {% for d in pedido.detalles %}
+                                                        <div class="modal-list-item">
+                                                            <span style="color:var(--text-white);">{{ d.producto.nombre }}</span>
+                                                            <strong style="color:var(--accent-gold);">x{{ d.cantidad }}</strong>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:1rem; font-weight:bold; border-top: 1px solid var(--border-dark); padding-top: 10px;">
+                                                        <span>Monto Total</span>
+                                                        <strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:20px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px;">
+                                                    ⏱️ Recogida: <strong style="color:var(--accent-gold);">Inmediata / {{ pedido.horario_recogida }}</strong><br>
+                                                    💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong>
+                                                </div>
+                                                
+                                                <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
+                                                    <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
+                                                    <select name="estado" class="form-control" style="margin-bottom: 0; border-color: var(--accent-gold);" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre }}', '{{ pedido.codigo_recogida }}')">
+                                                        <option value="Venta Flash Excedente" {% if pedido.estado == 'Venta Flash Excedente' %}selected{% endif %}>Reservado (Esperando Cliente)</option>
+                                                        <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Empaquetado para entregar</option>
+                                                        <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado (Cerrar)</option>
+                                                    </select>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if not ns_flash.hay_pedidos %}
+                                    <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay adquisiciones relámpago activas.</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
@@ -483,7 +573,6 @@
                         </form>
                     </div>
                     
-                    <!-- Mini Formulario Flash -->
                     <div style="margin-top: 10px; padding: 10px; background: #1A1815; border-radius: 10px; border: 1px solid #365C2B; width: 100%;">
                         <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
                             <input type="hidden" name="nombre" value="{{ prod.nombre }}">
@@ -500,7 +589,6 @@
                     </div>
                 </div>
 
-                <!-- Formulario Completo de Edición (AHORA CON OPCIÓN PARA IMAGEN) -->
                 <div id="edit-form-{{ prod.id }}" style="display:none; background:var(--input-bg); padding:15px; border:1px solid var(--accent-gold); margin-bottom:20px; border-radius:16px;">
                     <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data">
                         <div class="edit-grid">
@@ -527,7 +615,6 @@
 
                         <textarea name="descripcion" class="form-control" style="height:50px; resize:none; margin-top: 10px;">{{ prod.descripcion }}</textarea>
                         
-                        <!-- NUEVO BLOQUE: Editar Fotografía -->
                         <div style="background: var(--card-black); border: 1px dashed var(--border-dark); padding: 12px; border-radius: 12px; text-align: center; margin-top: 5px;">
                             <span style="display:block; margin-bottom:8px; font-size:0.75rem; font-weight: bold; color: var(--text-gray);">Actualizar Fotografía (Opcional)</span>
                             <input type="file" name="imagen_file" accept="image/*" style="font-size:0.8rem; width: 100%; color: var(--text-gray);">
@@ -642,45 +729,41 @@
             <h3>🗃️ Cajas Cerradas (Completados)</h3>
             <div class="table-wrapper">
                 <div class="admin-table-container">
-    <table class="admin-table" style="width: 100%; border-collapse: collapse;">
-        <thead>
-            <tr style="border-bottom: 1px solid var(--light-brown);">
-                <th style="padding: 12px; text-align: left; color: var(--skin-beige);">Tipo</th>
-                <th style="padding: 12px; text-align: left; color: var(--skin-beige);">Ticket</th>
-                <th style="padding: 12px; text-align: left; color: var(--skin-beige);">Cliente</th>
-                <th style="padding: 12px; text-align: left; color: var(--skin-beige);">Monto</th>
-                <th style="padding: 12px; text-align: left; color: var(--skin-beige);">Estatus</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for pedido in pedidos_entregados %}
-            <tr style="border-bottom: 1px solid #222; {% if pedido.es_relampago %}background: rgba(184, 134, 11, 0.05);{% endif %}">
-                <td style="padding: 12px;">
-                    {% if pedido.es_relampago %}
-                        <span style="color: var(--accent-gold); font-size: 0.65rem; font-weight: bold; border: 1px solid var(--accent-gold); padding: 2px 6px; border-radius: 4px;">⚡ FLASH</span>
-                    {% else %}
-                        <span style="color: var(--text-gray); font-size: 0.65rem; font-weight: normal; border: 1px solid #333; padding: 2px 6px; border-radius: 4px;">NORMAL</span>
-                    {% endif %}
-                </td>
-                
-                <td style="padding: 12px; color: var(--text-gray); font-weight: bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
-                <td style="padding: 12px; font-weight: bold; font-size: 0.85rem; color: var(--skin-beige);">{{ pedido.cliente.nombre }}</td>
-                <td style="padding: 12px; font-weight:bold; color: var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</td>
-                <td style="padding: 12px;">
-                    <span style="background: #1F2E1A; color: #6BD968; padding: 4px 8px; border-radius: 10px; font-size: 0.65rem; border: 1px solid #365C2B;">ENTREGADO</span>
-                </td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="5" style="text-align:center; color:var(--text-gray); padding: 30px;">
-                    Sin historial en esta fecha.
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-    <div id="usuarios_seguridad" class="tab-content">
+                    <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--border-dark);">
+                                <th style="padding: 12px; text-align: left; color: var(--text-white);">Tipo</th>
+                                <th style="padding: 12px; text-align: left; color: var(--text-white);">Ticket</th>
+                                <th style="padding: 12px; text-align: left; color: var(--text-white);">Cliente</th>
+                                <th style="padding: 12px; text-align: left; color: var(--text-white);">Monto</th>
+                                <th style="padding: 12px; text-align: left; color: var(--text-white);">Estatus</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pedido in pedidos_entregados %}
+                            <tr style="border-bottom: 1px solid #222; {% if pedido.es_relampago %}background: rgba(203, 165, 115, 0.05);{% endif %}">
+                                <td style="padding: 12px;">
+                                    {% if pedido.es_relampago %}
+                                        <span style="color: var(--accent-gold); font-size: 0.65rem; font-weight: bold; border: 1px solid var(--accent-gold); padding: 2px 6px; border-radius: 4px;">⚡ FLASH</span>
+                                    {% else %}
+                                        <span style="color: var(--text-gray); font-size: 0.65rem; font-weight: normal; border: 1px solid #333; padding: 2px 6px; border-radius: 4px;">NORMAL</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 12px; color: var(--text-gray); font-weight: bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
+                                <td style="padding: 12px; font-weight: bold; font-size: 0.85rem; color: var(--text-white);">{{ pedido.cliente.nombre }}</td>
+                                <td style="padding: 12px; font-weight:bold; color: var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</td>
+                                <td style="padding: 12px;">
+                                    <span style="background: #1F2E1A; color: #6BD968; padding: 4px 8px; border-radius: 10px; font-size: 0.65rem; border: 1px solid #365C2B;">ENTREGADO</span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" style="text-align:center; color:var(--text-gray); padding: 30px;">Sin historial en esta fecha.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div> </div> </div> </div> <div id="usuarios_seguridad" class="tab-content">
         <div class="card" id="panel-pin">
             <h3 style="color: #FF5A5A;">⚠️ Acceso Restringido</h3>
             <p style="color: var(--text-gray); font-size: 0.85rem;">Se requiere autorización ejecutiva para desencriptar el directorio de clientes.</p>
@@ -702,14 +785,12 @@
                         </tr>
                     </thead>
                     <tbody id="cuerpo-usuarios">
-                        <!-- Se llena por JavaScript -->
-                    </tbody>
+                        </tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Importar Socket.IO -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
         // SOCKET.IO PARA TIEMPO REAL
@@ -726,7 +807,7 @@
             event.currentTarget.classList.add('active');
         }
 
-        // LOGICA DE DESBLOQUEO DE USUARIOS
+        // LÓGICA DE DESBLOQUEO DE USUARIOS
         async function desbloquearDirectorio() {
             const pin = document.getElementById('pin_maestro').value;
             const errorMsg = document.getElementById('error-pin');
@@ -739,7 +820,6 @@
                 });
                 
                 const data = await response.json();
-                
                 if (response.ok) {
                     document.getElementById('panel-pin').style.display = 'none';
                     document.getElementById('tabla-usuarios').style.display = 'block';
@@ -778,25 +858,24 @@
                 event.target.style.display = 'none';
             }
         }
-function notificarWhatsApp(selectElement, telefono, nombre, codigo) {
-    if (selectElement.value === 'Listo') {
-        // Limpiamos el número de cualquier espacio o guión
-        let numLimpiado = telefono.replace(/\D/g, '');
         
-        // Agregamos automáticamente la lada local (52) para la API de WhatsApp
-        let numeroFinal = "52" + numLimpiado;
-        
-        // Armamos el mensaje
-        let mensaje = `Hola ${nombre}, tu orden ${codigo} ya te está esperando. Ya puedes pasar a recogerlo.`;
-        
-        // Generamos la URL y la abrimos en una pestaña nueva
-        let url = `https://wa.me/${numeroFinal}?text=${encodeURIComponent(mensaje)}`;
-        window.open(url, '_blank');
-    }
-    
-    // Finalmente, enviamos el formulario para actualizar la base de datos
-    selectElement.form.submit();
-}
+        function notificarWhatsApp(selectElement, telefono, nombre, codigo) {
+            if (selectElement.value === 'Listo') {
+                // Limpiamos el número de cualquier espacio o guión
+                let numLimpiado = telefono.replace(/\D/g, '');
+                // Agregamos automáticamente la lada local (52) para la API de WhatsApp
+                let numeroFinal = "52" + numLimpiado;
+                // Armamos el mensaje
+                let mensaje = `Hola ${nombre}, tu orden ${codigo} ya te está esperando. Ya puedes pasar a recogerlo.`;
+                
+                // Generamos la URL y la abrimos en una pestaña nueva
+                let url = `https://wa.me/${numeroFinal}?text=${encodeURIComponent(mensaje)}`;
+                window.open(url, '_blank');
+            }
+            
+            // Finalmente, enviamos el formulario para actualizar la base de datos
+            selectElement.form.submit();
+        }
     </script>
 </body>
 </html>
