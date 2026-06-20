@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Delicious Bread">
-<link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Delicious Bread">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}">
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>THE ZMARTH ORG — OPERACIONES</title>
     <style>
         :root { 
@@ -95,6 +94,7 @@
             -webkit-overflow-scrolling: touch;
         }
         .tabs::-webkit-scrollbar { display: none; }
+        
         .tab-btn { 
             background: transparent;
             border: none; 
@@ -111,7 +111,7 @@
         .tab-btn.active { background: var(--accent-gold); color: var(--card-black); }
         
         .filter-form { width: 100%; }
-        .filter-form select, .search-bar { 
+        .filter-form select { 
             background: var(--card-black);
             border: 1px solid var(--accent-gold); 
             color: var(--accent-gold); 
@@ -123,8 +123,6 @@
             font-weight: bold;
             text-transform: uppercase;
         }
-        .search-bar { margin-bottom: 15px; }
-        .search-bar::placeholder { color: var(--text-gray); }
         @media (min-width: 768px) { .filter-form { width: auto; } }
 
         /* VISTAS Y GRID */
@@ -164,25 +162,55 @@
         /* TABLAS RESPONSIVAS */
         .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
         .admin-table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0 8px; }
-        .admin-table th { color: var(--text-gray); padding: 0 15px 10px; text-align: left; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-dark); }
+        .admin-table th { color: var(--text-gray); padding: 0 15px 10px; text-align: left; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-dark); white-space: nowrap; }
         .admin-table td { padding: 15px; background: var(--input-bg); font-size: 0.85rem; color: var(--text-white); border-top: 1px solid var(--border-dark); border-bottom: 1px solid var(--border-dark); }
         .admin-table td:first-child { border-radius: 12px 0 0 12px; border-left: 1px solid var(--border-dark); }
         .admin-table td:last-child { border-radius: 0 12px 12px 0; border-right: 1px solid var(--border-dark); }
         
-        /* INVENTARIO Y LISTAS */
+        /* INVENTARIO Y LISTAS (CORRECCIÓN UI: Imágenes de Esquina a Esquina) */
         .inv-item { 
             display: flex;
             flex-direction: column; 
-            background: var(--input-bg); padding: 15px; margin-bottom: 15px; 
-            border-radius: 16px; border: 1px solid var(--border-dark); 
-            gap: 15px;
+            background: var(--input-bg); 
+            margin-bottom: 15px; 
+            border-radius: 16px; 
+            border: 1px solid var(--border-dark); 
+            overflow: hidden;
         }
-        @media (min-width: 768px) { .inv-item { flex-direction: row; justify-content: space-between; align-items: center; padding: 20px; flex-wrap: wrap; } }
         .inv-item.agotado { opacity: 0.5; filter: grayscale(80%); }
         
-        .inv-info { display: flex; gap: 15px; align-items: center; width: 100%; }
+        .inv-image-container {
+            width: 100%;
+            height: 180px;
+            border-bottom: 1px solid var(--border-dark);
+        }
+        .inv-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .img-placeholder-full {
+            width: 100%;
+            height: 100%;
+            background: var(--card-black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .inv-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
         .inv-actions { display: flex; gap: 10px; width: 100%; justify-content: space-between; flex-wrap: wrap; }
-        @media (min-width: 768px) { .inv-actions { width: auto; justify-content: flex-end; } }
        
         /* FORMULARIOS */
         .form-control { 
@@ -242,9 +270,6 @@
         .list-scroll { max-height: 25vh; overflow-y: auto; padding-right: 10px; margin-bottom: 15px; }
         .modal-list-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border-dark); font-size: 0.9rem; }
 
-        .img-thumbnail { width: 50px; height: 50px; object-fit: cover; border-radius: 12px; flex-shrink: 0; }
-        .img-placeholder { width: 50px; height: 50px; background: var(--card-black); border-radius: 12px; border: 1px dashed var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: var(--text-gray); flex-shrink: 0; }
-        
         /* Temporizador Estilos */
         .timer-badge { display: inline-block; padding: 3px 8px; border-radius: 8px; font-size: 0.7rem; margin-top: 5px; font-weight: bold; background: rgba(0,0,0,0.5); }
     </style>
@@ -252,7 +277,7 @@
 <body>
 
     <header class="top-bar">
-        <h1>THE ZMARTH ORG — OPERACIONES</h1>
+        <h1>DELICIOUS BREAD — OPERACIONES</h1>
         <div style="font-size: 0.75rem; color: #8A8A8A; margin-top: 5px; font-weight: bold; letter-spacing: 1px;">Ecosistema Delicious Bread</div>
         <div class="auth-links">
             <a href="{{ url_for('index') }}">🛒 Ver Tienda</a>
@@ -279,8 +304,7 @@
         </form>
     </div>
 
-    
-
+    <div id="activos" class="tab-content active">
         <div class="admin-grid">
             <div style="display: flex; flex-direction: column; gap: 20px;">
                 <div class="card" id="card-produccion-requerida">
@@ -304,7 +328,6 @@
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 20px;">
-                
                 <div class="card">
                     <h3>🛰️ Radar: Órdenes Anticipadas</h3>
                     <div class="table-wrapper">
@@ -396,7 +419,7 @@
                                                 
                                                 <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
                                                     <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
-                                                    <select name="estado" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre }}', '{{ pedido.codigo_recogida }}')">
+                                                    <select name="estado" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
                                                         <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
                                                         <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>Horneando</option>
                                                         <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para entregar</option>
@@ -502,7 +525,7 @@
                                                 
                                                 <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
                                                     <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
-                                                    <select name="estado" class="form-control" style="margin-bottom: 0; border-color: var(--accent-gold);" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre }}', '{{ pedido.codigo_recogida }}')">
+                                                    <select name="estado" class="form-control" style="margin-bottom: 0; border-color: var(--accent-gold);" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
                                                         <option value="Venta Flash Excedente" {% if pedido.estado == 'Venta Flash Excedente' %}selected{% endif %}>Reservado (Esperando Cliente)</option>
                                                         <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Empaquetado para entregar</option>
                                                         <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado (Cerrar)</option>
@@ -520,12 +543,9 @@
                         </table>
                     </div>
                 </div>
-
             </div>
         </div>
-    </div>
-
-    <div id="especiales" class="tab-content">
+    </div> <div id="especiales" class="tab-content">
         <div class="card">
             <h3>💼 Alta Gama & Pedidos Especiales</h3>
             <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 20px;">Línea de producción dedicada a catering corporativo, bodas y solicitudes personalizadas de Atelier.</p>
@@ -555,27 +575,27 @@
                             <td>
                                 <span>${{ "%.2f"|format(esp.monto_anticipo) }}</span>
                                 {% if esp.anticipo_validado %}
-                                <span style="color: #6BD968; font-size: 0.75rem; display:block;">[Validado]</span>
+                                    <span style="color: #6BD968; font-size: 0.75rem; display:block;">[Validado]</span>
                                 {% else %}
-                                <span style="color: #FF5A5A; font-size: 0.75rem; display:block;">[Pendiente]</span>
+                                    <span style="color: #FF5A5A; font-size: 0.75rem; display:block;">[Pendiente]</span>
                                 {% endif %}
                             </td>
                             <td><span style="background: #111; border: 1px solid #333; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color:#ccc;">{{ esp.estado }}</span></td>
                             <td>
                                 {% if esp.comprobante_url %}
-                                <a href="{{ esp.comprobante_url }}" target="_blank" style="color: var(--accent-gold); font-size: 0.8rem; text-decoration: underline; margin-right: 10px; display:inline-block;">Ver Comprobante</a>
+                                    <a href="{{ esp.comprobante_url }}" target="_blank" style="color: var(--accent-gold); font-size: 0.8rem; text-decoration: underline; margin-right: 10px; display:inline-block;">Ver Comprobante</a>
                                 {% endif %}
                                 
                                 {% if not esp.anticipo_validado %}
-                                <form action="/admin/pedido_especial/{{ esp.id }}/validar" method="POST" style="display:inline;">
-                                    <input type="hidden" name="accion" value="aprobar">
-                                    <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: #365C2B; color: #6BD968;">Validar Anticipo</button>
-                                </form>
+                                    <form action="/admin/pedido_especial/{{ esp.id }}/validar" method="POST" style="display:inline;">
+                                        <input type="hidden" name="accion" value="aprobar">
+                                        <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: #365C2B; color: #6BD968;">Validar Anticipo</button>
+                                    </form>
                                 {% elif esp.estado != 'Entregado' %}
-                                <form action="/admin/pedido_especial/{{ esp.id }}/validar" method="POST" style="display:inline;">
-                                    <input type="hidden" name="accion" value="completar">
-                                    <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: var(--accent-gold); color: var(--accent-gold);">Cerrar (Entregado)</button>
-                                </form>
+                                    <form action="/admin/pedido_especial/{{ esp.id }}/validar" method="POST" style="display:inline;">
+                                        <input type="hidden" name="accion" value="completar">
+                                        <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: var(--accent-gold); color: var(--accent-gold);">Cerrar (Entregado)</button>
+                                    </form>
                                 {% endif %}
                             </td>
                         </tr>
@@ -619,96 +639,100 @@
                 <h3>🥖 Catálogo Configurado</h3>
                 {% for prod in productos %}
                 <div class="inv-item {% if not prod.disponible %}agotado{% endif %}">
-                    <div class="inv-info">
+                    <div class="inv-image-container">
                         {% if prod.imagen_url %}
-                        <img src="{{ prod.imagen_url }}" alt="{{ prod.nombre }}" class="img-thumbnail">
+                            <img src="{{ prod.imagen_url }}" alt="{{ prod.nombre }}">
                         {% else %}
-                        <div class="img-placeholder">Sin<br>Foto</div>
+                            <div class="img-placeholder-full">Sin Fotografía</div>
                         {% endif %}
-                        <div style="flex-grow: 1;">
+                    </div>
+                    
+                    <div class="inv-content">
+                        <div>
                             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
-                                <strong style="font-size:0.95rem; color:var(--text-white); text-transform: uppercase;">{{ prod.nombre }}</strong>
-                                <span style="color:var(--accent-gold); font-weight: bold; font-size: 0.9rem;">${{ "%.2f"|format(prod.precio) }}</span>
+                                <strong style="font-size:1.05rem; color:var(--text-white); text-transform: uppercase;">{{ prod.nombre }}</strong>
+                                <span style="color:var(--accent-gold); font-weight: bold; font-size: 1rem;">${{ "%.2f"|format(prod.precio) }}</span>
                                 
                                 {% if prod.stock_sobrante and prod.stock_sobrante > 0 %}
-                                <span style="background: #1C333B; color: #6BE0FF; font-size: 0.6rem; padding: 3px 8px; border-radius: 10px; border: 1px solid #2B525F;">⚡ FLASH: {{ prod.stock_sobrante }} PZS</span>
+                                    <span style="background: #1C333B; color: #6BE0FF; font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid #2B525F;">⚡ FLASH: {{ prod.stock_sobrante }} PZS</span>
                                 {% endif %}
                                 
                                 {% if prod.es_pedido_grande %}
-                                <span style="background: #3b2b1a; color: var(--accent-gold); font-size: 0.6rem; padding: 3px 8px; border-radius: 10px; border: 1px solid var(--accent-gold);">MAYOREO</span>
+                                    <span style="background: #3b2b1a; color: var(--accent-gold); font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid var(--accent-gold);">MAYOREO</span>
                                 {% endif %}
+                                
                                 {% if not prod.disponible %}
-                                <span style="background: #5C2B2B; color: #FF8F8F; font-size: 0.6rem; padding: 3px 8px; border-radius: 10px; border: 1px solid #7A3A3A;">PAUSADO</span>
+                                    <span style="background: #5C2B2B; color: #FF8F8F; font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid #7A3A3A;">PAUSADO</span>
                                 {% endif %}
                             </div>
-                            <div style="font-size:0.75rem; color:var(--text-gray); margin-top:4px;">{{ prod.descripcion }}</div>
+                            <div style="font-size:0.8rem; color:var(--text-gray); margin-top:8px;">{{ prod.descripcion }}</div>
+                        </div>
+
+                        <div class="inv-actions">
+                            <form action="{{ url_for('toggle_producto', producto_id=prod.id) }}" method="POST" style="flex: 1;">
+                                <button type="submit" class="btn-small" style="width: 100%; border-color: var(--accent-gold); color: var(--accent-gold);">
+                                    {% if prod.disponible %}Pausar{% else %}Activar{% endif %}
+                                </button>
+                            </form>
+                            <button class="btn-small" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='block'">Editar</button>
+                            <form action="{{ url_for('eliminar_producto', producto_id=prod.id) }}" method="POST" onsubmit="return confirm('¿Eliminar producto?');" style="flex: 1;">
+                                <button type="submit" class="btn-small" style="width: 100%; border-color: #5C2B2B; color: #D96868;">Borrar</button>
+                            </form>
+                        </div>
+                        
+                        <div style="padding: 12px; background: #1A1815; border-radius: 10px; border: 1px solid #365C2B; width: 100%; box-sizing: border-box;">
+                            <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                                <input type="hidden" name="nombre" value="{{ prod.nombre }}">
+                                <input type="hidden" name="descripcion" value="{{ prod.descripcion }}">
+                                <input type="hidden" name="precio" value="{{ prod.precio }}">
+                                {% if prod.es_pedido_grande %}
+                                    <input type="hidden" name="es_pedido_grande" value="1">
+                                {% endif %}
+                                
+                                <label style="font-size: 0.75rem; color: var(--text-gray); white-space: nowrap;">Stock Flash Rápido:</label>
+                                <input type="number" name="stock_sobrante" value="{{ prod.stock_sobrante or 0 }}" min="0" class="form-control" style="margin-bottom: 0; padding: 8px; width: 80px; flex: 1;">
+                                <button type="submit" class="btn-small" style="padding: 8px 15px; border-color: var(--accent-gold); color: var(--accent-gold); flex: none;">Actualizar</button>
+                            </form>
                         </div>
                     </div>
 
-                    <div class="inv-actions">
-                        <form action="{{ url_for('toggle_producto', producto_id=prod.id) }}" method="POST" style="flex: 1;">
-                            <button type="submit" class="btn-small" style="width: 100%; border-color: var(--accent-gold); color: var(--accent-gold);">
-                                {% if prod.disponible %}Pausar{% else %}Activar{% endif %}
-                            </button>
-                        </form>
-                        <button class="btn-small" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='block'">Editar</button>
-                        <form action="{{ url_for('eliminar_producto', producto_id=prod.id) }}" method="POST" onsubmit="return confirm('¿Eliminar producto?');" style="flex: 1;">
-                            <button type="submit" class="btn-small" style="width: 100%; border-color: #5C2B2B; color: #D96868;">Borrar</button>
-                        </form>
-                    </div>
-                    
-                    <div style="margin-top: 10px; padding: 10px; background: #1A1815; border-radius: 10px; border: 1px solid #365C2B; width: 100%;">
-                        <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center; justify-content: flex-end;">
-                            <input type="hidden" name="nombre" value="{{ prod.nombre }}">
-                            <input type="hidden" name="descripcion" value="{{ prod.descripcion }}">
-                            <input type="hidden" name="precio" value="{{ prod.precio }}">
-                            {% if prod.es_pedido_grande %}
-                            <input type="hidden" name="es_pedido_grande" value="1">
-                            {% endif %}
+                    <div id="edit-form-{{ prod.id }}" style="display:none; background:var(--input-bg); padding:20px; border-top:1px solid var(--accent-gold);">
+                        <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data">
+                            <div class="edit-grid">
+                                <div>
+                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Nombre del Producto:</label>
+                                    <input type="text" name="nombre" class="form-control" value="{{ prod.nombre }}" required>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Precio Base ($):</label>
+                                    <input type="number" step="0.50" name="precio" class="form-control" value="{{ prod.precio }}" required>
+                                </div>
+                            </div>
                             
-                            <label style="font-size: 0.7rem; color: var(--text-gray); white-space: nowrap;">Stock Flash Rápido:</label>
-                            <input type="number" name="stock_sobrante" value="{{ prod.stock_sobrante or 0 }}" min="0" class="form-control" style="margin-bottom: 0; padding: 5px; width: 80px;">
-                            <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: var(--accent-gold); color: var(--accent-gold); flex: none;">Actualizar</button>
+                            <div class="edit-grid" style="margin-top: 10px;">
+                                <div>
+                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Modificar Sobrante (Venta Flash):</label>
+                                    <input type="number" name="stock_sobrante" class="form-control" value="{{ prod.stock_sobrante or 0 }}" min="0">
+                                </div>
+                                <div style="display: flex; align-items: center; padding-top: 15px;">
+                                    <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--accent-gold); width: 16px; height: 16px; margin-right: 8px;">
+                                    <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Mayoreo</label>
+                                </div>
+                            </div>
+
+                            <textarea name="descripcion" class="form-control" style="height:60px; resize:none; margin-top: 10px;">{{ prod.descripcion }}</textarea>
+                            
+                            <div style="background: var(--card-black); border: 1px dashed var(--border-dark); padding: 15px; border-radius: 12px; text-align: center; margin-top: 5px;">
+                                <span style="display:block; margin-bottom:8px; font-size:0.75rem; font-weight: bold; color: var(--text-gray);">Actualizar Fotografía (Opcional)</span>
+                                <input type="file" name="imagen_file" accept="image/*" style="font-size:0.8rem; width: 100%; color: var(--text-gray);">
+                            </div>
+                            
+                            <div style="display:flex; gap:15px; margin-top: 20px;">
+                                <button type="submit" class="btn-action" style="flex: 2; background: var(--accent-gold); color: var(--card-black);">Guardar</button>
+                                <button type="button" class="btn-action" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='none'" style="flex: 1; border-color: var(--border-dark); color: var(--text-gray);">Cerrar</button>
+                            </div>
                         </form>
                     </div>
-                </div>
-
-                <div id="edit-form-{{ prod.id }}" style="display:none; background:var(--input-bg); padding:15px; border:1px solid var(--accent-gold); margin-bottom:20px; border-radius:16px;">
-                    <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data">
-                        <div class="edit-grid">
-                            <div>
-                                <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Nombre del Producto:</label>
-                                <input type="text" name="nombre" class="form-control" value="{{ prod.nombre }}" required>
-                            </div>
-                            <div>
-                                <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Precio Base ($):</label>
-                                <input type="number" step="0.50" name="precio" class="form-control" value="{{ prod.precio }}" required>
-                            </div>
-                        </div>
-                        
-                        <div class="edit-grid" style="margin-top: 10px;">
-                            <div>
-                                <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Modificar Sobrante (Venta Flash):</label>
-                                <input type="number" name="stock_sobrante" class="form-control" value="{{ prod.stock_sobrante or 0 }}" min="0">
-                            </div>
-                            <div style="display: flex; align-items: center; padding-top: 15px;">
-                                <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--accent-gold); width: 16px; height: 16px; margin-right: 8px;">
-                                <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Mayoreo</label>
-                            </div>
-                        </div>
-
-                        <textarea name="descripcion" class="form-control" style="height:50px; resize:none; margin-top: 10px;">{{ prod.descripcion }}</textarea>
-                        
-                        <div style="background: var(--card-black); border: 1px dashed var(--border-dark); padding: 12px; border-radius: 12px; text-align: center; margin-top: 5px;">
-                            <span style="display:block; margin-bottom:8px; font-size:0.75rem; font-weight: bold; color: var(--text-gray);">Actualizar Fotografía (Opcional)</span>
-                            <input type="file" name="imagen_file" accept="image/*" style="font-size:0.8rem; width: 100%; color: var(--text-gray);">
-                        </div>
-                        
-                        <div style="display:flex; gap:15px; margin-top: 15px;">
-                            <button type="submit" class="btn-action" style="flex: 2; background: var(--accent-gold); color: var(--card-black);">Guardar</button>
-                            <button type="button" class="btn-action" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='none'" style="flex: 1; border-color: var(--border-dark); color: var(--text-gray);">Cerrar</button>
-                        </div>
-                    </form>
                 </div>
                 {% endfor %}
             </div>
@@ -812,42 +836,45 @@
         <div class="card">
             <h3>🗃️ Cajas Cerradas (Completados)</h3>
             <div class="table-wrapper">
-                <div class="admin-table-container">
-                    <table class="admin-table" style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 1px solid var(--border-dark);">
-                                <th style="padding: 12px; text-align: left; color: var(--text-white);">Tipo</th>
-                                <th style="padding: 12px; text-align: left; color: var(--text-white);">Ticket</th>
-                                <th style="padding: 12px; text-align: left; color: var(--text-white);">Cliente</th>
-                                <th style="padding: 12px; text-align: left; color: var(--text-white);">Monto</th>
-                                <th style="padding: 12px; text-align: left; color: var(--text-white);">Estatus</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for pedido in pedidos_entregados %}
-                            <tr style="border-bottom: 1px solid #222; {% if pedido.es_relampago %}background: rgba(203, 165, 115, 0.05);{% endif %}">
-                                <td style="padding: 12px;">
-                                    {% if pedido.es_relampago %}
-                                        <span style="color: var(--accent-gold); font-size: 0.65rem; font-weight: bold; border: 1px solid var(--accent-gold); padding: 2px 6px; border-radius: 4px;">⚡ FLASH</span>
-                                    {% else %}
-                                        <span style="color: var(--text-gray); font-size: 0.65rem; font-weight: normal; border: 1px solid #333; padding: 2px 6px; border-radius: 4px;">NORMAL</span>
-                                    {% endif %}
-                                </td>
-                                <td style="padding: 12px; color: var(--text-gray); font-weight: bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
-                                <td style="padding: 12px; font-weight: bold; font-size: 0.85rem; color: var(--text-white);">{{ pedido.cliente.nombre }}</td>
-                                <td style="padding: 12px; font-weight:bold; color: var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</td>
-                                <td style="padding: 12px;">
-                                    <span style="background: #1F2E1A; color: #6BD968; padding: 4px 8px; border-radius: 10px; font-size: 0.65rem; border: 1px solid #365C2B;">ENTREGADO</span>
-                                </td>
-                            </tr>
-                            {% else %}
-                            <tr>
-                                <td colspan="5" style="text-align:center; color:var(--text-gray); padding: 30px;">Sin historial en esta fecha.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div> </div> </div> </div> <div id="usuarios_seguridad" class="tab-content">
+                <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-dark);">
+                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Tipo</th>
+                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Ticket</th>
+                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Cliente</th>
+                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Monto</th>
+                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Estatus</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in pedidos_entregados %}
+                        <tr style="border-bottom: 1px solid #222; {% if pedido.es_relampago %}background: rgba(203, 165, 115, 0.05);{% endif %}">
+                            <td style="padding: 12px;">
+                                {% if pedido.es_relampago %}
+                                    <span style="color: var(--accent-gold); font-size: 0.65rem; font-weight: bold; border: 1px solid var(--accent-gold); padding: 2px 6px; border-radius: 4px;">⚡ FLASH</span>
+                                {% else %}
+                                    <span style="color: var(--text-gray); font-size: 0.65rem; font-weight: normal; border: 1px solid #333; padding: 2px 6px; border-radius: 4px;">NORMAL</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px; color: var(--text-gray); font-weight: bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
+                            <td style="padding: 12px; font-weight: bold; font-size: 0.85rem; color: var(--text-white);">{{ pedido.cliente.nombre }}</td>
+                            <td style="padding: 12px; font-weight:bold; color: var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</td>
+                            <td style="padding: 12px;">
+                                <span style="background: #1F2E1A; color: #6BD968; padding: 4px 8px; border-radius: 10px; font-size: 0.65rem; border: 1px solid #365C2B;">ENTREGADO</span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align:center; color:var(--text-gray); padding: 30px;">Sin historial en esta fecha.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="usuarios_seguridad" class="tab-content">
         <div class="card" id="panel-pin">
             <h3 style="color: #FF5A5A;">⚠️ Acceso Restringido</h3>
             <p style="color: var(--text-gray); font-size: 0.85rem;">Se requiere autorización ejecutiva para desencriptar el directorio de clientes.</p>
@@ -869,7 +896,7 @@
                         </tr>
                     </thead>
                     <tbody id="cuerpo-usuarios">
-                        </tbody>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -904,7 +931,7 @@
             let listaDiv = document.getElementById('lista-produccion-anticipada');
             listaDiv.innerHTML = '';
             let keys = Object.keys(prodDict);
-            
+
             if(keys.length === 0) {
                 listaDiv.innerHTML = '<p style="color:var(--text-gray); font-size:0.85rem; text-align: center;">Sin requerimientos de producción activa.</p>';
                 return;
@@ -919,28 +946,7 @@
             });
         }
 
-        // 2. BUSCADOR DE TICKETS (CÓDIGO) - FIX 3: oninput preventivo
-        function filtrarTickets() {
-            let input = document.getElementById("buscadorTickets").value.toUpperCase();
-            let tablas = document.querySelectorAll(".table-rastreable");
-            
-            tablas.forEach(tabla => {
-                let trs = tabla.getElementsByTagName("tr");
-                for (let i = 1; i < trs.length; i++) {
-                    let tdCodigo = trs[i].querySelector(".codigo-ticket");
-                    if (tdCodigo) {
-                        let texto = tdCodigo.textContent || tdCodigo.innerText;
-                        if (texto.toUpperCase().indexOf(input) > -1) {
-                            trs[i].style.display = "";
-                        } else {
-                            trs[i].style.display = "none";
-                        }
-                    }
-                }
-            });
-        }
-
-        // 3. MOTOR DE EXPIRACIÓN: TEMPORIZADOR DE 1 HORA (REMASTERIZADO)
+        // 2. MOTOR DE EXPIRACIÓN: TEMPORIZADOR DE 1 HORA (REMASTERIZADO)
         function iniciarMotorExpiracion() {
             const timers = document.querySelectorAll('.timer-recogida');
             setInterval(() => {
@@ -974,7 +980,6 @@
                     const limiteSuperior = new Date();
                     limiteSuperior.setHours(horas + 1, mins, 0, 0); // Expiración exacta de 1 hora
 
-                    // FIX 1: Lógica de Tiempo Exacto
                     if (ahora < limiteInferior) {
                         timer.innerHTML = '<span style="color: #6BE0FF;">Esperando hora de recogida...</span>';
                         timer.style.border = "1px solid #6BE0FF";
@@ -987,7 +992,6 @@
                         const diff = limiteSuperior - ahora;
                         const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                         const s = Math.floor((diff % (1000 * 60)) / 1000);
-                        // Formato mm:ss
                         const ms = m < 10 ? '0'+m : m;
                         const ss = s < 10 ? '0'+s : s;
                         timer.innerHTML = `<span style="color: #CBA573;">Expira en: ${ms}:${ss}</span>`;
@@ -997,7 +1001,7 @@
             }, 1000);
         }
 
-        // CONTROL DE PESTAÑAS
+        // CONTROL DE PESTAÑAS (Corregido y optimizado)
         function openTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1018,7 +1022,7 @@
             location.reload(); 
         });
 
-        // LÓGICA DE DESBLOQUEO DE USUARIOS
+        // LÓGICA DE DESBLOQUEO DE USUARIOS (Corregida la fuga de datos del hash)
         async function desbloquearDirectorio() {
             const pin = document.getElementById('pin_maestro').value;
             const errorMsg = document.getElementById('error-pin');
@@ -1043,7 +1047,7 @@
                             <td style="color:var(--accent-gold); font-weight:bold;">USR-${u.id}</td>
                             <td>${u.nombre}</td>
                             <td><span style="display:block; color:#fff;">${u.correo}</span><span style="color:#777; font-size:0.75rem;">${u.telefono}</span></td>
-                            <td><span style="background: #111; color: #6BD968; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid #365C2B;">Encriptada (${u.hash})</span></td>
+                            <td><span style="background: #111; color: #6BD968; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid #365C2B;">Cifrada Correctamente</span></td>
                         </tr>`;
                     });
                 } else {
