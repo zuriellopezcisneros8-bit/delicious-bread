@@ -21,70 +21,143 @@
         body { background-color: var(--bg-beige); color: var(--text-dark); font-family: 'Montserrat', sans-serif; padding: 20px 15px; }
         
         header { text-align: center; margin: 60px 0; }
-        h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 10px; }
+        h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 5px; }
         
-        .nav-actions { display: flex; justify-content: center; gap: 20px; margin-top: 20px; }
-        .btn-nav { color: var(--text-dark); text-decoration: none; border: 1px solid var(--text-dark); padding: 10px 20px; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
+        .nav-actions { display: flex; justify-content: center; gap: 20px; margin-top: 25px; }
+        .btn-nav { color: var(--text-dark); text-decoration: none; border: 1px solid var(--text-dark); padding: 10px 20px; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .btn-nav:hover { background: var(--text-dark); color: var(--bg-beige); }
 
         .container { max-width: 800px; margin: 0 auto; }
-        .profile-card { background: var(--card-black); padding: 30px; border-radius: 4px; margin-bottom: 40px; color: var(--skin-beige); }
-        .order-card { background: var(--card-black); border: 1px solid var(--border-fino); padding: 25px; margin-bottom: 20px; color: var(--skin-beige); }
         
-        .order-header { display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; margin-bottom: 15px; }
-        .order-id { color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.2rem; }
+        .profile-card { background: var(--card-black); padding: 35px; border-radius: 4px; margin-bottom: 40px; color: var(--skin-beige); text-align: center; border: 1px solid var(--luxury-gold); box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .profile-card h3 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 8px; color: var(--luxury-gold); letter-spacing: 1px; }
+
+        .order-card { background: var(--card-black); border: 1px solid var(--border-fino); padding: 30px; margin-bottom: 25px; color: var(--skin-beige); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s; }
+        .order-card:hover { border-color: var(--luxury-gold); transform: translateY(-3px); box-shadow: 0 15px 30px rgba(0,0,0,0.15); }
         
-        .badge { font-size: 0.6rem; padding: 5px 10px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); text-transform: uppercase; }
-        .file-upload-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #333; }
+        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; margin-bottom: 20px; }
+        .order-id { color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        
+        /* ESTILOS DE ESTADOS (SINCRONIZADOS CON EL ADMINISTRADOR) */
+        .badge { font-size: 0.65rem; padding: 6px 12px; font-weight: 600; text-transform: uppercase; border-radius: 2px; letter-spacing: 1.5px; font-family: 'Montserrat', sans-serif; }
+        .badge-pendiente { border: 1px solid #8b7355; color: #8b7355; background: rgba(139, 115, 85, 0.05); }
+        .badge-horneando { border: 1px solid #d9884a; color: #d9884a; background: rgba(217, 136, 74, 0.05); }
+        .badge-listo { border: 1px solid #6BD968; color: #6BD968; background: rgba(107, 217, 104, 0.05); }
+        .badge-entregado { border: 1px solid #333; color: #777; background: rgba(34, 34, 34, 0.3); }
+        .badge-flash { border: 1px solid var(--luxury-gold); color: var(--card-black); background: var(--luxury-gold); }
+        .badge-cancelado { border: 1px solid #ff4d4d; color: #ff4d4d; background: rgba(255, 77, 77, 0.05); }
+
+        .flash-tag { display: inline-block; font-size: 0.6rem; font-family: 'Montserrat', sans-serif; background: transparent; color: var(--luxury-gold); padding: 2px 6px; border: 1px solid var(--luxury-gold); border-radius: 2px; letter-spacing: 1px; }
+
+        .order-body p { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.95rem; border-bottom: 1px solid #111; padding-bottom: 10px; font-weight: 300; }
+        .order-body p:last-of-type { border-bottom: none; }
+        
+        .total-text { margin-top: 20px; font-family: 'Playfair Display', serif; font-size: 1.5rem; color: var(--luxury-gold); text-align: right; }
+        
+        .meta-info { font-size: 0.75rem; color: #777; margin-top: 15px; text-transform: uppercase; letter-spacing: 1.5px; display: flex; justify-content: flex-end; gap: 15px; }
+
+        .file-upload-section { margin-top: 25px; padding-top: 25px; border-top: 1px dashed #222; text-align: right; }
+        .file-upload-section input[type="file"] { background: #0A0A0A; padding: 12px; border: 1px solid #333; color: var(--skin-beige); font-family: 'Montserrat', sans-serif; font-size: 0.75rem; width: 100%; margin-bottom: 15px; border-radius: 2px; }
+        .btn-upload { background: var(--luxury-gold); color: var(--card-black); border: none; padding: 12px 25px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s; border-radius: 2px; }
+        .btn-upload:hover { background: var(--skin-beige); }
     </style>
 </head>
 <body>
 
     <header>
         <h1>PANEL DE SOCIO</h1>
+        <p style="font-size: 0.8rem; letter-spacing: 5px; text-transform: uppercase; color: #554433; font-weight: 500;">The Zmarth Organization</p>
         <div class="nav-actions">
-            <a href="{{ url_for('index') }}" class="btn-nav">Tienda</a>
-            <a href="{{ url_for('logout') }}" class="btn-nav">Salir</a>
+            <a href="{{ url_for('index') }}" class="btn-nav">Tienda Atelier</a>
+            <a href="{{ url_for('logout') }}" class="btn-nav">Cerrar Sesión</a>
         </div>
     </header>
 
     <div class="container">
         <div class="profile-card">
             <h3>{{ usuario.nombre }}</h3>
-            <p>{{ usuario.correo }} | {{ usuario.telefono }}</p>
+            <p style="font-size: 0.85rem; letter-spacing: 2px; color: #888; font-weight: 300; text-transform: uppercase;">{{ usuario.correo }} | {{ usuario.telefono }}</p>
         </div>
 
-        <h2 style="text-align: center; margin-bottom: 30px;">Historial de Pedidos</h2>
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 1.8rem; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 35px; text-align: center; border-bottom: 1px solid var(--border-fino); padding-bottom: 20px;">Historial de Operaciones</h2>
         
         {% for pedido in pedidos %}
         <div class="order-card">
             <div class="order-header">
-                <span class="order-id">{{ pedido.codigo_recogida }}</span>
-                <span class="badge">{{ pedido.estado }}</span>
+                <div class="order-id">
+                    SMART-{{ pedido.codigo_recogida }}
+                    {% if pedido.es_relampago %}
+                        <span class="flash-tag">⚡ RELÁMPAGO</span>
+                    {% endif %}
+                </div>
+                
+                {% if pedido.estado == 'Pendiente' %}
+                    <span class="badge badge-pendiente">En Fila</span>
+                {% elif pedido.estado == 'Horneando' %}
+                    <span class="badge badge-horneando">En Hornos</span>
+                {% elif pedido.estado == 'Listo' %}
+                    <span class="badge badge-listo">Listo en Atelier</span>
+                {% elif pedido.estado == 'Entregado' %}
+                    <span class="badge badge-entregado">Caja Cerrada</span>
+                {% elif pedido.estado == 'Venta Flash Excedente' %}
+                    <span class="badge badge-flash">Reservado (Flash)</span>
+                {% elif pedido.estado == 'Cancelado' %}
+                    <span class="badge badge-cancelado">Expirado</span>
+                {% else %}
+                    <span class="badge badge-pendiente">{{ pedido.estado }}</span>
+                {% endif %}
             </div>
             
             <div class="order-body">
                 {% for detalle in pedido.detalles %}
-                    <p>{{ detalle.cantidad }}x {{ detalle.producto.nombre }}</p>
+                    <p>
+                        <span style="color: #999;">{{ detalle.cantidad }}x</span> 
+                        <span style="color: var(--skin-beige); flex-grow: 1; margin-left: 10px;">{{ detalle.producto.nombre }}</span>
+                    </p>
                 {% endfor %}
-                <p style="margin-top: 10px; font-weight: bold;">Total: ${{ "%.2f"|format(pedido.monto_total) }}</p>
+                
+                <div class="total-text">TOTAL: ${{ "%.2f"|format(pedido.monto_total) }}</div>
+                
+                <div class="meta-info">
+                    <span>⏱️ REC: <strong style="color: var(--skin-beige);">{{ pedido.horario_recogida }}</strong></span>
+                    <span>💳 FORMATO: <strong style="color: var(--skin-beige);">{{ pedido.metodo_pago }}</strong></span>
+                </div>
             </div>
 
-            {% if pedido.metodo_pago == 'Transferencia' %}
+            {% if pedido.metodo_pago == 'Transferencia' and pedido.estado != 'Entregado' and pedido.estado != 'Cancelado' %}
             <div class="file-upload-section">
                 {% if pedido.comprobante_url %}
-                    <p style="color: var(--luxury-gold); font-size: 0.8rem;">✓ Comprobante recibido</p>
+                    <p style="color: var(--luxury-gold); font-size: 0.8rem; text-align: left; letter-spacing: 2px; text-transform: uppercase;">✓ Verificación Digital Anexada</p>
                 {% else %}
-                    <form action="{{ url_for('subir_comprobante', pedido_id=pedido.id) }}" method="POST" enctype="multipart/form-data">
-                        <input type="file" name="comprobante_pago" required accept="image/*" style="color: white; font-size: 0.7rem;">
-                        <button type="submit" class="btn-nav" style="padding: 5px 10px; cursor: pointer;">Subir Pago</button>
+                    <form action="{{ url_for('subir_comprobante', pedido_id=pedido.id) }}" method="POST" enctype="multipart/form-data" style="display: flex; flex-direction: column; align-items: flex-end;">
+                        <span style="font-size: 0.7rem; color: #777; margin-bottom: 10px; width: 100%; text-align: left; letter-spacing: 2px; text-transform: uppercase;">Anexar comprobante de pago:</span>
+                        <input type="file" name="comprobante_pago" required accept="image/*">
+                        <button type="submit" class="btn-upload">Subir Archivo Criptográfico</button>
                     </form>
                 {% endif %}
             </div>
             {% endif %}
         </div>
+        {% else %}
+        <div style="text-align: center; padding: 60px 20px; border: 1px dashed var(--border-fino); color: #666; border-radius: 4px;">
+            <p style="letter-spacing: 3px; text-transform: uppercase; font-size: 0.8rem;">No existen operaciones activas en su registro actual.</p>
+        </div>
         {% endfor %}
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Inicializar enlace WebSocket con el servidor maestro
+            const socket = io();
+            
+            // Escuchar el canal de transmisión de datos globales
+            socket.on('actualizacion_global', function() {
+                console.log("Señal de ZMARTHNET recibida. Sincronizando datos operativos en tiempo real...");
+                // Recarga controlada para inyectar los nuevos datos al HTML renderizado sin intervención manual del usuario
+                window.location.reload();
+            });
+        });
+    </script>
 </body>
 </html>
