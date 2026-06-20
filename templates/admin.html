@@ -111,7 +111,7 @@
         .tab-btn.active { background: var(--accent-gold); color: var(--card-black); }
         
         .filter-form { width: 100%; }
-        .filter-form select { 
+        .filter-form select, .search-bar { 
             background: var(--card-black);
             border: 1px solid var(--accent-gold); 
             color: var(--accent-gold); 
@@ -123,6 +123,8 @@
             font-weight: bold;
             text-transform: uppercase;
         }
+        .search-bar { margin-bottom: 15px; }
+        .search-bar::placeholder { color: var(--text-gray); }
         @media (min-width: 768px) { .filter-form { width: auto; } }
 
         /* VISTAS Y GRID */
@@ -242,6 +244,9 @@
 
         .img-thumbnail { width: 50px; height: 50px; object-fit: cover; border-radius: 12px; flex-shrink: 0; }
         .img-placeholder { width: 50px; height: 50px; background: var(--card-black); border-radius: 12px; border: 1px dashed var(--border-dark); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; color: var(--text-gray); flex-shrink: 0; }
+        
+        /* Temporizador Estilos */
+        .timer-badge { display: inline-block; padding: 3px 8px; border-radius: 8px; font-size: 0.7rem; margin-top: 5px; font-weight: bold; background: rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
@@ -275,18 +280,28 @@
     </div>
 
     <div id="activos" class="tab-content active">
+        
+        <input type="text" id="buscadorTickets" class="search-bar" placeholder="🔍 Rastrear código SMART-..." onkeyup="filtrarTickets()">
+
         <div class="admin-grid">
             <div style="display: flex; flex-direction: column; gap: 20px;">
-                <div class="card">
+                <div class="card" id="card-produccion-requerida">
                     <h3>🔥 Producción Requerida</h3>
-                    {% for producto, total in produccion.items() %}
-                    <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-dark);">
-                        <span style="color:var(--text-gray); font-size: 0.85rem;">{{ producto }}</span>
-                        <span style="color: var(--accent-gold); font-weight:bold;">x{{ total }}</span>
+                    <p style="color: var(--text-gray); font-size: 0.75rem; margin-top: -15px;">Filtro IA: Excluye Adquisición Relámpago.</p>
+                    
+                    <div id="lista-produccion-anticipada">
+                        <p style="color:var(--text-gray); font-size:0.85rem; text-align: center;">Procesando datos del Atelier...</p>
                     </div>
-                    {% else %}
-                    <p style="color:var(--text-gray); font-size:0.85rem; text-align: center;">Horno en pausa. Sin pedidos.</p>
-                    {% endfor %}
+
+                    <div id="datos-produccion-crudos" style="display: none;">
+                        {% for pedido in pedidos_activos %}
+                            {% if not pedido.es_relampago and pedido.estado != 'Entregado' and pedido.estado != 'Cancelado' %}
+                                {% for d in pedido.detalles %}
+                                    <div class="prod-data-item" data-nombre="{{ d.producto.nombre }}" data-cantidad="{{ d.cantidad }}"></div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
 
@@ -295,12 +310,12 @@
                 <div class="card">
                     <h3>🛰️ Radar: Órdenes Anticipadas</h3>
                     <div class="table-wrapper">
-                        <table class="admin-table">
+                        <table class="admin-table table-rastreable">
                             <thead>
                                 <tr>
                                     <th>Ticket</th>
                                     <th>Cliente</th>
-                                    <th>Total</th>
+                                    <th>Tiempo Restante</th>
                                     <th>Acción</th>
                                 </tr>
                             </thead>
@@ -310,9 +325,13 @@
                                     {% if not pedido.es_relampago %}
                                         {% set ns_normal.hay_pedidos = true %}
                                         <tr>
-                                            <td style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
+                                            <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
                                             <td><div style="font-weight: bold;">{{ pedido.cliente.nombre }}</div></td>
-                                            <td><strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong></td>
+                                            <td>
+                                                <div class="timer-badge timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}">
+                                                    Calculando...
+                                                </div>
+                                            </td>
                                             <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem;" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket</button></td>
                                         </tr>
                                         
@@ -339,10 +358,28 @@
                                                     </div>
                                                 </div>
                                                 
-                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:20px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px;">
-                                                    ⏱️ Recogida: <strong style="color:var(--text-white);">{{ pedido.horario_recogida }} hrs</strong><br>
-                                                    💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong>
+                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:20px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
+                                                    <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
+                                                        <span>⏱️ Recogida: <strong style="color:var(--text-white);">{{ pedido.horario_recogida }}</strong></span>
+                                                        <span>💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong></span>
+                                                    </div>
+                                                    <div class="timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}" style="font-size: 0.75rem; font-weight: bold;"></div>
                                                 </div>
+
+                                                {% if pedido.metodo_pago == 'Transferencia' %}
+                                                    {% if pedido.comprobante_url %}
+                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px solid var(--accent-gold); padding: 10px; border-radius: 12px; background: #0A0A0A;">
+                                                            <span style="display: block; font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 10px; text-transform: uppercase;">Evidencia de Transferencia</span>
+                                                            <a href="{{ pedido.comprobante_url }}" target="_blank">
+                                                                <img src="{{ pedido.comprobante_url }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;">
+                                                            </a>
+                                                        </div>
+                                                    {% else %}
+                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px dashed #FF5A5A; padding: 15px; border-radius: 12px; background: rgba(255, 90, 90, 0.05);">
+                                                            <span style="font-size: 0.75rem; color: #FF5A5A; font-weight: bold; text-transform: uppercase;">Pendiente de Comprobante</span>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endif %}
                                                 
                                                 <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
                                                     <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
@@ -351,6 +388,7 @@
                                                         <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>Horneando</option>
                                                         <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para entregar</option>
                                                         <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado (Cerrar)</option>
+                                                        <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado (Expirado)</option>
                                                     </select>
                                                 </form>
                                             </div>
@@ -368,7 +406,7 @@
                 <div class="card" style="border: 1px solid var(--accent-gold);">
                     <h3 style="color: var(--accent-gold);">⚡ Radar: Adquisición Relámpago</h3>
                     <div class="table-wrapper">
-                        <table class="admin-table">
+                        <table class="admin-table table-rastreable">
                             <thead>
                                 <tr>
                                     <th>Ticket</th>
@@ -383,7 +421,7 @@
                                     {% if pedido.es_relampago %}
                                         {% set ns_flash.hay_pedidos = true %}
                                         <tr>
-                                            <td style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
+                                            <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
                                             <td><div style="font-weight: bold; color: var(--text-white);">{{ pedido.cliente.nombre }}</div></td>
                                             <td><strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong></td>
                                             <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket ⚡</button></td>
@@ -412,10 +450,27 @@
                                                     </div>
                                                 </div>
                                                 
-                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:20px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px;">
-                                                    ⏱️ Recogida: <strong style="color:var(--accent-gold);">Inmediata / {{ pedido.horario_recogida }}</strong><br>
-                                                    💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong>
+                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:20px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
+                                                    <div style="display: flex; justify-content: space-around;">
+                                                        <span>⏱️ Recogida: <strong style="color:var(--accent-gold);">Inmediata / {{ pedido.horario_recogida }}</strong></span>
+                                                        <span>💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong></span>
+                                                    </div>
                                                 </div>
+
+                                                {% if pedido.metodo_pago == 'Transferencia' %}
+                                                    {% if pedido.comprobante_url %}
+                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px solid var(--accent-gold); padding: 10px; border-radius: 12px; background: #0A0A0A;">
+                                                            <span style="display: block; font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 10px; text-transform: uppercase;">Evidencia de Transferencia</span>
+                                                            <a href="{{ pedido.comprobante_url }}" target="_blank">
+                                                                <img src="{{ pedido.comprobante_url }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;">
+                                                            </a>
+                                                        </div>
+                                                    {% else %}
+                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px dashed #FF5A5A; padding: 15px; border-radius: 12px; background: rgba(255, 90, 90, 0.05);">
+                                                            <span style="font-size: 0.75rem; color: #FF5A5A; font-weight: bold; text-transform: uppercase;">Pendiente de Comprobante</span>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endif %}
                                                 
                                                 <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
                                                     <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
@@ -423,6 +478,7 @@
                                                         <option value="Venta Flash Excedente" {% if pedido.estado == 'Venta Flash Excedente' %}selected{% endif %}>Reservado (Esperando Cliente)</option>
                                                         <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Empaquetado para entregar</option>
                                                         <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado (Cerrar)</option>
+                                                        <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado (Retornar Stock)</option>
                                                     </select>
                                                 </form>
                                             </div>
@@ -793,38 +849,136 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
-        // MANTENER LA PESTAÑA ACTIVA DURANTE LA RECARGA EN TIEMPO REAL
+        // INIT: IA DE PRODUCCIÓN Y TEMPORIZADORES
         document.addEventListener("DOMContentLoaded", function() {
             let lastTab = sessionStorage.getItem("adminActiveTab") || "activos";
             openTab(lastTab);
+            
+            calcularProduccionPura();
+            iniciarMotorExpiracion();
         });
 
+        // 1. FILTRO IA DE PRODUCCIÓN: AISLA LA ADQUISICIÓN RELÁMPAGO
+        function calcularProduccionPura() {
+            let items = document.querySelectorAll('.prod-data-item');
+            let prodDict = {};
+            
+            items.forEach(item => {
+                let nombre = item.dataset.nombre;
+                let cant = parseInt(item.dataset.cantidad);
+                if(prodDict[nombre]) {
+                    prodDict[nombre] += cant;
+                } else {
+                    prodDict[nombre] = cant;
+                }
+            });
+
+            let listaDiv = document.getElementById('lista-produccion-anticipada');
+            listaDiv.innerHTML = '';
+            let keys = Object.keys(prodDict);
+            
+            if(keys.length === 0) {
+                listaDiv.innerHTML = '<p style="color:var(--text-gray); font-size:0.85rem; text-align: center;">Sin requerimientos de producción activa.</p>';
+                return;
+            }
+
+            keys.forEach(k => {
+                listaDiv.innerHTML += `
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-dark);">
+                    <span style="color:var(--text-gray); font-size: 0.85rem;">${k}</span>
+                    <span style="color: var(--accent-gold); font-weight:bold;">x${prodDict[k]}</span>
+                </div>`;
+            });
+        }
+
+        // 2. BUSCADOR DE TICKETS (CÓDIGO)
+        function filtrarTickets() {
+            let input = document.getElementById("buscadorTickets").value.toUpperCase();
+            let tablas = document.querySelectorAll(".table-rastreable");
+            
+            tablas.forEach(tabla => {
+                let trs = tabla.getElementsByTagName("tr");
+                for (let i = 1; i < trs.length; i++) {
+                    let tdCodigo = trs[i].querySelector(".codigo-ticket");
+                    if (tdCodigo) {
+                        let texto = tdCodigo.textContent || tdCodigo.innerText;
+                        if (texto.toUpperCase().indexOf(input) > -1) {
+                            trs[i].style.display = "";
+                        } else {
+                            trs[i].style.display = "none";
+                        }
+                    }
+                }
+            });
+        }
+
+        // 3. MOTOR DE EXPIRACIÓN: TEMPORIZADOR DE 1 HORA
+        function iniciarMotorExpiracion() {
+            const timers = document.querySelectorAll('.timer-recogida');
+            setInterval(() => {
+                const ahora = new Date();
+                
+                timers.forEach(timer => {
+                    const estado = timer.dataset.estado;
+                    if (estado === 'Entregado' || estado === 'Cancelado') {
+                        timer.innerHTML = `<span style="color: ${estado === 'Cancelado' ? '#FF5A5A' : '#6BD968'};">${estado.toUpperCase()}</span>`;
+                        return;
+                    }
+                    
+                    const horarioStr = timer.dataset.horario;
+                    if(!horarioStr || horarioStr === 'Inmediato') {
+                        timer.innerHTML = '<span style="color: #6BE0FF;">RETIRO INMEDIATO</span>';
+                        return;
+                    }
+
+                    // Conversión del string "05:00 PM" a Date local de hoy
+                    const match = horarioStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+                    if(!match) return;
+                    
+                    let horas = parseInt(match[1]);
+                    let mins = parseInt(match[2]);
+                    if(match[3].toUpperCase() === 'PM' && horas < 12) horas += 12;
+                    if(match[3].toUpperCase() === 'AM' && horas === 12) horas = 0;
+
+                    const limite = new Date();
+                    limite.setHours(horas + 1, mins, 0, 0); // Límite exacto de 1 hora
+
+                    const diff = limite - ahora;
+                    
+                    if(diff <= 0) {
+                        timer.innerHTML = '<span style="color: #FF5A5A;">VENCIDO (Cambiando Estado...)</span>';
+                        timer.style.border = "1px solid #FF5A5A";
+                    } else {
+                        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        const s = Math.floor((diff % (1000 * 60)) / 1000);
+                        // Formato mm:ss
+                        const ms = m < 10 ? '0'+m : m;
+                        const ss = s < 10 ? '0'+s : s;
+                        timer.innerHTML = `<span style="color: #CBA573;">Expira en: ${ms}:${ss}</span>`;
+                        timer.style.border = "1px solid var(--accent-gold)";
+                    }
+                });
+            }, 1000);
+        }
+
+        // CONTROL DE PESTAÑAS
         function openTab(tabId) {
-            // Ocultar todos los contenidos y quitar estado activo a botones
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             
-            // Mostrar la pestaña seleccionada
             const tabElement = document.getElementById(tabId);
-            if (tabElement) {
-                tabElement.classList.add('active');
-            }
+            if (tabElement) tabElement.classList.add('active');
             
-            // Activar el botón correspondiente
             const btnElement = document.querySelector(`button[onclick="openTab('${tabId}')"]`);
-            if (btnElement) {
-                btnElement.classList.add('active');
-            }
+            if (btnElement) btnElement.classList.add('active');
 
-            // Guardar la pestaña en la memoria del navegador
             sessionStorage.setItem("adminActiveTab", tabId);
         }
 
-        // SOCKET.IO PARA TIEMPO REAL
+        // SOCKET.IO PARA TIEMPO REAL ZMARTHNET
         const socket = io();
         socket.on('actualizacion_global', function() {
             console.log("Señal de ZMARTHNET recibida. Sincronizando datos en tiempo real...");
-            // La página se recarga suavemente y el código de arriba recordará en qué pestaña estabas
             location.reload(); 
         });
 
