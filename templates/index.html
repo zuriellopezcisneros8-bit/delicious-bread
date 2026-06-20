@@ -1167,9 +1167,20 @@
     
     socket.on('actualizacion_global', function() {
         console.log("ZMARTHNET: Datos en tiempo real sincronizados.");
+        
+        // 1. Evaluamos si el cliente tiene abierta alguna interfaz crítica de transacción
         const carritoAbierto = document.getElementById('sidebarCarrito').classList.contains('abierto');
-        if (!carritoAbierto) {
+        const modal3DAbierto = document.getElementById('modal-3d').style.display === 'flex';
+        const modalTicketAbierto = document.getElementById('modalTicket').style.display === 'flex';
+        const modalExitoAbierto = document.getElementById('modalCodigoExito').style.display === 'flex';
+        const modalRelampagoAbierto = document.getElementById('modalPagoRelampago').style.display === 'flex';
+        const lightboxAbierto = document.getElementById('amazonLightbox').style.display === 'flex';
+        
+        // 2. Solo aplicamos el recargo automático si el usuario está inactivo navegando
+        if (!carritoAbierto && !modal3DAbierto && !modalTicketAbierto && !modalExitoAbierto && !modalRelampagoAbierto && !lightboxAbierto) {
             location.reload();
+        } else {
+            console.log("ZMARTHNET: Recarga interceptada. El cliente se encuentra en un flujo operativo activo.");
         }
     });
 </script>
