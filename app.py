@@ -97,6 +97,7 @@ class Producto(db.Model):
     imagen_url = db.Column(db.String(500), nullable=True)
     disponible = db.Column(db.Boolean, default=True)
     stock_sobrante = db.Column(db.Integer, default=0)
+    categoria = db.Column(db.String(50), default='pan')
 
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -717,7 +718,10 @@ def admin():
         if file and file.filename != '':
             imagen_url = subir_a_cloudinary(file)
         
-        nuevo_prod = Producto(nombre=nombre, descripcion=descripcion, precio=precio, imagen_url=imagen_url, stock_sobrante=stock_sob)
+        # Modifica estas líneas donde creas el nuevo producto
+        categoria = request.form.get('categoria', 'pan')
+
+        nuevo_prod = Producto(nombre=nombre, descripcion=descripcion, precio=precio, imagen_url=imagen_url, stock_sobrante=stock_sob, categoria=categoria)
         db.session.add(nuevo_prod)
         db.session.commit()
         

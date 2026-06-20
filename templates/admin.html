@@ -615,6 +615,10 @@
                 <form action="{{ url_for('admin') }}" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="nuevo_producto" value="1">
                     <input type="text" name="nombre" class="form-control" required placeholder="Nombre (Ej. Charola de Empanadas)">
+<select name="categoria" class="form-control" style="margin-bottom: 15px;">
+    <option value="pan">Panadería (Entrega 5 a 7 PM)</option>
+    <option value="abarrotes">Tienda / Abarrotes (Entrega Libre)</option>
+</select>
                     <textarea name="descripcion" class="form-control" placeholder="Descripción" style="height:60px; resize: none;"></textarea>
                     
                     <div class="edit-grid" style="margin-bottom: 15px;">
