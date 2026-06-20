@@ -281,7 +281,7 @@
 
     <div id="activos" class="tab-content active">
         
-        <input type="text" id="buscadorTickets" class="search-bar" placeholder="🔍 Rastrear código SMART-..." onkeyup="filtrarTickets()">
+        <input type="text" id="buscadorTickets" class="search-bar" autocomplete="off" placeholder="🔍 Rastrear código SMART-..." oninput="filtrarTickets()">
 
         <div class="admin-grid">
             <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -326,7 +326,12 @@
                                         {% set ns_normal.hay_pedidos = true %}
                                         <tr>
                                             <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
-                                            <td><div style="font-weight: bold;">{{ pedido.cliente.nombre }}</div></td>
+                                            <td>
+                                                <div style="font-weight: bold;">{{ pedido.cliente.nombre }}</div>
+                                                {% if pedido.pagado %}
+                                                    <span style="font-size: 0.65rem; color: #6BD968; border: 1px solid #365C2B; background: #1F2E1A; padding: 2px 5px; border-radius: 4px;">PAGADO</span>
+                                                {% endif %}
+                                            </td>
                                             <td>
                                                 <div class="timer-badge timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}">
                                                     Calculando...
@@ -358,12 +363,22 @@
                                                     </div>
                                                 </div>
                                                 
-                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:20px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
+                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
                                                     <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
                                                         <span>⏱️ Recogida: <strong style="color:var(--text-white);">{{ pedido.horario_recogida }}</strong></span>
                                                         <span>💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong></span>
                                                     </div>
                                                     <div class="timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}" style="font-size: 0.75rem; font-weight: bold;"></div>
+                                                </div>
+
+                                                <div style="margin-bottom: 20px; text-align: center;">
+                                                    <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST">
+                                                        {% if pedido.pagado %}
+                                                            <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border-color: #365C2B; cursor: default; width: 100%;">✅ Confirmado - Total Pagado</button>
+                                                        {% else %}
+                                                            <button type="submit" class="btn-action" style="border-color: #6BE0FF; color: #6BE0FF; width: 100%;">💰 Validar y Marcar como Pagado</button>
+                                                        {% endif %}
+                                                    </form>
                                                 </div>
 
                                                 {% if pedido.metodo_pago == 'Transferencia' %}
@@ -422,7 +437,12 @@
                                         {% set ns_flash.hay_pedidos = true %}
                                         <tr>
                                             <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
-                                            <td><div style="font-weight: bold; color: var(--text-white);">{{ pedido.cliente.nombre }}</div></td>
+                                            <td>
+                                                <div style="font-weight: bold; color: var(--text-white);">{{ pedido.cliente.nombre }}</div>
+                                                {% if pedido.pagado %}
+                                                    <span style="font-size: 0.65rem; color: #6BD968; border: 1px solid #365C2B; background: #1F2E1A; padding: 2px 5px; border-radius: 4px;">PAGADO</span>
+                                                {% endif %}
+                                            </td>
                                             <td><strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong></td>
                                             <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket ⚡</button></td>
                                         </tr>
@@ -450,11 +470,21 @@
                                                     </div>
                                                 </div>
                                                 
-                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:20px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
+                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
                                                     <div style="display: flex; justify-content: space-around;">
                                                         <span>⏱️ Recogida: <strong style="color:var(--accent-gold);">Inmediata / {{ pedido.horario_recogida }}</strong></span>
                                                         <span>💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong></span>
                                                     </div>
+                                                </div>
+
+                                                <div style="margin-bottom: 20px; text-align: center;">
+                                                    <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST">
+                                                        {% if pedido.pagado %}
+                                                            <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border-color: #365C2B; cursor: default; width: 100%;">⚡ Confirmado - Total Pagado</button>
+                                                        {% else %}
+                                                            <button type="submit" class="btn-action" style="border-color: var(--accent-gold); color: var(--accent-gold); width: 100%;">💰 Validar y Marcar como Pagado</button>
+                                                        {% endif %}
+                                                    </form>
                                                 </div>
 
                                                 {% if pedido.metodo_pago == 'Transferencia' %}
@@ -891,7 +921,7 @@
             });
         }
 
-        // 2. BUSCADOR DE TICKETS (CÓDIGO)
+        // 2. BUSCADOR DE TICKETS (CÓDIGO) - FIX 3: oninput preventivo
         function filtrarTickets() {
             let input = document.getElementById("buscadorTickets").value.toUpperCase();
             let tablas = document.querySelectorAll(".table-rastreable");
@@ -912,7 +942,7 @@
             });
         }
 
-        // 3. MOTOR DE EXPIRACIÓN: TEMPORIZADOR DE 1 HORA
+        // 3. MOTOR DE EXPIRACIÓN: TEMPORIZADOR DE 1 HORA (REMASTERIZADO)
         function iniciarMotorExpiracion() {
             const timers = document.querySelectorAll('.timer-recogida');
             setInterval(() => {
@@ -940,15 +970,23 @@
                     if(match[3].toUpperCase() === 'PM' && horas < 12) horas += 12;
                     if(match[3].toUpperCase() === 'AM' && horas === 12) horas = 0;
 
-                    const limite = new Date();
-                    limite.setHours(horas + 1, mins, 0, 0); // Límite exacto de 1 hora
-
-                    const diff = limite - ahora;
+                    const limiteInferior = new Date();
+                    limiteInferior.setHours(horas, mins, 0, 0); // Hora de recogida pactada
                     
-                    if(diff <= 0) {
-                        timer.innerHTML = '<span style="color: #FF5A5A;">VENCIDO (Cambiando Estado...)</span>';
+                    const limiteSuperior = new Date();
+                    limiteSuperior.setHours(horas + 1, mins, 0, 0); // Expiración exacta de 1 hora
+
+                    // FIX 1: Lógica de Tiempo Exacto
+                    if (ahora < limiteInferior) {
+                        timer.innerHTML = '<span style="color: #6BE0FF;">Esperando hora de recogida...</span>';
+                        timer.style.border = "1px solid #6BE0FF";
+                    } 
+                    else if (ahora >= limiteSuperior) {
+                        timer.innerHTML = '<span style="color: #FF5A5A;">VENCIDO (Expira)</span>';
                         timer.style.border = "1px solid #FF5A5A";
-                    } else {
+                    } 
+                    else {
+                        const diff = limiteSuperior - ahora;
                         const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                         const s = Math.floor((diff % (1000 * 60)) / 1000);
                         // Formato mm:ss

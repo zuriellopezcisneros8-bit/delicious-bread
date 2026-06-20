@@ -36,7 +36,8 @@
         .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .order-id { color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
         
-        .badge { font-size: 0.6rem; padding: 5px 10px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); text-transform: uppercase; border-radius: 2px; white-space: nowrap; }
+        .badges-container { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .badge { font-size: 0.6rem; padding: 5px 10px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); text-transform: uppercase; border-radius: 2px; white-space: nowrap; font-weight: bold; }
         
         /* Colores dinámicos sincronizados con el admin */
         .badge-pendiente { border-color: #8b7355; color: #8b7355; background: rgba(139, 115, 85, 0.05); }
@@ -45,6 +46,10 @@
         .badge-entregado { border-color: #333; color: #777; background: rgba(34, 34, 34, 0.3); }
         .badge-flash { border-color: var(--luxury-gold); color: var(--card-black); background: var(--luxury-gold); }
         .badge-cancelado { border-color: #ff4d4d; color: #ff4d4d; background: rgba(255, 77, 77, 0.05); }
+
+        /* Estilos Financieros */
+        .badge-pagado { border-color: #6BD968; color: #6BD968; background: rgba(107, 217, 104, 0.1); }
+        .badge-no-pagado { border-color: #d9884a; color: #d9884a; background: rgba(217, 136, 74, 0.05); }
         
         .flash-tag { font-size: 0.55rem; padding: 2px 5px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); border-radius: 2px; }
 
@@ -54,7 +59,8 @@
         @media (max-width: 600px) {
             h1 { font-size: 1.8rem; letter-spacing: 3px; }
             .order-header { flex-direction: column; align-items: flex-start; }
-            .badge { width: 100%; text-align: center; }
+            .badges-container { width: 100%; justify-content: flex-start; }
+            .badge { text-align: center; }
             .profile-card p { font-size: 0.85rem; }
         }
     </style>
@@ -87,21 +93,29 @@
                     {% endif %}
                 </span>
                 
-                {% if pedido.estado == 'Pendiente' %}
-                    <span class="badge badge-pendiente">En Fila</span>
-                {% elif pedido.estado == 'Horneando' %}
-                    <span class="badge badge-horneando">En Hornos</span>
-                {% elif pedido.estado == 'Listo' %}
-                    <span class="badge badge-listo">Listo en Delicious Bread</span>
-                {% elif pedido.estado == 'Entregado' %}
-                    <span class="badge badge-entregado">Entregado</span>
-                {% elif pedido.estado == 'Venta Flash Excedente' %}
-                    <span class="badge badge-flash">Reservado (Flash)</span>
-                {% elif pedido.estado == 'Cancelado' %}
-                    <span class="badge badge-cancelado">Expirado</span>
-                {% else %}
-                    <span class="badge badge-pendiente">{{ pedido.estado }}</span>
-                {% endif %}
+                <div class="badges-container">
+                    {% if pedido.pagado %}
+                        <span class="badge badge-pagado">✅ PAGADO</span>
+                    {% else %}
+                        <span class="badge badge-no-pagado">⏳ PAGO PENDIENTE</span>
+                    {% endif %}
+
+                    {% if pedido.estado == 'Pendiente' %}
+                        <span class="badge badge-pendiente">En Fila</span>
+                    {% elif pedido.estado == 'Horneando' %}
+                        <span class="badge badge-horneando">En Hornos</span>
+                    {% elif pedido.estado == 'Listo' %}
+                        <span class="badge badge-listo">Listo en Delicious Bread</span>
+                    {% elif pedido.estado == 'Entregado' %}
+                        <span class="badge badge-entregado">Entregado</span>
+                    {% elif pedido.estado == 'Venta Flash Excedente' %}
+                        <span class="badge badge-flash">Reservado (Flash)</span>
+                    {% elif pedido.estado == 'Cancelado' %}
+                        <span class="badge badge-cancelado">Expirado</span>
+                    {% else %}
+                        <span class="badge badge-pendiente">{{ pedido.estado }}</span>
+                    {% endif %}
+                </div>
             </div>
             
             <div class="order-body">
@@ -119,12 +133,15 @@
 
             {% if pedido.metodo_pago == 'Transferencia' and pedido.estado != 'Entregado' and pedido.estado != 'Cancelado' %}
             <div class="file-upload-section">
-                {% if pedido.comprobante_url %}
-                    <p style="color: var(--luxury-gold); font-size: 0.8rem;">✓ Comprobante recibido</p>
+                {% if pedido.pagado %}
+                    <p style="color: #6BD968; font-size: 0.8rem; font-weight: bold; text-align: center; letter-spacing: 1px;">✓ TRANSACCIÓN VALIDADA POR EL ATELIER</p>
+                {% elif pedido.comprobante_url %}
+                    <p style="color: var(--luxury-gold); font-size: 0.8rem; text-align: center; letter-spacing: 1px;">✓ Comprobante enviado. Entró en proceso de revisión...</p>
                 {% else %}
                     <form action="{{ url_for('subir_comprobante', pedido_id=pedido.id) }}" method="POST" enctype="multipart/form-data">
+                        <label style="display: block; font-size: 0.75rem; color: var(--luxury-gold); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Evidencia de Transferencia:</label>
                         <input type="file" name="comprobante_pago" required accept="image/*" style="color: white; font-size: 0.7rem;">
-                        <button type="submit" class="btn-nav" style="padding: 5px 10px; cursor: pointer; display: block; margin-top: 10px;">Subir Pago</button>
+                        <button type="submit" class="btn-nav" style="padding: 8px 15px; cursor: pointer; display: block; margin-top: 10px; width: 100%; border-color: var(--luxury-gold); color: var(--luxury-gold);">Anexar Comprobante</button>
                     </form>
                 {% endif %}
             </div>

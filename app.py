@@ -110,6 +110,7 @@ class Pedido(db.Model):
     detalles = db.relationship('DetallePedido', backref='pedido', lazy=True)
     comprobante_url = db.Column(db.String(500), nullable=True)
     es_relampago = db.Column(db.Boolean, default=False)
+    pagado = db.Column(db.Boolean, default=False)
 
 class DetallePedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1101,6 +1102,20 @@ def actualizar_estado(pedido_id):
     return redirect(url_for('admin'))
 
 
+@app.route('/admin/pedido/<int:pedido_id>/pagar', methods=['POST'])
+def marcar_pagar_pedido(pedido_id):
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('admin_login'))
+    
+    pedido = Pedido.query.get_or_404(pedido_id)
+    # Cambiamos el estado a pagado
+    pedido.pagado = True
+    db.session.commit()
+
+    # Sincronización inmediata con ZMARTHNET
+    socketio.emit('actualizacion_global')
+
+    return redirect(url_for('admin'))
 
 # ================= CIBERSEGURIDAD BÓVEDA DE USUARIOS =================
 @app.route('/admin/api/usuarios', methods=['POST'])
