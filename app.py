@@ -1,3 +1,6 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
@@ -9,8 +12,7 @@ import string
 import os
 import re
 from datetime import datetime, timedelta
-import eventlet
-eventlet.monkey_patch()
+
 
 import cloudinary
 import cloudinary.uploader
