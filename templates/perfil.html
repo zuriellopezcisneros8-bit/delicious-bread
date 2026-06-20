@@ -24,20 +24,22 @@
         h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 10px; }
         
         .nav-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin-top: 20px; }
-        .btn-nav { color: var(--text-dark); text-decoration: none; border: 1px solid var(--text-dark); padding: 10px 20px; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; text-align: center; }
+        .btn-nav { color: var(--text-dark); text-decoration: none; border: 1px solid var(--text-dark); padding: 10px 20px; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; text-align: center; border-radius: 6px; transition: 0.3s; }
         .btn-nav:hover { background: var(--text-dark); color: var(--bg-beige); }
 
         .container { max-width: 800px; margin: 0 auto; }
-        .profile-card { background: var(--card-black); padding: 30px; border-radius: 4px; margin-bottom: 40px; color: var(--skin-beige); text-align: center; }
+        
+        /* Bordes redondeados aplicados a las tarjetas */
+        .profile-card { background: var(--card-black); padding: 30px; border-radius: 15px; margin-bottom: 40px; color: var(--skin-beige); text-align: center; }
         .profile-card h3 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 10px; color: var(--luxury-gold); }
         
-        .order-card { background: var(--card-black); border: 1px solid var(--border-fino); padding: 25px; margin-bottom: 20px; color: var(--skin-beige); }
+        .order-card { background: var(--card-black); border: 1px solid var(--border-fino); padding: 25px; margin-bottom: 25px; color: var(--skin-beige); border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
-        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        .order-id { color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 15px; }
+        .order-id { color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.2rem; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
         
         .badges-container { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-        .badge { font-size: 0.6rem; padding: 5px 10px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); text-transform: uppercase; border-radius: 2px; white-space: nowrap; font-weight: bold; }
+        .badge { font-size: 0.65rem; padding: 6px 12px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); text-transform: uppercase; border-radius: 6px; white-space: nowrap; font-weight: 600; letter-spacing: 0.5px; }
         
         /* Colores dinámicos sincronizados con el admin */
         .badge-pendiente { border-color: #8b7355; color: #8b7355; background: rgba(139, 115, 85, 0.05); }
@@ -51,10 +53,58 @@
         .badge-pagado { border-color: #6BD968; color: #6BD968; background: rgba(107, 217, 104, 0.1); }
         .badge-no-pagado { border-color: #d9884a; color: #d9884a; background: rgba(217, 136, 74, 0.05); }
         
-        .flash-tag { font-size: 0.55rem; padding: 2px 5px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); border-radius: 2px; }
+        /* Etiqueta Flash Mejorada */
+        .flash-tag { font-size: 0.75rem; padding: 4px 8px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); border-radius: 6px; font-weight: 600; letter-spacing: 1px; display: inline-flex; align-items: center; }
 
         .file-upload-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #333; }
-        .file-upload-section input[type="file"] { width: 100%; margin-bottom: 10px; }
+        
+        /* Estilo elegante para el input de archivo */
+        .file-upload-section input[type="file"] { width: 100%; margin-bottom: 15px; color: var(--skin-beige); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; outline: none; }
+        
+        /* Modificando el botón interno del input file */
+        .file-upload-section input[type="file"]::file-selector-button {
+            background-color: transparent;
+            color: var(--luxury-gold);
+            border: 1px solid var(--luxury-gold);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-right: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-section input[type="file"]::file-selector-button:hover {
+            background-color: var(--luxury-gold);
+            color: var(--card-black);
+        }
+
+        .btn-anexar {
+            background-color: transparent;
+            color: var(--luxury-gold);
+            border: 1px solid var(--luxury-gold);
+            padding: 12px 15px;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: 0.3s;
+            font-family: 'Montserrat', sans-serif;
+            display: block;
+            text-align: center;
+        }
+
+        .btn-anexar:hover {
+            background-color: var(--luxury-gold);
+            color: var(--card-black);
+        }
 
         @media (max-width: 600px) {
             h1 { font-size: 1.8rem; letter-spacing: 3px; }
@@ -94,12 +144,16 @@
                 </span>
                 
                 <div class="badges-container">
-                    {% if pedido.pagado %}
-                        <span class="badge badge-pagado">✅ PAGADO</span>
-                    {% else %}
-                        <span class="badge badge-no-pagado">⏳ PAGO PENDIENTE</span>
+                    <!-- Estado de Pago Financiero: Se oculta si el pedido está expirado/cancelado -->
+                    {% if pedido.estado != 'Cancelado' %}
+                        {% if pedido.pagado %}
+                            <span class="badge badge-pagado">✅ PAGADO</span>
+                        {% else %}
+                            <span class="badge badge-no-pagado">⏳ PAGO PENDIENTE</span>
+                        {% endif %}
                     {% endif %}
 
+                    <!-- Estado Operativo -->
                     {% if pedido.estado == 'Pendiente' %}
                         <span class="badge badge-pendiente">En Fila</span>
                     {% elif pedido.estado == 'Horneando' %}
@@ -120,35 +174,36 @@
             
             <div class="order-body">
                 {% for detalle in pedido.detalles %}
-                    <p style="margin-bottom: 5px; font-size: 0.9rem;">
-                        <span style="color: #999;">{{ detalle.cantidad }}x</span> 
+                    <p style="margin-bottom: 8px; font-size: 0.95rem;">
+                        <span style="color: #999; font-weight: 600;">{{ detalle.cantidad }}x</span> 
                         <span>{{ detalle.producto.nombre }}</span>
                     </p>
                 {% endfor %}
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 15px;">
-                    <span style="font-size: 0.75rem; color: #777; text-transform: uppercase;">⏱️ {{ pedido.horario_recogida }} <br>💳 {{ pedido.metodo_pago }}</span>
-                    <p style="font-weight: bold; color: var(--luxury-gold); font-size: 1.1rem;">Total: ${{ "%.2f"|format(pedido.monto_total) }}</p>
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
+                    <span style="font-size: 0.75rem; color: #888; text-transform: uppercase; line-height: 1.6;">⏱️ {{ pedido.horario_recogida }} <br>💳 {{ pedido.metodo_pago }}</span>
+                    <p style="font-weight: 600; color: var(--luxury-gold); font-size: 1.2rem;">Total: ${{ "%.2f"|format(pedido.monto_total) }}</p>
                 </div>
             </div>
 
+            <!-- Interfaz de Carga de Comprobante -->
             {% if pedido.metodo_pago == 'Transferencia' and pedido.estado != 'Entregado' and pedido.estado != 'Cancelado' %}
             <div class="file-upload-section">
                 {% if pedido.pagado %}
-                    <p style="color: #6BD968; font-size: 0.8rem; font-weight: bold; text-align: center; letter-spacing: 1px;">✓ TRANSACCIÓN VALIDADA POR EL ATELIER</p>
+                    <p style="color: #6BD968; font-size: 0.8rem; font-weight: 600; text-align: center; letter-spacing: 1.5px;">✓ TRANSACCIÓN VALIDADA POR EL ATELIER</p>
                 {% elif pedido.comprobante_url %}
                     <p style="color: var(--luxury-gold); font-size: 0.8rem; text-align: center; letter-spacing: 1px;">✓ Comprobante enviado. Entró en proceso de revisión...</p>
                 {% else %}
                     <form action="{{ url_for('subir_comprobante', pedido_id=pedido.id) }}" method="POST" enctype="multipart/form-data">
-                        <label style="display: block; font-size: 0.75rem; color: var(--luxury-gold); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Evidencia de Transferencia:</label>
-                        <input type="file" name="comprobante_pago" required accept="image/*" style="color: white; font-size: 0.7rem;">
-                        <button type="submit" class="btn-nav" style="padding: 8px 15px; cursor: pointer; display: block; margin-top: 10px; width: 100%; border-color: var(--luxury-gold); color: var(--luxury-gold);">Anexar Comprobante</button>
+                        <label style="display: block; font-size: 0.75rem; color: var(--luxury-gold); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500;">Evidencia de Transferencia:</label>
+                        <input type="file" name="comprobante_pago" required accept="image/*">
+                        <button type="submit" class="btn-anexar">Anexar Comprobante</button>
                     </form>
                 {% endif %}
             </div>
             {% endif %}
         </div>
         {% else %}
-        <div style="text-align: center; padding: 40px 20px; border: 1px dashed var(--border-fino); color: #666;">
+        <div style="text-align: center; padding: 40px 20px; border: 1px dashed var(--border-fino); color: #666; border-radius: 15px;">
             <p>No existen operaciones en su registro actual.</p>
         </div>
         {% endfor %}
