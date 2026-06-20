@@ -1,0 +1,2475 @@
+import eventlet
+eventlet.monkey_patch()
+
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from flask_socketio import SocketIO, emit
+import random
+import string
+import os
+import re
+from datetime import datetime, timedelta
+
+
+import cloudinary
+import cloudinary.uploader
+
+app = Flask(__name__)
+
+socketio = SocketIO(app, cors_allowed_origins="*") 
+
+# ================= CONFIGURACIÓN DE CLOUDINARY =================
+cloudinary.config(
+    cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key = os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret = os.environ.get('CLOUDINARY_API_SECRET')
+)
+
+def subir_a_cloudinary(file):
+    if file and file.filename != '':
+        upload_result = cloudinary.uploader.upload(file)
+        return upload_result.get("secure_url")
+    return None
+
+# ================= CONFIGURACIÓN DE BASE DE DATOS =================
+db_uri = os.environ.get('DATABASE_URL')
+
+if not db_uri:
+    db_uri = 'postgresql://tu_usuario:tu_contraseña@tu_servidor.neon.tech/neondb?sslmode=require'
+
+# Corrección automática de dialecto para SQLAlchemy
+if db_uri and db_uri.startswith("postgres://"):
+    db_uri = db_uri.replace("postgres://", "postgresql://", 1)
+
+# Eliminación de channel_binding para evitar fallos de descifrado SSL en Render + Neon
+if db_uri:
+    db_uri = db_uri.replace("&channel_binding=require", "").replace("?channel_binding=require", "?")
+
+print("DATABASE_URL:", db_uri)
+print("Conectando a Neon...")
+
+app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# 1. Usar SQLAlchemy Engine Options & 2. Configurar el Pool
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,
+    'pool_recycle': 300,
+    'pool_size': 5,
+    'max_overflow': 10
+}
+
+app.secret_key = 'zmarth_executive_secure_key_2026'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=180)
+
+
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
+
+db = SQLAlchemy(app)
+
+# 5. Función de Diagnóstico de Conexión
+def verificar_db():
+    try:
+        from sqlalchemy import text
+        db.session.execute(text('SELECT 1'))
+        print("✓ Base conectada")
+    except Exception as e:
+        print(f"✗ Error de conexión: {e}")
+
+# ================= MODELOS DE BASE DE DATOS =================
+
+class Usuario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    telefono = db.Column(db.String(15), unique=True, nullable=False)
+    correo = db.Column(db.String(100), unique=True, nullable=False)
+    contrasena = db.Column(db.String(255), nullable=False)
+    pedidos = db.relationship('Pedido', backref='cliente', lazy=True)
+
+class Producto(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    descripcion = db.Column(db.Text, nullable=True)
+    precio = db.Column(db.Float, nullable=False)
+    imagen_url = db.Column(db.String(500), nullable=True)
+    disponible = db.Column(db.Boolean, default=True)
+    stock_sobrante = db.Column(db.Integer, default=0)
+
+class Pedido(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    horario_recogida = db.Column(db.String(20), nullable=False)
+    metodo_pago = db.Column(db.String(20), nullable=False)
+    monto_total = db.Column(db.Float, nullable=False)
+    estado = db.Column(db.String(30), default='Pendiente')
+    codigo_recogida = db.Column(db.String(10), unique=True, nullable=False)
+    fecha_pedido = db.Column(db.DateTime, default=datetime.utcnow)
+    detalles = db.relationship('DetallePedido', backref='pedido', lazy=True)
+    comprobante_url = db.Column(db.String(500), nullable=True)
+    es_relampago = db.Column(db.Boolean, default=False)
+    pagado = db.Column(db.Boolean, default=False)
+
+class DetallePedido(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    pedido_id = db.Column(db.Integer, db.ForeignKey('pedido.id'), nullable=False)
+    producto_id = db.Column(db.Integer, db.ForeignKey('producto.id'), nullable=False)
+    cantidad = db.Column(db.Integer, nullable=False)
+    producto = db.relationship('Producto')
+
+class DiaInhabil(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fecha = db.Column(db.Date, unique=True, nullable=False)
+    motivo = db.Column(db.String(200), nullable=True)
+
+class Anuncio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(100), nullable=True)
+    imagen_url = db.Column(db.String(500), nullable=False)
+    enlace_destino = db.Column(db.String(500), nullable=True)
+    activo = db.Column(db.Boolean, default=True)
+
+class PedidoEspecial(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre_contacto = db.Column(db.String(100), nullable=False)
+    telefono_contacto = db.Column(db.String(15), nullable=False)
+    correo_contacto = db.Column(db.String(100), nullable=False)
+    metodo_entrega = db.Column(db.String(20), nullable=False)  
+    direccion_texto = db.Column(db.String(300), nullable=True)
+    numero_casa = db.Column(db.String(20), nullable=True)
+    referencias = db.Column(db.Text, nullable=True)
+    latitud = db.Column(db.Float, nullable=True)
+    longitud = db.Column(db.Float, nullable=True)
+    monto_total = db.Column(db.Float, nullable=False)
+    monto_anticipo = db.Column(db.Float, nullable=False)  
+    comprobante_url = db.Column(db.String(500), nullable=True)
+    anticipo_validado = db.Column(db.Boolean, default=False)
+    estado = db.Column(db.String(50), default='Pendiente de Validación')  
+    codigo_recogida = db.Column(db.String(15), unique=True, nullable=False)
+    fecha_evento = db.Column(db.String(50), nullable=False)
+    fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
+    detalles = db.relationship('DetallePedidoEspecial', backref='pedido_especial', lazy=True)
+
+class DetallePedidoEspecial(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    pedido_especial_id = db.Column(db.Integer, db.ForeignKey('pedido_especial.id'), nullable=False)
+    producto_id = db.Column(db.Integer, db.ForeignKey('producto.id'), nullable=False)
+    cantidad = db.Column(db.Integer, nullable=False)
+    producto = db.relationship('Producto')
+
+def generar_codigo():
+    caracteres = string.ascii_uppercase + string.digits
+    return f"DB-{''.join(random.choice(caracteres) for _ in range(4))}"
+
+def generar_codigo_especial():
+    caracteres = string.ascii_uppercase + string.digits
+    return f"ZCW-EV-{''.join(random.choice(caracteres) for _ in range(5))}"
+
+# ================= IA ZEDITH =================
+
+import os
+import re
+import random
+import traceback
+import google.generativeai as genai
+from flask import request, jsonify, session
+
+# ================= CARGA DE LLAVES =================
+
+API_KEYS = []
+
+for i in range(1, 51):
+    key = os.environ.get(f'GEMINI_KEY_{i}')
+    if key:
+        API_KEYS.append(key)
+
+print("===================================")
+print(f"LLAVES GEMINI DETECTADAS: {len(API_KEYS)}")
+print("===================================")
+
+# ================= PROMPT BASE =================
+
+system_instruction_base = """
+Eres Zedith, la asistente ejecutiva de inteligencia artificial de 'Delicious Bread'.
+
+Tu tono es sofisticado, cálido, profesional, seguro y apasionado.
+
+CONOCIMIENTO CORPORATIVO:
+
+1. Render:
+Si preguntan por pantalla negra o "render ejecutando", es nuestro servicio de hospedaje web.
+
+2. Seguridad:
+La navegación está protegida por ZCAWS que significa ZMARTH CIBERSECURITY AND ADVANCED WEB SERVICES la cual tambien es una compañia nuestra, del grupo ZMARTH.
+
+3. Creador:
+Zuriel Zmarth, polímata tecnológico experto en ciberseguridad software, biotecnologia e IA.
+
+4. CONFIDENCIALIDAD:
+Si preguntan cuánto hemos ganado, contraseñas o secretos, responde:
+
+"Lo siento, por protocolos de ciberseguridad esa información es confidencial.
+
+5. Asesor Humano
+Si alguien quiere hablar con un humano o un asesor no virtual solo si el usurio lo pide le dices que para hablar con un humano se comunique solamente via whatsApp al numero "4428534583"
+
+6.​Instrucciones de Funcionamiento: Sistema de Pedidos "Delicious Bread"
+​Horario de Pedidos: El sistema de pedidos está habilitado diariamente desde la 1:00 AM hasta las 4:00 PM.
+​Bloqueo del Sistema: Al llegar las 4:00 PM, el sistema bloquea automáticamente la selección de artículos, impidiendo la creación de nuevos pedidos. Si el botón de selección está deshabilitado, indica que se encuentra fuera del horario de operación.
+​Venta de Excedentes: Si al finalizar el horario principal existen productos sobrantes, el sistema se reactiva a partir de las 5:00 PM, permitiendo realizar pedidos sobre el inventario restante.
+​Proceso de Pago y Validación: El método de pago es mediante transferencia bancaria o en efectivo en tienda. Para completar el proceso, es obligatorio presentar el comprobante de pago (ticket) en la tienda al momento de recoger los productos.
+​Recogida de Pedidos: Los horarios de recogida inician a las 5:00 PM, asegurando que el pan esté recién horneado y caliente. Los clientes pueden seleccionar su horario de recogida dentro del rango de 5:00 PM a 7:00 PM.
+​Recomendación de Calidad: Se recomienda acudir puntualmente a recoger el pedido dentro del horario establecido, ya que después de las 6:00 PM o 7:00 PM el pan pierde su temperatura original y ya no se encuentra recién hecho.
+
+7. DELIVERY
+Instrucción de Atención al Cliente: Políticas de Entrega
+​Método Actual: Actualmente, el único método de entrega habilitado es el pick-up (recogida en tienda). Es indispensable que el cliente presente su número o código de pedido para retirar sus productos.
+​Protocolo ante Solicitudes de Delivery: Si un usuario consulta por servicios de entrega a domicilio, se debe informar de manera directa que el servicio no se encuentra disponible bajo esa modalidad actualmente.
+​Proyecto Futuro - Drones (ZCAWS Technologies): Para clientes interesados en innovaciones futuras, se debe explicar que estamos desarrollando un sistema de drones autónomos de última generación, bajo la dirección y respaldo de ZCWS Technologies. Este sistema integrará inteligencia artificial avanzada para las entregas, sin embargo, el proyecto continúa en fase de investigación y desarrollo, por lo que su implementación tomará tiempo.
+​Posibilidad de Logística Humana: Es posible mencionar que estamos evaluando la probabilidad de integrar una red de repartidores humanos para las entregas a domicilio. No obstante, es fundamental aclarar que esta opción no es oficial ni está confirmada, ya que permanece bajo análisis.
+​Prioridad de Comunicación: El desarrollo oficial y confirmado por la organización es el sistema de drones autónomos; cualquier otra modalidad de entrega debe ser tratada como una posibilidad no garantizada, cualquier cambio o actualizacion se avisara por anuncio dentro de la app.
+
+8. UBICACION
+Estamos ubicados en el nuevo desarrollo de casas, en la calle venustiano carranza #64 
+
+9. Contexto Operativo para Zedith: Gestión de "Adquisición Relámpago"
+​Como asistente de 'Delicious Bread', debes gestionar las solicitudes de disponibilidad inmediata basándote estrictamente en el estado de la Adquisición Relámpago. Utiliza los siguientes parámetros para guiar al cliente:
+​El Significado (Disponibilidad Inmediata): La "Adquisición Relámpago" significa una sola cosa: hay producto listo para entrega inmediata en la boutique. Cuando esta opción se activa en el sistema, aparecerá un indicador con el número exacto de unidades disponibles en tiempo real (por ejemplo: "12 unidades" o "1 unidad").
+​El Origen (¿Por qué hay stock extra?): Si el cliente pregunta, explícale que, para garantizar la perfección en nuestra producción artesanal, siempre horneamos un margen adicional de seguridad. Por ejemplo, si tenemos 90 pedidos programados, horneamos 100 piezas. Esas piezas excedentes de calidad premium son las que se liberan en esta modalidad.
+​Horarios de Activación (Impredecibles): Aunque es muy común que esta ventana se active en la recta final del día (a partir de las 5:00 p.m. hasta las 7:00 p.m. o más tarde), la Adquisición Relámpago puede aparecer a cualquier hora del día sin excepción (incluso al mediodía), dependiendo del flujo y excedente de los hornos.
+​Protocolo Estricto de Atención (Pedidos al Instante): Si un cliente te contacta buscando realizar un pedido al instante o exige disponibilidad inmediata, tu directiva es la siguiente:
+​Verificación: Indícale que revise si la sección de "Adquisición Relámpago" está activa en el sistema.
+​Si NO está activa: Infórmale con gran cortesía y firmeza que no hay disponibilidad inmediata en este momento. En este escenario, la única manera de adquirir nuestros productos es realizando un pedido anticipado (pre-orden) en los horarios regulares de recepción.
+​Si SÍ está activa: Anímalo a proceder con la compra y el pago de manera inmediata para asegurar sus piezas, recordándole que el inventario se muestra en tiempo real y, al ser excedente limitado, se agota rápidamente.
+
+10. ​Debes actuar como embajadora de la visión tecnológica de The Zmarth Organization. Si surge el tema o si un cliente muestra interés en tecnología avanzada, soluciones de software o necesidades de compras digitales, infórmale sobre nuestras dos grandes divisiones en desarrollo:
+​Smart Market (Plataforma E-commerce Avanzada):
+​Visión: Explica que estamos construyendo una plataforma integral tipo "Amazon" diseñada para el mercado moderno, enfocada en la distribución de productos de primera necesidad, incluyendo abarrotes, cremería y salchichonería.
+​Innovación: Destaca que el sistema integrará tecnología de entrega con drones de inteligencia artificial, alineándonos con las tendencias globales de logística de última milla.
+​Estado: Informa que el sistema está actualmente en desarrollo y que proyectamos el inicio de operaciones en los próximos meses.
+​ZCAWS Technologies (División de Desarrollo y Ciberseguridad):
+​Alcance: Somos la compañía detrás de la tecnología que el cliente está presenciando. Desarrollamos software a medida, aplicaciones, sistemas de ciberseguridad robustos y puntos de venta especializados.
+​Servicio: Si un cliente pregunta quién creó nuestros sistemas o muestra interés en adquirir soluciones tecnológicas para sus propios proyectos, explícale que somos una empresa especializada en servicios web digitales, ciberseguridad de alto nivel y desarrollo de software.
+​Protocolo de Contacto (Call to Action):
+​Para cualquier duda, interés en alianzas, o solicitud de información sobre nuestros servicios de desarrollo (software o ciberseguridad), redirige al cliente directamente al canal oficial:
+​WhatsApp: 4427972122.
+​Tono: Mantén siempre un discurso visionario, profesional y seguro. Somos una compañía joven, pero altamente avanzada en el ecosistema digital.
+"""
+
+# ================= API CHAT =================
+
+@app.route('/api/chat', methods=['POST'])
+def chat_zedith():
+
+    print("\n================ NUEVA CONSULTA ================\n")
+
+    try:
+        data = request.json
+
+        print("JSON RECIBIDO:")
+        print(data)
+
+        user_message = data.get('message', '').strip()
+
+        print("MENSAJE:")
+        print(user_message)
+
+        if not user_message:
+            return jsonify({
+                "error": "No hay mensaje"
+            }), 400
+
+        # ================= HISTORIAL =================
+
+        if 'zedith_historial' not in session:
+            session['zedith_historial'] = []
+            es_primer_mensaje = True
+        else:
+            es_primer_mensaje = len(session['zedith_historial']) == 0
+
+        # ================= NOMBRE CLIENTE =================
+
+        nombre_cliente = "Cliente"
+
+        if 'usuario_id' in session:
+            # 6. Modificación del endpoint y control preventivo de errores 500
+            try:
+                usuario = db.session.get(
+                    Usuario,
+                    session['usuario_id']
+                )
+                if usuario:
+                    nombre_cliente = usuario.nombre
+            except Exception as e:
+                print(f"Error recuperando usuario (Exception manejada de SQLAlchemy): {e}")
+                # 7. Rollback y remoción preventiva en fallos
+                db.session.rollback()
+                db.session.remove()
+                nombre_cliente = "Cliente"
+
+        # ================= PRODUCTOS =================
+
+        try:
+            productos_db = Producto.query.all()
+            inventario_lista = [
+                f"- {p.nombre}: ${p.precio} MXN ({'Disponible' if p.disponible else 'Agotado'})"
+                for p in productos_db
+            ]
+        except Exception as e:
+            print(f"Error recuperando productos: {e}")
+            db.session.rollback()
+            db.session.remove()
+            inventario_lista = []
+
+        inventario_texto = "\n".join(inventario_lista)
+
+        # ================= RASTREO DE PEDIDOS =================
+
+        estado_pedido = "El cliente no ha consultado ningún pedido específico."
+
+        codigo_match = re.search(
+            r'(DB-[A-Z0-9]{4}|ZCW-EV-[A-Z0-9]{5})',
+            user_message,
+            re.IGNORECASE
+        )
+
+        if codigo_match:
+
+            codigo = codigo_match.group(0).upper()
+
+            try:
+                pedido = Pedido.query.filter_by(
+                    codigo_recogida=codigo
+                ).first()
+
+                if not pedido:
+                    pedido = PedidoEspecial.query.filter_by(
+                        codigo_recogida=codigo
+                    ).first()
+
+                if pedido:
+                    estado_pedido = (
+                        f"El pedido {codigo} "
+                        f"se encuentra en estado: {pedido.estado}"
+                    )
+                else:
+                    estado_pedido = (
+                        f"El código {codigo} "
+                        f"no existe en la base de datos."
+                    )
+            except Exception as e:
+                print(f"Error rastreando pedido: {e}")
+                db.session.rollback()
+                db.session.remove()
+                estado_pedido = f"No fue posible consultar el estado del código {codigo} temporalmente."
+
+        # ================= HISTORIAL TEXTO =================
+
+        historial_texto = ""
+
+        if session['zedith_historial']:
+
+            historial_texto += "\n[HISTORIAL]\n"
+
+            for msg in session['zedith_historial']:
+
+                historial_texto += (
+                    f"{msg['role']}: "
+                    f"{msg['content']}\n"
+                )
+
+        regla_saludo = (
+            f"ESTRICTO: Es el primer mensaje. "
+            f"Saluda a {nombre_cliente}."
+            if es_primer_mensaje
+            else
+            "Continúa la conversación normalmente."
+        )
+
+        prompt_enriquecido = f"""
+{historial_texto}
+
+[DATOS EN TIEMPO REAL]
+
+Cliente: {nombre_cliente}
+
+Estado Pedido:
+{estado_pedido}
+
+Catálogo:
+{inventario_texto}
+
+[INSTRUCCIÓN]
+
+{regla_saludo}
+
+Cliente:
+{user_message}
+
+Zedith:
+"""
+
+        print("\n========== PROMPT ==========\n")
+        print(prompt_enriquecido[:3000])
+
+        # ================= VALIDACIÓN DE LLAVES =================
+
+        if not API_KEYS:
+
+            print("ERROR: NO SE DETECTARON LLAVES GEMINI")
+
+            return jsonify({
+                "reply": "Sistemas IA fuera de línea. No se encontraron llaves."
+            }), 500
+
+        llaves_disponibles = API_KEYS.copy()
+        random.shuffle(llaves_disponibles)
+
+        intentos_maximos = min(
+            3,
+            len(llaves_disponibles)
+        )
+
+        print(f"INTENTOS MÁXIMOS: {intentos_maximos}")
+
+        # ================= GENERACIÓN =================
+
+        for i in range(intentos_maximos):
+
+            try:
+
+                print(f"\nINTENTO #{i+1}")
+
+                key_actual = llaves_disponibles[i]
+
+                print(
+                    f"KEY TERMINA EN: "
+                    f"{key_actual[-6:]}"
+                )
+
+                genai.configure(
+                    api_key=key_actual
+                )
+
+                model = genai.GenerativeModel(
+                    model_name="gemini-2.5-flash",
+                    system_instruction=system_instruction_base
+                )
+
+                print("ENVIANDO A GEMINI...")
+
+                response = model.generate_content(
+                    prompt_enriquecido
+                )
+
+                print("RESPUESTA RECIBIDA")
+
+                print(response)
+
+                if not hasattr(response, "text"):
+
+                    print("ERROR: response.text NO EXISTE")
+
+                    continue
+
+                respuesta_texto = response.text.strip()
+
+                print("\nRESPUESTA IA:")
+                print(respuesta_texto)
+
+                historial_actual = session['zedith_historial']
+
+                historial_actual.append({
+                    "role": "Cliente",
+                    "content": user_message
+                })
+
+                historial_actual.append({
+                    "role": "Zedith",
+                    "content": respuesta_texto
+                })
+
+                session['zedith_historial'] = historial_actual[-4:]
+
+                session.modified = True
+
+                return jsonify({
+                    "reply": respuesta_texto
+                })
+
+            except Exception as e:
+
+                print("\n====================================")
+                print(f"ERROR EN INTENTO #{i+1}")
+                print(type(e).__name__)
+                print(str(e))
+                print("====================================")
+
+                traceback.print_exc()
+
+                continue
+
+        print("\nTODOS LOS INTENTOS FALLARON\n")
+
+        return jsonify({
+            "reply": "Disculpe, mis sistemas de IA están experimentando una incidencia temporal."
+        }), 500
+
+    except Exception as e:
+
+        print("\n=========== ERROR GLOBAL ===========")
+        traceback.print_exc()
+        print("====================================")
+
+        return jsonify({
+            "reply": "Se produjo un error interno del sistema."
+        }), 500
+
+# --- CÓDIGO CORREGIDO ---
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        telefono = request.form.get('telefono')
+        correo = request.form.get('correo')
+        contrasena = request.form.get('contrasena')
+        
+        # ERROR DETECTADO AQUÍ: 'telemetry' no existe, debe ser 'telefono'
+        existe_usuario = Usuario.query.filter((Usuario.correo == correo) | (Usuario.telefono == telefono)).first()
+        
+        if existe_usuario:
+            flash('El correo o teléfono ya se encuentra registrado.', 'error')
+            return redirect(url_for('registro'))
+            
+        contrasena_hash = generate_password_hash(contrasena)
+        nuevo_usuario = Usuario(nombre=nombre, telefono=telefono, correo=correo, contrasena=contrasena_hash)
+        db.session.add(nuevo_usuario)
+        db.session.commit()
+        
+        session['usuario_id'] = nuevo_usuario.id
+        return redirect(url_for('index'))
+        
+    return render_template('registro.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        correo = request.form.get('correo')
+        contrasena = request.form.get('contrasena')
+        
+        usuario = Usuario.query.filter_by(correo=correo).first()
+        
+        if usuario and check_password_hash(usuario.contrasena, contrasena):
+            session.permanent = True
+            session['usuario_id'] = usuario.id
+            return redirect(url_for('index'))
+        else:
+            flash('Credenciales incorrectas. Verifique sus datos.', 'error')
+            return redirect(url_for('login'))
+            
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('usuario_id', None)
+    return redirect(url_for('login'))
+
+@app.route('/', methods=['GET'])
+def index():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+        
+    usuario = db.session.get(Usuario, session['usuario_id'])
+    
+    if not usuario:
+        session.pop('usuario_id', None)
+        return redirect(url_for('login'))
+        
+    productos = Producto.query.all()
+    anuncios = Anuncio.query.filter_by(activo=True).all()
+    
+    productos_sobrantes = [p for p in productos if p.stock_sobrante > 0]
+    
+    hoy = datetime.utcnow().date()
+    dia_bloqueado = DiaInhabil.query.filter_by(fecha=hoy).first()
+    tienda_abierta = False if dia_bloqueado else True
+    motivo_cierre = dia_bloqueado.motivo if dia_bloqueado else ""
+    
+    return render_template('index.html', 
+                           productos=productos, 
+                           productos_sobrantes=productos_sobrantes,
+                           anuncios=anuncios,
+                           usuario=usuario, 
+                           nombre_usuario=usuario.nombre,
+                           tienda_abierta=tienda_abierta,
+                           motivo_cierre=motivo_cierre)
+
+
+
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from flask_socketio import SocketIO, emit
+import random
+import string
+import os
+import re
+from datetime import datetime, timedelta
+
+# (Las configuraciones iniciales de Cloudinary, DB, Mail y SocketIO se mantienen en la parte superior de su archivo)
+
+
+
+@app.route('/perfil')
+def perfil():
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+        
+    usuario = db.session.get(Usuario, session['usuario_id'])
+    mis_pedidos = Pedido.query.filter_by(usuario_id=usuario.id).order_by(Pedido.fecha_pedido.desc()).all()
+    mis_especiales = PedidoEspecial.query.filter_by(correo_contacto=usuario.correo).order_by(PedidoEspecial.fecha_creacion.desc()).all()
+    
+    return render_template('perfil.html', usuario=usuario, pedidos=mis_pedidos, especiales=mis_especiales)
+
+
+
+# ================= PANEL ADMINISTRATIVO EXPANDIDO =================
+
+app.config['ADMIN_PASSWORD'] = 'ZmarthAdmin26'
+
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if password == app.config['ADMIN_PASSWORD']:
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin'))
+        else:
+            flash('Acceso denegado. Clave incorrecta.', 'error')
+    return render_template('admin_login.html')
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('index'))
+
+def cancelar_pedidos_vencidos():
+    """
+    Escanea pedidos activos y revoca automáticamente aquellos que superen 
+    el margen de tolerancia de 1 hora respecto a la hora acordada de retiro.
+    """
+    pedidos_activos = Pedido.query.filter(Pedido.estado.notin_(['Entregado', 'Cancelado', 'Venta Flash Excedente'])).all()
+    cambio_detectado = False
+    
+    for p in pedidos_activos:
+        try:
+            horario_str = p.horario_recogida.strip()
+            if horario_str == 'Inmediato':
+                continue
+            
+            try:
+                hora_dt = datetime.strptime(horario_str, "%I:%M %p").time()
+            except ValueError:
+                hora_dt = datetime.strptime(horario_str, "%H:%M").time()
+                
+            fecha_base = p.fecha_pedido.date()
+            fecha_hora_recogida_local = datetime.combine(fecha_base, hora_dt)
+            
+            # Cálculo exacto basado en la zona horaria de la sucursal (UTC -6)
+            hora_actual_local = datetime.utcnow() - timedelta(hours=6)
+            
+            if hora_actual_local > fecha_hora_recogida_local + timedelta(hours=1):
+                p.estado = 'Cancelado'
+                cambio_detectado = True
+                # Reincorporación automática de mercancía al stock de ofertas de oportunidad
+                for detalle in p.detalles:
+                    prod = db.session.get(Producto, detalle.producto_id)
+                    if prod:
+                        prod.stock_sobrante += detalle.cantidad
+        except Exception as e:
+            print(f"Error procesando el motor de expiración para pedido {p.id}: {e}")
+            
+    if cambio_detectado:
+        db.session.commit()
+        socketio.emit('actualizacion_global')
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+
+    # Ejecución sistemática del motor de limpieza temporal de pedidos
+    cancelar_pedidos_vencidos()
+
+    if request.method == 'POST' and 'nuevo_producto' in request.form:
+        nombre = request.form.get('nombre')
+        descripcion = request.form.get('descripcion')
+        precio = float(request.form.get('precio'))
+        stock_sob = int(request.form.get('stock_sobrante', 0))
+        
+        file = request.files.get('imagen_file')
+        imagen_url = None
+        
+        if file and file.filename != '':
+            imagen_url = subir_a_cloudinary(file)
+        
+        nuevo_prod = Producto(nombre=nombre, descripcion=descripcion, precio=precio, imagen_url=imagen_url, stock_sobrante=stock_sob)
+        db.session.add(nuevo_prod)
+        db.session.commit()
+        
+        socketio.emit('actualizacion_global')
+        return redirect(url_for('admin'))
+
+    filtro = request.args.get('filtro', 'hoy')
+    todos_pedidos = Pedido.query.order_by(Pedido.fecha_pedido.desc()).all()
+    hoy = datetime.utcnow().date()
+    
+    pedidos_filtrados = []
+    for p in todos_pedidos:
+        fecha_p = p.fecha_pedido.date()
+        if filtro == 'hoy' and fecha_p == hoy: pedidos_filtrados.append(p)
+        elif filtro == 'ayer' and fecha_p == (hoy - timedelta(days=1)): pedidos_filtrados.append(p)
+        elif filtro == 'semana' and (hoy - fecha_p).days <= 7: pedidos_filtrados.append(p)
+        elif filtro == 'mes' and hoy.month == fecha_p.month and hoy.year == fecha_p.year: pedidos_filtrados.append(p)
+        elif filtro == 'todos': pedidos_filtrados.append(p)
+
+    pedidos_activos = [p for p in pedidos_filtrados if p.estado != 'Entregado']
+    pedidos_entregados = [p for p in pedidos_filtrados if p.estado == 'Entregado']
+
+    produccion_total = {}
+    for p in pedidos_activos:
+        for detalle in p.detalles:
+            prod_nombre = detalle.producto.nombre
+            produccion_total[prod_nombre] = produccion_total.get(prod_nombre, 0) + detalle.cantidad
+
+    productos = Producto.query.all()
+    dias_bloqueados_lista = DiaInhabil.query.order_by(DiaInhabil.fecha.asc()).all()
+    
+    anuncios_lista = Anuncio.query.all()
+    pedidos_especiales_lista = PedidoEspecial.query.order_by(PedidoEspecial.fecha_creacion.desc()).all()
+
+    return render_template('admin.html', 
+                           pedidos_activos=pedidos_activos, 
+                           pedidos_entregados=pedidos_entregados,
+                           produccion=produccion_total,
+                           productos=productos,
+                           filtro_actual=filtro,
+                           dias_bloqueados_lista=dias_bloqueados_lista,
+                           anuncios_lista=anuncios_lista,
+                           pedidos_especiales_lista=pedidos_especiales_lista)
+
+@app.route('/admin/anuncio/nuevo', methods=['POST'])
+def nuevo_anuncio():
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    titulo = request.form.get('titulo')
+    enlace = request.form.get('enlace_destino')
+    file = request.files.get('anuncio_file')
+    
+    if file and file.filename != '':
+        img_url = subir_a_cloudinary(file)
+        if img_url:
+            ad = Anuncio(titulo=titulo, imagen_url=img_url, enlace_destino=enlace)
+            db.session.add(ad)
+            db.session.commit()
+            flash('Anuncio publicitario integrado exitosamente.', 'success')
+        else:
+            flash('Hubo un error al procesar la imagen del anuncio.', 'error')
+            
+    return redirect(url_for('admin'))
+
+@app.route('/admin/anuncio/eliminar/<int:anuncio_id>', methods=['POST'])
+def eliminar_anuncio(anuncio_id):
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('admin_login'))
+    
+    ad = db.session.get(Anuncio, anuncio_id)
+    if ad:
+        db.session.delete(ad)
+        db.session.commit()
+        flash('Anuncio publicitario removido con éxito.', 'success')
+    else:
+        flash('El anuncio especificado no pudo ser localizado.', 'error')
+        
+    return redirect(url_for('admin'))
+
+
+@app.route('/admin/inhabilitar_dias', methods=['POST'])
+def inhabilitar_dias():
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    
+    fecha_inicio_str = request.form.get('fecha_inicio')
+    fecha_fin_str = request.form.get('fecha_fin')
+    motivo = request.form.get('motivo') or "Mantenimiento del Atelier"
+
+    if fecha_inicio_str and fecha_fin_str:
+        fecha_inicio = datetime.strptime(fecha_inicio_str, '%Y-%m-%d').date()
+        fecha_fin = datetime.strptime(fecha_fin_str, '%Y-%m-%d').date()
+        
+        delta = fecha_fin - fecha_inicio
+        for i in range(delta.days + 1):
+            dia_actual = fecha_inicio + timedelta(days=i)
+            if not DiaInhabil.query.filter_by(fecha=dia_actual).first():
+                nuevo_dia = DiaInhabil(fecha=dia_actual, motivo=motivo)
+                db.session.add(nuevo_dia)
+                
+        db.session.commit()
+    return redirect(url_for('admin'))
+
+@app.route('/admin/habilitar_dia/<int:dia_id>', methods=['POST'])
+def habilitar_dia(dia_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    dia = DiaInhabil.query.get_or_404(dia_id)
+    db.session.delete(dia)
+    db.session.commit()
+    return redirect(url_for('admin'))
+
+@app.route('/admin/producto/toggle/<int:producto_id>', methods=['POST'])
+def toggle_producto(producto_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    producto = Producto.query.get_or_404(producto_id)
+    producto.disponible = not producto.disponible
+    db.session.commit()
+    return redirect(url_for('admin'))
+
+@app.route('/admin/eliminar_producto/<int:producto_id>', methods=['POST'])
+def eliminar_producto(producto_id):
+    if 'admin_logged_in' not in session:
+        return redirect(url_for('admin'))
+    
+    producto = Producto.query.get_or_404(producto_id)
+    tiene_ventas = DetallePedido.query.filter_by(producto_id=producto_id).first()
+    
+    if tiene_ventas:
+        producto.disponible = False
+        db.session.commit()
+        flash('El producto tenía ventas registradas, así que se ha PAUSADO automáticamente para mantener tu historial.', 'warning')
+    else:
+        try:
+            db.session.delete(producto)
+            db.session.commit()
+            flash('Producto eliminado permanentemente del catálogo.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al eliminar: {str(e)}', 'danger')
+            
+    return redirect(url_for('admin'))
+
+@app.route('/admin/producto/editar/<int:producto_id>', methods=['POST'])
+def editar_producto(producto_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    producto = Producto.query.get_or_404(producto_id)
+    
+    producto.nombre = request.form.get('nombre')
+    producto.descripcion = request.form.get('descripcion')
+    producto.precio = float(request.form.get('precio'))
+    producto.stock_sobrante = int(request.form.get('stock_sobrante', 0))
+    
+    file = request.files.get('imagen_file')
+    if file and file.filename != '':
+        nueva_imagen_url = subir_a_cloudinary(file)
+        if nueva_imagen_url:
+            producto.imagen_url = nueva_imagen_url
+        
+    db.session.commit()
+    return redirect(url_for('admin'))
+
+# ================= SUBIDA DE COMPROBANTES (TIENDA REGULAR) =================
+@app.route('/subir_comprobante/<int:pedido_id>', methods=['POST'])
+def subir_comprobante(pedido_id):
+    if 'usuario_id' not in session:
+        return redirect(url_for('login'))
+        
+    pedido = Pedido.query.get_or_404(pedido_id)
+    
+    if pedido.usuario_id != session['usuario_id']:
+        flash('Acceso denegado.', 'error')
+        return redirect(url_for('perfil'))
+        
+    file = request.files.get('comprobante_pago')
+    if file and file.filename != '':
+        url_nube = subir_a_cloudinary(file)
+        
+        if url_nube:
+            pedido.comprobante_url = url_nube
+            db.session.commit()
+            flash('Comprobante anexado exitosamente. Entrará a revisión.', 'success')
+        else:
+            flash('Hubo un error al procesar el comprobante.', 'error')
+        
+    return redirect(url_for('perfil'))
+
+
+@app.route('/procesar_sobrante', methods=['POST'])
+def procesar_sobrante():
+    if 'usuario_id' not in session:
+        return jsonify({'success': False, 'error': 'No autorizado. Inicie sesión.'}), 401
+        
+    usuario = db.session.get(Usuario, session['usuario_id'])
+    
+    # Soporte para estructurar la petición tanto por JSON asíncrono como por formularios tradicionales
+    if request.is_json:
+        data = request.get_json()
+        producto_id = data.get('producto_id')
+        cantidad_solicitada = int(data.get('cantidad', 1))
+        horario = data.get('horario', 'Inmediato')
+        metodo_pago = data.get('metodo_pago', 'Efectivo') # Máximo de seguridad de 20 caracteres
+    else:
+        producto_id = request.form.get('producto_id')
+        cantidad_solicitada = int(request.form.get('canvas_cantidad', 1))
+        horario = request.form.get('horario', 'Inmediato')
+        metodo_pago = request.form.get('metodo_pago', 'Efectivo')
+    
+    producto = db.session.get(Producto, producto_id)
+    
+    if not producto or producto.stock_sobrante < cantidad_solicitada:
+        return jsonify({'success': False, 'error': 'Lo sentimos, las piezas solicitadas ya han sido adquiridas por otro cliente.'})
+    
+    producto.stock_sobrante -= cantidad_solicitada
+    monto_total = producto.precio * cantidad_solicitada
+    
+    nuevo_pedido = Pedido(
+        usuario_id=usuario.id,
+        horario_recogida=horario,
+        metodo_pago=metodo_pago,
+        monto_total=monto_total,
+        codigo_recogida=generar_codigo(),
+        estado='Venta Flash Excedente',
+        es_relampago=True
+    )
+    db.session.add(nuevo_pedido)
+    db.session.commit()
+    
+    detalle = DetallePedido(pedido_id=nuevo_pedido.id, producto_id=producto.id, cantidad=cantidad_solicitada)
+    db.session.add(detalle)
+    db.session.commit()
+    
+    # Sincronización global inmediata del stock remanente mediante WebSockets
+    socketio.emit('actualizacion_global')
+    
+    return jsonify({
+        'success': True,
+        'codigo': nuevo_pedido.codigo_recogida,
+        'mensaje': 'Adquisición Relámpago completada de forma exitosa. Puede pasar a la boutique a retirar su orden.'
+    })
+
+
+@app.route('/procesar_pedido', methods=['POST'])
+def procesar_pedido():
+    # 1. Validación de sesión
+    if 'usuario_id' not in session:
+        return jsonify({'success': False, 'message': 'No autorizado'}), 401
+        
+    # 2. Validación de día inhábil
+    hoy = datetime.utcnow().date()
+    if DiaInhabil.query.filter_by(fecha=hoy).first():
+        return jsonify({'success': False, 'message': 'La boutique está cerrada hoy.'}), 403
+        
+    usuario = db.session.get(Usuario, session['usuario_id'])
+    horario = request.form.get('horario')
+    metodo_pago = request.form.get('metodo_pago')
+    
+    productos = Producto.query.all()
+    monto_total = 0
+    detalles_a_crear = []
+    
+    # 3. Procesamiento de productos
+    for prod in productos:
+        cant = request.form.get(f'cantidad_{prod.id}', 0)
+        if cant and int(cant) > 0:
+            cantidad = int(cant)
+            monto_total += prod.precio * float(cantidad)
+            detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)
+            detalles_a_crear.append(detalle)
+            
+    # 4. Creación del pedido
+    if detalles_a_crear:
+        nuevo_pedido = Pedido(
+            usuario_id=usuario.id,
+            horario_recogida=horario,
+            metodo_pago=metodo_pago,
+            monto_total=monto_total,
+            codigo_recogida=generar_codigo()
+        )
+        db.session.add(nuevo_pedido)
+        db.session.commit()
+        
+        # 5. Asignación de detalles
+        for d in detalles_a_crear:
+            d.pedido_id = nuevo_pedido.id
+            db.session.add(d)
+        db.session.commit()
+        
+        # ---> SINCRONIZACIÓN EN TIEMPO REAL ZMARTHNET <---
+        socketio.emit('actualizacion_global')
+        
+        # 6. Respuesta JSON para el Frontend
+        return jsonify({
+            'success': True,
+            'codigo': nuevo_pedido.codigo_recogida
+        })
+
+    # Caso en que no haya productos seleccionados
+    return jsonify({'success': False, 'message': 'Pedido vacío'}), 400
+
+
+@app.route('/pedido_especial', methods=['GET', 'POST'])
+def pedido_especial():
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        telefono = request.form.get('telefono')
+        correo = request.form.get('correo')
+        metodo_entrega = request.form.get('metodo_entrega')  
+        fecha_evento = request.form.get('fecha_evento')
+        
+        direccion = request.form.get('direccion')
+        numero_casa = request.form.get('numero_casa')
+        referencias = request.form.get('referencias')
+        lat = request.form.get('latitud')
+        lng = request.form.get('longitud')
+        
+        productos = Producto.query.all()
+        monto_total = 0
+        detalles_especiales = []
+        
+        for prod in productos:
+            cant = request.form.get(f'cantidad_especial_{prod.id}', 0)
+            if cant and int(cant) > 0:
+                cantidad = int(cant)
+                monto_total += prod.precio * float(cantidad)
+                detalles_especiales.append(DetallePedidoEspecial(producto_id=prod.id, cantidad=cantidad))
+                
+        if not detalles_especiales:
+            flash('Debe seleccionar al menos un producto para cotizar su evento.', 'error')
+            return redirect(url_for('pedido_especial'))
+            
+        monto_anticipo = monto_total * 0.50
+        
+        file = request.files.get('comprobante_pago')
+        comprobante_url = None
+        if file and file.filename != '':
+            comprobante_url = subir_a_cloudinary(file)
+            
+        nuevo_especial = PedidoEspecial(
+            nombre_contacto=nombre,
+            telefono_contacto=telefono,
+            correo_contacto=correo,
+            metodo_entrega=metodo_entrega,
+            direccion_texto=direccion,
+            numero_casa=numero_casa,
+            referencias=referencias,
+            latitud=float(lat) if lat else None,
+            longitud=float(lng) if lng else None,
+            monto_total=monto_total,
+            monto_anticipo=monto_anticipo,
+            comprobante_url=comprobante_url,
+            codigo_recogida=generar_codigo_especial(),
+            fecha_evento=fecha_evento
+        )
+        db.session.add(nuevo_especial)
+        db.session.commit()
+        
+        for det in detalles_especiales:
+            det.pedido_especial_id = nuevo_especial.id
+            db.session.add(det)
+        db.session.commit()
+        
+        # ---> SINCRONIZACIÓN EN TIEMPO REAL ZMARTHNET <---
+        socketio.emit('actualizacion_global')
+        
+        flash('Solicitud de evento enviada. El comprobante está bajo verificación manual.', 'success')
+        return redirect(url_for('index'))
+        
+    productos = Producto.query.all()
+    return render_template('pedido_especial.html', productos=productos)
+
+@app.route('/admin/pedido/<int:pedido_id>/estado', methods=['POST'])
+def actualizar_estado(pedido_id):
+    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    
+    pedido = Pedido.query.get_or_404(pedido_id)
+    if pedido:
+        nuevo_estado = request.form.get('estado')
+        pedido.estado = nuevo_estado
+        db.session.commit()
+
+        # ---> SINCRONIZACIÓN EN TIEMPO REAL ZMARTHNET <---
+        socketio.emit('actualizacion_global')
+
+    return redirect(url_for('admin'))
+
+
+@app.route('/admin/pedido/<int:pedido_id>/pagar', methods=['POST'])
+def marcar_pagar_pedido(pedido_id):
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('admin_login'))
+    
+    pedido = Pedido.query.get_or_404(pedido_id)
+    # Cambiamos el estado a pagado
+    pedido.pagado = True
+    db.session.commit()
+
+    # Sincronización inmediata con ZMARTHNET
+    socketio.emit('actualizacion_global')
+
+    return redirect(url_for('admin'))
+
+# ================= CIBERSEGURIDAD BÓVEDA DE USUARIOS =================
+@app.route('/admin/api/usuarios', methods=['POST'])
+def obtener_usuarios_seguros():
+    if not session.get('admin_logged_in'): return jsonify({"error": "No autorizado"}), 403
+    
+    data = request.json
+    pin_ingresado = data.get('pin', '')
+    PIN_MAESTRO = "ZMARTH-007" 
+    
+    if pin_ingresado != PIN_MAESTRO:
+        return jsonify({"error": "PIN Inválido. Protocolo de intrusión activado."}), 401
+        
+    usuarios = Usuario.query.all()
+    lista_usuarios = [{"id": u.id, "nombre": u.nombre, "correo": u.correo, "telefono": u.telefono, "hash": u.contrasena[:15]+"..."} for u in usuarios]
+    return jsonify({"usuarios": lista_usuarios})
+
+# ================= DIAGNÓSTICO E INICIALIZACIÓN DE CONTEXTO =================
+with app.app_context():
+    try:
+        db.create_all()
+        print("====== DIAGNÓSTICO DE BASE DE DATOS ======\n¡ÉXITO! Tablas listas.")
+        verificar_db()
+    except Exception as e:
+        print(f"❌ ERROR CRÍTICO AL CREAR TABLAS: {e}")
+
+# 8. Corregir la inicialización final del servidor para Flask-SocketIO
+if __name__ == '__main__':
+    socketio.run(
+        app,
+        host='0.0.0.0',
+        port=5000,
+        debug=True
+    )
+
+
+---------------------------------------------------------------------------------------
+
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Delicious Bread">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon.png') }}">
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE ZMARTH ORG — OPERACIONES</title>
+    <style>
+        :root { 
+            /* Paleta Ecosistema Zmarth */
+            --bg-beige: #F3EBE0;
+            --card-black: #100F0D; 
+            --input-bg: #1A1815;
+            --accent-gold: #CBA573; 
+            --text-white: #F0F0F0;
+            --text-gray: #8A8A8A;
+            --border-dark: #2A2520;
+            --radius: 20px;
+            --shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        
+        body { 
+            background-color: var(--bg-beige);
+            font-family: 'Arial', sans-serif; 
+            color: var(--card-black); 
+            margin: 0; 
+            padding: 0; 
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        /* HEADER & NAVBAR */
+        .top-bar { 
+            text-align: center;
+            padding: 20px 15px 15px; 
+        }
+        .top-bar h1 { 
+            margin: 0;
+            font-size: 1.2rem; 
+            color: #1A1A1A; 
+            letter-spacing: 2px; 
+            text-transform: uppercase; 
+            font-weight: 900;
+        }
+        .auth-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .auth-links a { 
+            background: var(--card-black);
+            border: 1px solid var(--accent-gold); 
+            border-radius: 30px; 
+            padding: 10px 20px; 
+            color: var(--text-white); 
+            text-decoration: none; 
+            font-size: 0.8rem; 
+            text-transform: uppercase; 
+            font-weight: bold;
+            letter-spacing: 1px; 
+            transition: 0.3s; 
+            flex: 1 1 auto;
+            max-width: 200px;
+        }
+        
+        /* CONTROLES SUPERIORES */
+        .controls-container { 
+            max-width: 1200px;
+            margin: 10px auto; 
+            padding: 0 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px;
+        }
+        @media (min-width: 768px) {
+            .controls-container { flex-direction: row; justify-content: space-between; align-items: center; padding: 0 40px; }
+        }
+
+        .tabs { 
+            display: flex;
+            gap: 5px; 
+            background: var(--card-black);
+            padding: 6px;
+            border-radius: 30px;
+            border: 1px solid var(--border-dark);
+            overflow-x: auto; 
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+        
+        .tab-btn { 
+            background: transparent;
+            border: none; 
+            color: var(--text-gray); 
+            padding: 10px 15px; 
+            border-radius: 25px;
+            cursor: pointer; 
+            font-size: 0.8rem; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            transition: 0.3s;
+            flex: 0 0 auto;
+        }
+        .tab-btn.active { background: var(--accent-gold); color: var(--card-black); }
+        
+        .filter-form { width: 100%; }
+        .filter-form select { 
+            background: var(--card-black);
+            border: 1px solid var(--accent-gold); 
+            color: var(--accent-gold); 
+            padding: 12px 20px; 
+            border-radius: 30px; 
+            outline: none; 
+            width: 100%;
+            font-size: 0.85rem; 
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        @media (min-width: 768px) { .filter-form { width: auto; } }
+
+        /* VISTAS Y GRID */
+        .tab-content { display: none; max-width: 1200px; margin: 0 auto 40px; padding: 0 15px; }
+        @media (min-width: 768px) { .tab-content { padding: 0 40px; } }
+        .tab-content.active { display: block; animation: slideUp 0.4s ease; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .admin-grid { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
+        @media (min-width: 900px) { .admin-grid { grid-template-columns: 1fr 2.5fr; gap: 25px; } }
+        
+        .card { 
+            background: var(--card-black);
+            padding: 20px; 
+            border-radius: var(--radius); 
+            border: 1px solid var(--border-dark); 
+            box-shadow: var(--shadow); 
+            width: 100%;
+            box-sizing: border-box;
+        }
+        @media (min-width: 768px) { .card { padding: 30px; } }
+        
+        .card h3 { 
+            margin-top: 0;
+            color: var(--accent-gold); 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-bottom: 20px; 
+            font-size: 1rem; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-dark);
+            padding-bottom: 15px;
+        }
+        
+        /* TABLAS RESPONSIVAS */
+        .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+        .admin-table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0 8px; }
+        .admin-table th { color: var(--text-gray); padding: 0 15px 10px; text-align: left; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-dark); white-space: nowrap; }
+        .admin-table td { padding: 15px; background: var(--input-bg); font-size: 0.85rem; color: var(--text-white); border-top: 1px solid var(--border-dark); border-bottom: 1px solid var(--border-dark); }
+        .admin-table td:first-child { border-radius: 12px 0 0 12px; border-left: 1px solid var(--border-dark); }
+        .admin-table td:last-child { border-radius: 0 12px 12px 0; border-right: 1px solid var(--border-dark); }
+        
+        /* INVENTARIO Y LISTAS (CORRECCIÓN UI: Imágenes de Esquina a Esquina) */
+        .inv-item { 
+            display: flex;
+            flex-direction: column; 
+            background: var(--input-bg); 
+            margin-bottom: 15px; 
+            border-radius: 16px; 
+            border: 1px solid var(--border-dark); 
+            overflow: hidden;
+        }
+        .inv-item.agotado { opacity: 0.5; filter: grayscale(80%); }
+        
+        .inv-image-container {
+            width: 100%;
+            height: 180px;
+            border-bottom: 1px solid var(--border-dark);
+        }
+        .inv-image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .img-placeholder-full {
+            width: 100%;
+            height: 100%;
+            background: var(--card-black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .inv-content {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .inv-actions { display: flex; gap: 10px; width: 100%; justify-content: space-between; flex-wrap: wrap; }
+       
+        /* FORMULARIOS */
+        .form-control { 
+            width: 100%;
+            padding: 12px 15px; background: var(--input-bg); 
+            border: 1px solid var(--border-dark); color: var(--text-white); 
+            border-radius: 12px; box-sizing: border-box; margin-bottom: 15px; 
+            font-size: 0.9rem;
+            -webkit-appearance: none;
+        }
+        .form-control:focus { border-color: var(--accent-gold); outline: none; }
+        .edit-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        @media (min-width: 768px) { .edit-grid { grid-template-columns: 1fr 1fr; } }
+        
+        .btn-action { 
+            width: 100%;
+            padding: 15px; background: transparent; 
+            color: var(--accent-gold); border: 1px solid var(--accent-gold); 
+            font-weight: bold; border-radius: 12px; cursor: pointer; 
+            text-transform: uppercase; font-size: 0.85rem;
+            transition: 0.3s; 
+        }
+        .btn-action:hover { background: var(--accent-gold); color: var(--card-black); }
+        
+        .btn-small { 
+            background: transparent;
+            border: 1px solid var(--border-dark); 
+            color: var(--text-gray); padding: 10px 15px; cursor: pointer; 
+            font-size: 0.75rem; border-radius: 12px; text-transform: uppercase; font-weight: bold;
+            flex: 1; text-align: center;
+        }
+        .btn-small:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+
+        /* MODALES OPTIMIZADOS PARA MÓVIL */
+        .modal-overlay { 
+            display: none;
+            position: fixed; top: 0; left: 0; 
+            width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); 
+            backdrop-filter: blur(5px); z-index: 9999;
+            justify-content: center; align-items: flex-end; 
+        }
+        @media (min-width: 768px) { .modal-overlay { align-items: center; } }
+        
+        .modal-content { 
+            background: var(--card-black);
+            border: 1px solid var(--accent-gold); 
+            border-radius: 25px 25px 0 0; width: 100%; max-height: 90vh; 
+            padding: 30px 20px; position: relative; color: var(--text-white);
+            overflow-y: auto; box-sizing: border-box; animation: modalSlideUp 0.3s ease;
+        }
+        @media (min-width: 768px) { .modal-content { border-radius: var(--radius); width: 90%; max-width: 550px; padding: 35px; } }
+        
+        @keyframes modalSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .btn-close-modal { position: absolute; top: 15px; right: 15px; background: var(--input-bg); border: 1px solid var(--border-dark); color: var(--text-white); width: 35px; height: 35px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        .list-scroll { max-height: 25vh; overflow-y: auto; padding-right: 10px; margin-bottom: 15px; }
+        .modal-list-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border-dark); font-size: 0.9rem; }
+
+        /* Temporizador Estilos */
+        .timer-badge { display: inline-block; padding: 3px 8px; border-radius: 8px; font-size: 0.7rem; margin-top: 5px; font-weight: bold; background: rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+
+    <header class="top-bar">
+        <h1>DELICIOUS BREAD — OPERACIONES</h1>
+        <div style="font-size: 0.75rem; color: #8A8A8A; margin-top: 5px; font-weight: bold; letter-spacing: 1px;">Ecosistema Delicious Bread</div>
+        <div class="auth-links">
+            <a href="{{ url_for('index') }}">🛒 Ver Tienda</a>
+            <a href="{{ url_for('admin_logout') }}" style="border-color: #5C2B2B; color: #D96868;">🚪 Salir</a>
+        </div>
+    </header>
+
+    <div class="controls-container">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="openTab('activos')">📦 Órdenes Live</button>
+            <button class="tab-btn" onclick="openTab('especiales')">💼 Pedidos Especiales</button>
+            <button class="tab-btn" onclick="openTab('inventario')">🥖 Menú & Productos</button>
+            <button class="tab-btn" onclick="openTab('configuracion')">⚙️ Alertas & Ajustes</button>
+            <button class="tab-btn" onclick="openTab('historial')">🗄️ Historial</button>
+            <button class="tab-btn" onclick="openTab('usuarios_seguridad')">🔐 Bóveda de Usuarios</button>
+        </div>
+        
+        <form class="filter-form" method="GET" action="{{ url_for('admin') }}">
+            <select name="filtro" onchange="this.form.submit()">
+                <option value="hoy" {% if filtro_actual == 'hoy' %}selected{% endif %}>Filtro: Hoy</option>
+                <option value="semana" {% if filtro_actual == 'semana' %}selected{% endif %}>Filtro: Esta Semana</option>
+                <option value="todos" {% if filtro_actual == 'todos' %}selected{% endif %}>Filtro: Todo</option>
+            </select>
+        </form>
+    </div>
+
+    <div id="activos" class="tab-content active">
+        <div class="admin-grid">
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card" id="card-produccion-requerida">
+                    <h3>🔥 Producción Requerida</h3>
+                    <p style="color: var(--text-gray); font-size: 0.75rem; margin-top: -15px;">Filtro IA: Excluye Adquisición Relámpago.</p>
+                    
+                    <div id="lista-produccion-anticipada">
+                        <p style="color:var(--text-gray); font-size:0.85rem; text-align: center;">Procesando datos del Atelier...</p>
+                    </div>
+
+                    <div id="datos-produccion-crudos" style="display: none;">
+                        {% for pedido in pedidos_activos %}
+                            {% if not pedido.es_relampago and pedido.estado != 'Entregado' and pedido.estado != 'Cancelado' %}
+                                {% for d in pedido.detalles %}
+                                    <div class="prod-data-item" data-nombre="{{ d.producto.nombre }}" data-cantidad="{{ d.cantidad }}"></div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card">
+                    <h3>🛰️ Radar: Órdenes Anticipadas</h3>
+                    <div class="table-wrapper">
+                        <table class="admin-table table-rastreable">
+                            <thead>
+                                <tr>
+                                    <th>Ticket</th>
+                                    <th>Cliente</th>
+                                    <th>Tiempo Restante</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set ns_normal = namespace(hay_pedidos=false) %}
+                                {% for pedido in pedidos_activos %}
+                                    {% if not pedido.es_relampago %}
+                                        {% set ns_normal.hay_pedidos = true %}
+                                        <tr>
+                                            <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
+                                            <td>
+                                                <div style="font-weight: bold;">{{ pedido.cliente.nombre }}</div>
+                                                {% if pedido.pagado %}
+                                                    <span style="font-size: 0.65rem; color: #6BD968; border: 1px solid #365C2B; background: #1F2E1A; padding: 2px 5px; border-radius: 4px;">PAGADO</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="timer-badge timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}">
+                                                    Calculando...
+                                                </div>
+                                            </td>
+                                            <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem;" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket</button></td>
+                                        </tr>
+                                        
+                                        <div id="modal-{{ pedido.id }}" class="modal-overlay">
+                                            <div class="modal-content">
+                                                <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
+                                                <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">TICKET: {{ pedido.codigo_recogida }}</h2>
+                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
+                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
+                                                
+                                                <div style="background:var(--input-bg); padding:15px; border-radius:12px; margin:15px 0; border:1px solid var(--border-dark);">
+                                                    <h4 style="margin:0 0 10px 0; color:var(--text-white); font-size:0.75rem; text-transform:uppercase;">Artículos:</h4>
+                                                    <div class="list-scroll">
+                                                        {% for d in pedido.detalles %}
+                                                        <div class="modal-list-item">
+                                                            <span style="color:var(--text-gray);">{{ d.producto.nombre }}</span>
+                                                            <strong style="color:var(--accent-gold);">x{{ d.cantidad }}</strong>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:1rem; font-weight:bold; border-top: 1px solid var(--border-dark); padding-top: 10px;">
+                                                        <span>Monto Total</span>
+                                                        <strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
+                                                    <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
+                                                        <span>⏱️ Recogida: <strong style="color:var(--text-white);">{{ pedido.horario_recogida }}</strong></span>
+                                                        <span>💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong></span>
+                                                    </div>
+                                                    <div class="timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}" style="font-size: 0.75rem; font-weight: bold;"></div>
+                                                </div>
+
+                                                <div style="margin-bottom: 20px; text-align: center;">
+                                                    <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST">
+                                                        {% if pedido.pagado %}
+                                                            <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border-color: #365C2B; cursor: default; width: 100%;">✅ Confirmado - Total Pagado</button>
+                                                        {% else %}
+                                                            <button type="submit" class="btn-action" style="border-color: #6BE0FF; color: #6BE0FF; width: 100%;">💰 Validar y Marcar como Pagado</button>
+                                                        {% endif %}
+                                                    </form>
+                                                </div>
+
+                                                {% if pedido.metodo_pago == 'Transferencia' %}
+                                                    {% if pedido.comprobante_url %}
+                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px solid var(--accent-gold); padding: 10px; border-radius: 12px; background: #0A0A0A;">
+                                                            <span style="display: block; font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 10px; text-transform: uppercase;">Evidencia de Transferencia</span>
+                                                            <a href="{{ pedido.comprobante_url }}" target="_blank">
+                                                                <img src="{{ pedido.comprobante_url }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;">
+                                                            </a>
+                                                        </div>
+                                                    {% else %}
+                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px dashed #FF5A5A; padding: 15px; border-radius: 12px; background: rgba(255, 90, 90, 0.05);">
+                                                            <span style="font-size: 0.75rem; color: #FF5A5A; font-weight: bold; text-transform: uppercase;">Pendiente de Comprobante</span>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endif %}
+                                                
+                                                <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
+                                                    <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
+                                                    <select name="estado" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+                                                        <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                                        <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>Horneando</option>
+                                                        <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para entregar</option>
+                                                        <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado (Cerrar)</option>
+                                                        <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado (Expirado)</option>
+                                                    </select>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if not ns_normal.hay_pedidos %}
+                                    <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay órdenes anticipadas en curso.</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card" style="border: 1px solid var(--accent-gold);">
+                    <h3 style="color: var(--accent-gold);">⚡ Radar: Adquisición Relámpago</h3>
+                    <div class="table-wrapper">
+                        <table class="admin-table table-rastreable">
+                            <thead>
+                                <tr>
+                                    <th>Ticket</th>
+                                    <th>Cliente</th>
+                                    <th>Total</th>
+                                    <th>Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set ns_flash = namespace(hay_pedidos=false) %}
+                                {% for pedido in pedidos_activos %}
+                                    {% if pedido.es_relampago %}
+                                        {% set ns_flash.hay_pedidos = true %}
+                                        <tr>
+                                            <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
+                                            <td>
+                                                <div style="font-weight: bold; color: var(--text-white);">{{ pedido.cliente.nombre }}</div>
+                                                {% if pedido.pagado %}
+                                                    <span style="font-size: 0.65rem; color: #6BD968; border: 1px solid #365C2B; background: #1F2E1A; padding: 2px 5px; border-radius: 4px;">PAGADO</span>
+                                                {% endif %}
+                                            </td>
+                                            <td><strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong></td>
+                                            <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket ⚡</button></td>
+                                        </tr>
+                                        
+                                        <div id="modal-{{ pedido.id }}" class="modal-overlay">
+                                            <div class="modal-content" style="border: 1px solid var(--accent-gold);">
+                                                <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
+                                                <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">⚡ TICKET: {{ pedido.codigo_recogida }}</h2>
+                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
+                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
+                                                
+                                                <div style="background:var(--input-bg); padding:15px; border-radius:12px; margin:15px 0; border:1px solid var(--accent-gold);">
+                                                    <h4 style="margin:0 0 10px 0; color:var(--accent-gold); font-size:0.75rem; text-transform:uppercase;">Artículos Relámpago:</h4>
+                                                    <div class="list-scroll">
+                                                        {% for d in pedido.detalles %}
+                                                        <div class="modal-list-item">
+                                                            <span style="color:var(--text-white);">{{ d.producto.nombre }}</span>
+                                                            <strong style="color:var(--accent-gold);">x{{ d.cantidad }}</strong>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:1rem; font-weight:bold; border-top: 1px solid var(--border-dark); padding-top: 10px;">
+                                                        <span>Monto Total</span>
+                                                        <strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
+                                                    <div style="display: flex; justify-content: space-around;">
+                                                        <span>⏱️ Recogida: <strong style="color:var(--accent-gold);">Inmediata / {{ pedido.horario_recogida }}</strong></span>
+                                                        <span>💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong></span>
+                                                    </div>
+                                                </div>
+
+                                                <div style="margin-bottom: 20px; text-align: center;">
+                                                    <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST">
+                                                        {% if pedido.pagado %}
+                                                            <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border-color: #365C2B; cursor: default; width: 100%;">⚡ Confirmado - Total Pagado</button>
+                                                        {% else %}
+                                                            <button type="submit" class="btn-action" style="border-color: var(--accent-gold); color: var(--accent-gold); width: 100%;">💰 Validar y Marcar como Pagado</button>
+                                                        {% endif %}
+                                                    </form>
+                                                </div>
+
+                                                {% if pedido.metodo_pago == 'Transferencia' %}
+                                                    {% if pedido.comprobante_url %}
+                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px solid var(--accent-gold); padding: 10px; border-radius: 12px; background: #0A0A0A;">
+                                                            <span style="display: block; font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 10px; text-transform: uppercase;">Evidencia de Transferencia</span>
+                                                            <a href="{{ pedido.comprobante_url }}" target="_blank">
+                                                                <img src="{{ pedido.comprobante_url }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;">
+                                                            </a>
+                                                        </div>
+                                                    {% else %}
+                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px dashed #FF5A5A; padding: 15px; border-radius: 12px; background: rgba(255, 90, 90, 0.05);">
+                                                            <span style="font-size: 0.75rem; color: #FF5A5A; font-weight: bold; text-transform: uppercase;">Pendiente de Comprobante</span>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endif %}
+                                                
+                                                <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
+                                                    <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
+                                                    <select name="estado" class="form-control" style="margin-bottom: 0; border-color: var(--accent-gold);" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+                                                        <option value="Venta Flash Excedente" {% if pedido.estado == 'Venta Flash Excedente' %}selected{% endif %}>Reservado (Esperando Cliente)</option>
+                                                        <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Empaquetado para entregar</option>
+                                                        <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado (Cerrar)</option>
+                                                        <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado (Retornar Stock)</option>
+                                                    </select>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                                {% if not ns_flash.hay_pedidos %}
+                                    <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay adquisiciones relámpago activas.</td></tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> <div id="especiales" class="tab-content">
+        <div class="card">
+            <h3>💼 Alta Gama & Pedidos Especiales</h3>
+            <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 20px;">Línea de producción dedicada a catering corporativo, bodas y solicitudes personalizadas de Atelier.</p>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Código Tracking</th>
+                            <th>Cliente / Contacto</th>
+                            <th>Fecha Evento</th>
+                            <th>Total Solicitado</th>
+                            <th>Anticipo (50%)</th>
+                            <th>Estado Operativo</th>
+                            <th>Atelier Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for esp in pedidos_especiales_lista %}
+                        <tr>
+                            <td style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">{{ esp.codigo_recogida }}</td>
+                            <td>
+                                <strong style="display:block; color:#fff;">{{ esp.nombre_contacto }}</strong>
+                                <span style="font-size: 0.75rem; color: #777;">{{ esp.telefono_contacto }} | {{ esp.correo_contacto }}</span>
+                            </td>
+                            <td>{{ esp.fecha_evento }}</td>
+                            <td><strong style="color: var(--accent-gold);">${{ "%.2f"|format(esp.monto_total) }}</strong></td>
+                            <td>
+                                <span>${{ "%.2f"|format(esp.monto_anticipo) }}</span>
+                                {% if esp.anticipo_validado %}
+                                    <span style="color: #6BD968; font-size: 0.75rem; display:block;">[Validado]</span>
+                                {% else %}
+                                    <span style="color: #FF5A5A; font-size: 0.75rem; display:block;">[Pendiente]</span>
+                                {% endif %}
+                            </td>
+                            <td><span style="background: #111; border: 1px solid #333; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color:#ccc;">{{ esp.estado }}</span></td>
+                            <td>
+                                {% if esp.comprobante_url %}
+                                    <a href="{{ esp.comprobante_url }}" target="_blank" style="color: var(--accent-gold); font-size: 0.8rem; text-decoration: underline; margin-right: 10px; display:inline-block;">Ver Comprobante</a>
+                                {% endif %}
+                                
+                                {% if not esp.anticipo_validado %}
+                                    <form action="/admin/pedido_especial/{{ esp.id }}/validar" method="POST" style="display:inline;">
+                                        <input type="hidden" name="accion" value="aprobar">
+                                        <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: #365C2B; color: #6BD968;">Validar Anticipo</button>
+                                    </form>
+                                {% elif esp.estado != 'Entregado' %}
+                                    <form action="/admin/pedido_especial/{{ esp.id }}/validar" method="POST" style="display:inline;">
+                                        <input type="hidden" name="accion" value="completar">
+                                        <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: var(--accent-gold); color: var(--accent-gold);">Cerrar (Entregado)</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="7" style="text-align: center; padding: 35px; color: var(--text-gray);">No existen cotizaciones o pedidos especiales en fila.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="inventario" class="tab-content">
+        <div class="admin-grid">
+            <div class="card" style="align-self: start;">
+                <h3>➕ Añadir Producto / Mayoreo</h3>
+                <form action="{{ url_for('admin') }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="nuevo_producto" value="1">
+                    <input type="text" name="nombre" class="form-control" required placeholder="Nombre (Ej. Charola de Empanadas)">
+                    <textarea name="descripcion" class="form-control" placeholder="Descripción" style="height:60px; resize: none;"></textarea>
+                    
+                    <div class="edit-grid" style="margin-bottom: 15px;">
+                        <input type="number" step="0.50" name="precio" class="form-control" required placeholder="Precio Base ($)" style="margin-bottom: 0;">
+                        <input type="number" name="stock_sobrante" class="form-control" min="0" value="0" placeholder="Stock Sobrante / Venta Flash (Piezas)" style="margin-bottom: 0;">
+                    </div>
+                    
+                    <div style="margin-bottom: 15px; background: var(--input-bg); border: 1px solid var(--border-dark); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" name="es_pedido_grande" id="is_large" value="1" style="accent-color: var(--accent-gold); width: 16px; height: 16px;">
+                        <label for="is_large" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Pedido Grande / Mayoreo</label>
+                    </div>
+
+                    <div style="background: var(--input-bg); border: 1px dashed var(--border-dark); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px;">
+                        <span style="display:block; margin-bottom:8px; font-size:0.8rem; font-weight: bold; color: var(--text-gray);">Fotografía</span>
+                        <input type="file" name="imagen_file" accept="image/*" style="font-size:0.8rem; width: 100%; color: var(--text-gray);">
+                    </div>
+                    <button type="submit" class="btn-action">Publicar en Tienda</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>🥖 Catálogo Configurado</h3>
+                {% for prod in productos %}
+                <div class="inv-item {% if not prod.disponible %}agotado{% endif %}">
+                    <div class="inv-image-container">
+                        {% if prod.imagen_url %}
+                            <img src="{{ prod.imagen_url }}" alt="{{ prod.nombre }}">
+                        {% else %}
+                            <div class="img-placeholder-full">Sin Fotografía</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="inv-content">
+                        <div>
+                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                                <strong style="font-size:1.05rem; color:var(--text-white); text-transform: uppercase;">{{ prod.nombre }}</strong>
+                                <span style="color:var(--accent-gold); font-weight: bold; font-size: 1rem;">${{ "%.2f"|format(prod.precio) }}</span>
+                                
+                                {% if prod.stock_sobrante and prod.stock_sobrante > 0 %}
+                                    <span style="background: #1C333B; color: #6BE0FF; font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid #2B525F;">⚡ FLASH: {{ prod.stock_sobrante }} PZS</span>
+                                {% endif %}
+                                
+                                {% if prod.es_pedido_grande %}
+                                    <span style="background: #3b2b1a; color: var(--accent-gold); font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid var(--accent-gold);">MAYOREO</span>
+                                {% endif %}
+                                
+                                {% if not prod.disponible %}
+                                    <span style="background: #5C2B2B; color: #FF8F8F; font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid #7A3A3A;">PAUSADO</span>
+                                {% endif %}
+                            </div>
+                            <div style="font-size:0.8rem; color:var(--text-gray); margin-top:8px;">{{ prod.descripcion }}</div>
+                        </div>
+
+                        <div class="inv-actions">
+                            <form action="{{ url_for('toggle_producto', producto_id=prod.id) }}" method="POST" style="flex: 1;">
+                                <button type="submit" class="btn-small" style="width: 100%; border-color: var(--accent-gold); color: var(--accent-gold);">
+                                    {% if prod.disponible %}Pausar{% else %}Activar{% endif %}
+                                </button>
+                            </form>
+                            <button class="btn-small" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='block'">Editar</button>
+                            <form action="{{ url_for('eliminar_producto', producto_id=prod.id) }}" method="POST" onsubmit="return confirm('¿Eliminar producto?');" style="flex: 1;">
+                                <button type="submit" class="btn-small" style="width: 100%; border-color: #5C2B2B; color: #D96868;">Borrar</button>
+                            </form>
+                        </div>
+                        
+                        <div style="padding: 12px; background: #1A1815; border-radius: 10px; border: 1px solid #365C2B; width: 100%; box-sizing: border-box;">
+                            <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                                <input type="hidden" name="nombre" value="{{ prod.nombre }}">
+                                <input type="hidden" name="descripcion" value="{{ prod.descripcion }}">
+                                <input type="hidden" name="precio" value="{{ prod.precio }}">
+                                {% if prod.es_pedido_grande %}
+                                    <input type="hidden" name="es_pedido_grande" value="1">
+                                {% endif %}
+                                
+                                <label style="font-size: 0.75rem; color: var(--text-gray); white-space: nowrap;">Stock Flash Rápido:</label>
+                                <input type="number" name="stock_sobrante" value="{{ prod.stock_sobrante or 0 }}" min="0" class="form-control" style="margin-bottom: 0; padding: 8px; width: 80px; flex: 1;">
+                                <button type="submit" class="btn-small" style="padding: 8px 15px; border-color: var(--accent-gold); color: var(--accent-gold); flex: none;">Actualizar</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="edit-form-{{ prod.id }}" style="display:none; background:var(--input-bg); padding:20px; border-top:1px solid var(--accent-gold);">
+                        <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data">
+                            <div class="edit-grid">
+                                <div>
+                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Nombre del Producto:</label>
+                                    <input type="text" name="nombre" class="form-control" value="{{ prod.nombre }}" required>
+                                </div>
+                                <div>
+                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Precio Base ($):</label>
+                                    <input type="number" step="0.50" name="precio" class="form-control" value="{{ prod.precio }}" required>
+                                </div>
+                            </div>
+                            
+                            <div class="edit-grid" style="margin-top: 10px;">
+                                <div>
+                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Modificar Sobrante (Venta Flash):</label>
+                                    <input type="number" name="stock_sobrante" class="form-control" value="{{ prod.stock_sobrante or 0 }}" min="0">
+                                </div>
+                                <div style="display: flex; align-items: center; padding-top: 15px;">
+                                    <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--accent-gold); width: 16px; height: 16px; margin-right: 8px;">
+                                    <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Mayoreo</label>
+                                </div>
+                            </div>
+
+                            <textarea name="descripcion" class="form-control" style="height:60px; resize:none; margin-top: 10px;">{{ prod.descripcion }}</textarea>
+                            
+                            <div style="background: var(--card-black); border: 1px dashed var(--border-dark); padding: 15px; border-radius: 12px; text-align: center; margin-top: 5px;">
+                                <span style="display:block; margin-bottom:8px; font-size:0.75rem; font-weight: bold; color: var(--text-gray);">Actualizar Fotografía (Opcional)</span>
+                                <input type="file" name="imagen_file" accept="image/*" style="font-size:0.8rem; width: 100%; color: var(--text-gray);">
+                            </div>
+                            
+                            <div style="display:flex; gap:15px; margin-top: 20px;">
+                                <button type="submit" class="btn-action" style="flex: 2; background: var(--accent-gold); color: var(--card-black);">Guardar</button>
+                                <button type="button" class="btn-action" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='none'" style="flex: 1; border-color: var(--border-dark); color: var(--text-gray);">Cerrar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div id="configuracion" class="tab-content">
+        <div class="admin-grid">
+            <div class="card">
+                <h3>📢 Banner de Anuncios Corporativos</h3>
+                <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Publica banners con imágenes de alta definición y vínculos de redirección del ecosistema.</p>
+                <form action="{{ url_for('nuevo_anuncio') }}" method="POST" enctype="multipart/form-data">
+                    <div class="edit-grid">
+                        <div>
+                            <label style="font-size:0.75rem; color:var(--text-gray);">Título / Eslogan Campaña:</label>
+                            <input type="text" name="titulo" class="form-control" placeholder="Ej. Lanzamiento Línea de Bodas" value="{{ anuncio_actual_titulo or '' }}">
+                        </div>
+                        <div>
+                            <label style="font-size:0.75rem; color:var(--text-gray);">Enlace de Destino (URL):</label>
+                            <input type="url" name="enlace_destino" class="form-control" placeholder="https://thezmarthorganization.com/..." value="{{ anuncio_actual_enlace or '' }}">
+                        </div>
+                    </div>
+
+                    <div style="background: var(--input-bg); border: 1px dashed var(--border-dark); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px;">
+                        <span style="display:block; margin-bottom:8px; font-size:0.8rem; font-weight: bold; color: var(--text-gray);">Arte Publicitario (Subir Archivo de Imagen)</span>
+                        <input type="file" name="anuncio_file" accept="image/*" style="font-size:0.8rem; width: 100%; color: var(--text-gray);">
+                    </div>
+
+                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px; background: var(--input-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-dark);">
+                        <input type="checkbox" name="anuncio_activo" id="anuncio_activo" value="1" checked style="accent-color: var(--accent-gold); width: 18px; height: 18px;">
+                        <label for="anuncio_activo" style="color:var(--text-white); font-size: 0.85rem; cursor: pointer;">Publicar Anuncio en Tienda</label>
+                    </div>
+                    <button type="submit" class="btn-action">Desplegar Banner Multi-Media</button>
+                </form>
+
+                <h4 style="color: var(--accent-gold); margin-top: 35px; font-size: 0.85rem; text-transform: uppercase;">Banners Operativos</h4>
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                    {% for ad in anuncios_lista %}
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-dark);">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <img src="{{ ad.imagen_url }}" style="width: 70px; height: 45px; object-fit: cover; border-radius: 6px;">
+                            <span style="color: var(--text-white); font-size: 0.85rem; font-weight: bold;">{{ ad.titulo or 'Banner sin título' }}</span>
+                        </div>
+                        <form action="{{ url_for('eliminar_anuncio', anuncio_id=ad.id) }}" method="POST" onsubmit="return confirm('¿Retirar este banner corporativo del ecosistema?');" style="margin: 0;">
+                            <button type="submit" class="btn-small" style="border-color: #5C2B2B; color: #D96868; padding: 8px 15px;">Dar de Baja</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <span style="color: var(--text-gray); font-size: 0.8rem; text-align: center; padding: 10px;">No hay campañas activas.</span>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="card">
+                    <h3>🚫 Bloqueo de Fechas (Horno Cerrado)</h3>
+                    <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Inhabilita días específicos para que no puedan realizarse pedidos.</p>
+                    <form action="/admin/inhabilitar_dias" method="POST">
+                        <div class="edit-grid">
+                            <div>
+                                <label style="font-size:0.75rem; color:var(--text-gray);">Desde:</label>
+                                <input type="date" name="fecha_inicio" class="form-control" required style="padding: 10px; margin-bottom: 10px;">
+                            </div>
+                            <div>
+                                <label style="font-size:0.75rem; color:var(--text-gray);">Hasta:</label>
+                                <input type="date" name="fecha_fin" class="form-control" required style="padding: 10px; margin-bottom: 10px;">
+                            </div>
+                        </div>
+                        <input type="text" name="motivo" class="form-control" placeholder="Motivo (Ej. Mantenimiento del Atelier)">
+                        <button type="submit" class="btn-action">Ejecutar Bloqueo</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h3>📅 Días Inhabilitados Actuales</h3>
+                    <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Fechas en las que el Atelier no recibirá órdenes. Retíralas para abrir el horno.</p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        {% for dia in dias_bloqueados_lista %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-dark);">
+                            <div>
+                                <strong style="color: var(--text-white); display: block; font-size: 0.9rem;">{{ dia.fecha.strftime('%d/%m/%Y') }}</strong>
+                                <span style="color: var(--accent-gold); font-size: 0.75rem;">{{ dia.motivo }}</span>
+                            </div>
+                            <form action="{{ url_for('habilitar_dia', dia_id=dia.id) }}" method="POST" style="margin: 0;">
+                                <button type="submit" class="btn-small" style="border-color: #5C2B2B; color: #D96868; padding: 6px 12px; margin: 0; min-width: 90px;">Reactivar</button>
+                            </form>
+                        </div>
+                        {% else %}
+                        <div style="text-align: center; padding: 20px; background: var(--input-bg); border-radius: 12px; border: 1px dashed var(--border-dark);">
+                            <span style="color: var(--text-gray); font-size: 0.85rem;">No hay fechas bloqueadas actualmente. El horno opera con normalidad.</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="historial" class="tab-content">
+        <div class="card">
+            <h3>🗃️ Cajas Cerradas (Completados)</h3>
+            <div class="table-wrapper">
+                <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid var(--border-dark);">
+                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Tipo</th>
+                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Ticket</th>
+                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Cliente</th>
+                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Monto</th>
+                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Estatus</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pedido in pedidos_entregados %}
+                        <tr style="border-bottom: 1px solid #222; {% if pedido.es_relampago %}background: rgba(203, 165, 115, 0.05);{% endif %}">
+                            <td style="padding: 12px;">
+                                {% if pedido.es_relampago %}
+                                    <span style="color: var(--accent-gold); font-size: 0.65rem; font-weight: bold; border: 1px solid var(--accent-gold); padding: 2px 6px; border-radius: 4px;">⚡ FLASH</span>
+                                {% else %}
+                                    <span style="color: var(--text-gray); font-size: 0.65rem; font-weight: normal; border: 1px solid #333; padding: 2px 6px; border-radius: 4px;">NORMAL</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 12px; color: var(--text-gray); font-weight: bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
+                            <td style="padding: 12px; font-weight: bold; font-size: 0.85rem; color: var(--text-white);">{{ pedido.cliente.nombre }}</td>
+                            <td style="padding: 12px; font-weight:bold; color: var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</td>
+                            <td style="padding: 12px;">
+                                <span style="background: #1F2E1A; color: #6BD968; padding: 4px 8px; border-radius: 10px; font-size: 0.65rem; border: 1px solid #365C2B;">ENTREGADO</span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align:center; color:var(--text-gray); padding: 30px;">Sin historial en esta fecha.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="usuarios_seguridad" class="tab-content">
+        <div class="card" id="panel-pin">
+            <h3 style="color: #FF5A5A;">⚠️ Acceso Restringido</h3>
+            <p style="color: var(--text-gray); font-size: 0.85rem;">Se requiere autorización ejecutiva para desencriptar el directorio de clientes.</p>
+            <input type="password" id="pin_maestro" class="form-control" placeholder="Ingrese PIN de Seguridad" style="max-width: 300px;">
+            <button class="btn-action" onclick="desbloquearDirectorio()" style="max-width: 300px; border-color: #FF5A5A; color: #FF5A5A;">Verificar Credenciales</button>
+            <p id="error-pin" style="color: #FF5A5A; font-size: 0.8rem; display: none; margin-top: 10px;"></p>
+        </div>
+
+        <div class="card" id="tabla-usuarios" style="display: none;">
+            <h3>👥 Directorio de Clientes Verificados</h3>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Contacto</th>
+                            <th>Estado de Contraseña</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-usuarios">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        // INIT: IA DE PRODUCCIÓN Y TEMPORIZADORES
+        document.addEventListener("DOMContentLoaded", function() {
+            let lastTab = sessionStorage.getItem("adminActiveTab") || "activos";
+            openTab(lastTab);
+            
+            calcularProduccionPura();
+            iniciarMotorExpiracion();
+        });
+
+        // 1. FILTRO IA DE PRODUCCIÓN: AISLA LA ADQUISICIÓN RELÁMPAGO
+        function calcularProduccionPura() {
+            let items = document.querySelectorAll('.prod-data-item');
+            let prodDict = {};
+            
+            items.forEach(item => {
+                let nombre = item.dataset.nombre;
+                let cant = parseInt(item.dataset.cantidad);
+                if(prodDict[nombre]) {
+                    prodDict[nombre] += cant;
+                } else {
+                    prodDict[nombre] = cant;
+                }
+            });
+
+            let listaDiv = document.getElementById('lista-produccion-anticipada');
+            listaDiv.innerHTML = '';
+            let keys = Object.keys(prodDict);
+
+            if(keys.length === 0) {
+                listaDiv.innerHTML = '<p style="color:var(--text-gray); font-size:0.85rem; text-align: center;">Sin requerimientos de producción activa.</p>';
+                return;
+            }
+
+            keys.forEach(k => {
+                listaDiv.innerHTML += `
+                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-dark);">
+                    <span style="color:var(--text-gray); font-size: 0.85rem;">${k}</span>
+                    <span style="color: var(--accent-gold); font-weight:bold;">x${prodDict[k]}</span>
+                </div>`;
+            });
+        }
+
+        // 2. MOTOR DE EXPIRACIÓN: TEMPORIZADOR DE 1 HORA (REMASTERIZADO)
+        function iniciarMotorExpiracion() {
+            const timers = document.querySelectorAll('.timer-recogida');
+            setInterval(() => {
+                const ahora = new Date();
+                
+                timers.forEach(timer => {
+                    const estado = timer.dataset.estado;
+                    if (estado === 'Entregado' || estado === 'Cancelado') {
+                        timer.innerHTML = `<span style="color: ${estado === 'Cancelado' ? '#FF5A5A' : '#6BD968'};">${estado.toUpperCase()}</span>`;
+                        return;
+                    }
+                    
+                    const horarioStr = timer.dataset.horario;
+                    if(!horarioStr || horarioStr === 'Inmediato') {
+                        timer.innerHTML = '<span style="color: #6BE0FF;">RETIRO INMEDIATO</span>';
+                        return;
+                    }
+
+                    // Conversión del string "05:00 PM" a Date local de hoy
+                    const match = horarioStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+                    if(!match) return;
+                    
+                    let horas = parseInt(match[1]);
+                    let mins = parseInt(match[2]);
+                    if(match[3].toUpperCase() === 'PM' && horas < 12) horas += 12;
+                    if(match[3].toUpperCase() === 'AM' && horas === 12) horas = 0;
+
+                    const limiteInferior = new Date();
+                    limiteInferior.setHours(horas, mins, 0, 0); // Hora de recogida pactada
+                    
+                    const limiteSuperior = new Date();
+                    limiteSuperior.setHours(horas + 1, mins, 0, 0); // Expiración exacta de 1 hora
+
+                    if (ahora < limiteInferior) {
+                        timer.innerHTML = '<span style="color: #6BE0FF;">Esperando hora de recogida...</span>';
+                        timer.style.border = "1px solid #6BE0FF";
+                    } 
+                    else if (ahora >= limiteSuperior) {
+                        timer.innerHTML = '<span style="color: #FF5A5A;">VENCIDO (Expira)</span>';
+                        timer.style.border = "1px solid #FF5A5A";
+                    } 
+                    else {
+                        const diff = limiteSuperior - ahora;
+                        const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        const s = Math.floor((diff % (1000 * 60)) / 1000);
+                        const ms = m < 10 ? '0'+m : m;
+                        const ss = s < 10 ? '0'+s : s;
+                        timer.innerHTML = `<span style="color: #CBA573;">Expira en: ${ms}:${ss}</span>`;
+                        timer.style.border = "1px solid var(--accent-gold)";
+                    }
+                });
+            }, 1000);
+        }
+
+        // CONTROL DE PESTAÑAS (Corregido y optimizado)
+        function openTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            
+            const tabElement = document.getElementById(tabId);
+            if (tabElement) tabElement.classList.add('active');
+            
+            const btnElement = document.querySelector(`button[onclick="openTab('${tabId}')"]`);
+            if (btnElement) btnElement.classList.add('active');
+
+            sessionStorage.setItem("adminActiveTab", tabId);
+        }
+
+        // SOCKET.IO PARA TIEMPO REAL ZMARTHNET
+        const socket = io();
+        socket.on('actualizacion_global', function() {
+            console.log("Señal de ZMARTHNET recibida. Sincronizando datos en tiempo real...");
+            location.reload(); 
+        });
+
+        // LÓGICA DE DESBLOQUEO DE USUARIOS (Corregida la fuga de datos del hash)
+        async function desbloquearDirectorio() {
+            const pin = document.getElementById('pin_maestro').value;
+            const errorMsg = document.getElementById('error-pin');
+            
+            try {
+                const response = await fetch('/admin/api/usuarios', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({pin: pin})
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    document.getElementById('panel-pin').style.display = 'none';
+                    document.getElementById('tabla-usuarios').style.display = 'block';
+                    
+                    const tbody = document.getElementById('cuerpo-usuarios');
+                    tbody.innerHTML = '';
+                    data.usuarios.forEach(u => {
+                        tbody.innerHTML += `
+                        <tr>
+                            <td style="color:var(--accent-gold); font-weight:bold;">USR-${u.id}</td>
+                            <td>${u.nombre}</td>
+                            <td><span style="display:block; color:#fff;">${u.correo}</span><span style="color:#777; font-size:0.75rem;">${u.telefono}</span></td>
+                            <td><span style="background: #111; color: #6BD968; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid #365C2B;">Cifrada Correctamente</span></td>
+                        </tr>`;
+                    });
+                } else {
+                    errorMsg.innerText = data.error;
+                    errorMsg.style.display = 'block';
+                }
+            } catch (error) {
+                errorMsg.innerText = "Fallo de conexión con el servidor maestro.";
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function abrirModalPedido(id) {
+            document.getElementById('modal-' + id).style.display = 'flex';
+        }
+        
+        function cerrarModalPedido(id) {
+            document.getElementById('modal-' + id).style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.style.display = 'none';
+            }
+        }
+        
+        function notificarWhatsApp(selectElement, telefono, nombre, codigo) {
+            if (selectElement.value === 'Listo') {
+                let numLimpiado = telefono.replace(/\D/g, '');
+                let numeroFinal = "52" + numLimpiado;
+                let mensaje = `👋Hola ${nombre}, tu orden ${codigo} ya te está esperando en Delicious Bread. Ya puedes pasar a recogerlo.`;
+                
+                let url = `https://wa.me/${numeroFinal}?text=${encodeURIComponent(mensaje)}`;
+                window.open(url, '_blank');
+            }
+            selectElement.form.submit();
+        }
+    </script>
+</body>
+</html>
+
+
+-----------------------------------------------------------------------------
+
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PANEL DE SOCIO | DELICIOUS BREAD</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-beige: #EADBC8;         
+            --card-black: #000000;       
+            --skin-beige: #dfd0c0;         
+            --light-brown: #8b7355;        
+            --luxury-gold: #c5a880;
+            --border-fino: #222222;        
+            --text-dark: #1A1A1A;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-beige); color: var(--text-dark); font-family: 'Montserrat', sans-serif; padding: 20px 15px; }
+        
+        header { text-align: center; margin: 60px 0; }
+        h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 10px; }
+        
+        .nav-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin-top: 20px; }
+        .btn-nav { color: var(--text-dark); text-decoration: none; border: 1px solid var(--text-dark); padding: 10px 20px; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; text-align: center; border-radius: 6px; transition: 0.3s; }
+        .btn-nav:hover { background: var(--text-dark); color: var(--bg-beige); }
+
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        /* Bordes redondeados aplicados a las tarjetas */
+        .profile-card { background: var(--card-black); padding: 30px; border-radius: 15px; margin-bottom: 40px; color: var(--skin-beige); text-align: center; }
+        .profile-card h3 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 10px; color: var(--luxury-gold); }
+        
+        .order-card { background: var(--card-black); border: 1px solid var(--border-fino); padding: 25px; margin-bottom: 25px; color: var(--skin-beige); border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 15px; }
+        .order-id { color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.2rem; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+        
+        .badges-container { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .badge { font-size: 0.65rem; padding: 6px 12px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); text-transform: uppercase; border-radius: 6px; white-space: nowrap; font-weight: 600; letter-spacing: 0.5px; }
+        
+        /* Colores dinámicos sincronizados con el admin */
+        .badge-pendiente { border-color: #8b7355; color: #8b7355; background: rgba(139, 115, 85, 0.05); }
+        .badge-horneando { border-color: #d9884a; color: #d9884a; background: rgba(217, 136, 74, 0.05); }
+        .badge-listo { border-color: #6BD968; color: #6BD968; background: rgba(107, 217, 104, 0.05); }
+        .badge-entregado { border-color: #333; color: #777; background: rgba(34, 34, 34, 0.3); }
+        .badge-flash { border-color: var(--luxury-gold); color: var(--card-black); background: var(--luxury-gold); }
+        .badge-cancelado { border-color: #ff4d4d; color: #ff4d4d; background: rgba(255, 77, 77, 0.05); }
+
+        /* Estilos Financieros */
+        .badge-pagado { border-color: #6BD968; color: #6BD968; background: rgba(107, 217, 104, 0.1); }
+        .badge-no-pagado { border-color: #d9884a; color: #d9884a; background: rgba(217, 136, 74, 0.05); }
+        
+        /* Etiqueta Flash Mejorada */
+        .flash-tag { font-size: 0.75rem; padding: 4px 8px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); border-radius: 6px; font-weight: 600; letter-spacing: 1px; display: inline-flex; align-items: center; }
+
+        .file-upload-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #333; }
+        
+        /* Estilo elegante para el input de archivo */
+        .file-upload-section input[type="file"] { width: 100%; margin-bottom: 15px; color: var(--skin-beige); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; outline: none; }
+        
+        /* Modificando el botón interno del input file */
+        .file-upload-section input[type="file"]::file-selector-button {
+            background-color: transparent;
+            color: var(--luxury-gold);
+            border: 1px solid var(--luxury-gold);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            text-transform: uppercase;
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-right: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-section input[type="file"]::file-selector-button:hover {
+            background-color: var(--luxury-gold);
+            color: var(--card-black);
+        }
+
+        .btn-anexar {
+            background-color: transparent;
+            color: var(--luxury-gold);
+            border: 1px solid var(--luxury-gold);
+            padding: 12px 15px;
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: 0.3s;
+            font-family: 'Montserrat', sans-serif;
+            display: block;
+            text-align: center;
+        }
+
+        .btn-anexar:hover {
+            background-color: var(--luxury-gold);
+            color: var(--card-black);
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 1.8rem; letter-spacing: 3px; }
+            .order-header { flex-direction: column; align-items: flex-start; }
+            .badges-container { width: 100%; justify-content: flex-start; }
+            .badge { text-align: center; }
+            .profile-card p { font-size: 0.85rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>PANEL DE SOCIO</h1>
+        <div class="nav-actions">
+            <a href="{{ url_for('index') }}" class="btn-nav">Tienda</a>
+            <a href="{{ url_for('logout') }}" class="btn-nav">Salir</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="profile-card">
+            <h3>{{ usuario.nombre }}</h3>
+            <p>{{ usuario.correo }} | {{ usuario.telefono }}</p>
+        </div>
+
+        <h2 style="text-align: center; margin-bottom: 30px; font-family: 'Playfair Display', serif; text-transform: uppercase; letter-spacing: 2px;">Historial de Pedidos</h2>
+        
+        {% for pedido in pedidos %}
+        <div class="order-card">
+            <div class="order-header">
+                <span class="order-id">
+                    {{ pedido.codigo_recogida }}
+                    {% if pedido.es_relampago %}
+                        <span class="flash-tag">⚡ FLASH</span>
+                    {% endif %}
+                </span>
+                
+                <div class="badges-container">
+                    <!-- Estado de Pago Financiero: Se oculta si el pedido está expirado/cancelado -->
+                    {% if pedido.estado != 'Cancelado' %}
+                        {% if pedido.pagado %}
+                            <span class="badge badge-pagado">✅ PAGADO</span>
+                        {% else %}
+                            <span class="badge badge-no-pagado">⏳ PAGO PENDIENTE</span>
+                        {% endif %}
+                    {% endif %}
+
+                    <!-- Estado Operativo -->
+                    {% if pedido.estado == 'Pendiente' %}
+                        <span class="badge badge-pendiente">En Fila</span>
+                    {% elif pedido.estado == 'Horneando' %}
+                        <span class="badge badge-horneando">En Hornos</span>
+                    {% elif pedido.estado == 'Listo' %}
+                        <span class="badge badge-listo">Listo en Delicious Bread</span>
+                    {% elif pedido.estado == 'Entregado' %}
+                        <span class="badge badge-entregado">Entregado</span>
+                    {% elif pedido.estado == 'Venta Flash Excedente' %}
+                        <span class="badge badge-flash">Reservado (Flash)</span>
+                    {% elif pedido.estado == 'Cancelado' %}
+                        <span class="badge badge-cancelado">Expirado</span>
+                    {% else %}
+                        <span class="badge badge-pendiente">{{ pedido.estado }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="order-body">
+                {% for detalle in pedido.detalles %}
+                    <p style="margin-bottom: 8px; font-size: 0.95rem;">
+                        <span style="color: #999; font-weight: 600;">{{ detalle.cantidad }}x</span> 
+                        <span>{{ detalle.producto.nombre }}</span>
+                    </p>
+                {% endfor %}
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
+                    <span style="font-size: 0.75rem; color: #888; text-transform: uppercase; line-height: 1.6;">⏱️ {{ pedido.horario_recogida }} <br>💳 {{ pedido.metodo_pago }}</span>
+                    <p style="font-weight: 600; color: var(--luxury-gold); font-size: 1.2rem;">Total: ${{ "%.2f"|format(pedido.monto_total) }}</p>
+                </div>
+            </div>
+
+            <!-- Interfaz de Carga de Comprobante -->
+            {% if pedido.metodo_pago == 'Transferencia' and pedido.estado != 'Entregado' and pedido.estado != 'Cancelado' %}
+            <div class="file-upload-section">
+                {% if pedido.pagado %}
+                    <p style="color: #6BD968; font-size: 0.8rem; font-weight: 600; text-align: center; letter-spacing: 1.5px;">✓ TRANSACCIÓN VALIDADA POR EL ATELIER</p>
+                {% elif pedido.comprobante_url %}
+                    <p style="color: var(--luxury-gold); font-size: 0.8rem; text-align: center; letter-spacing: 1px;">✓ Comprobante enviado. Entró en proceso de revisión...</p>
+                {% else %}
+                    <form action="{{ url_for('subir_comprobante', pedido_id=pedido.id) }}" method="POST" enctype="multipart/form-data">
+                        <label style="display: block; font-size: 0.75rem; color: var(--luxury-gold); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500;">Evidencia de Transferencia:</label>
+                        <input type="file" name="comprobante_pago" required accept="image/*">
+                        <button type="submit" class="btn-anexar">Anexar Comprobante</button>
+                    </form>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 40px 20px; border: 1px dashed var(--border-fino); color: #666; border-radius: 15px;">
+            <p>No existen operaciones en su registro actual.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const socket = io();
+            socket.on('actualizacion_global', function() {
+                window.location.reload();
+            });
+        });
+    </script>
+</body>
+</html>

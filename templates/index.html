@@ -118,10 +118,36 @@
         .btn-flash { background: var(--luxury-gold); color: var(--card-black); border: none; padding: 10px; width: 100%; font-family: 'Montserrat'; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; margin-top: 15px; font-size: 0.8rem; }
         .btn-flash:hover { background: var(--skin-beige); }
 
-        /* BANNERS / ANUNCIOS */
-        .contenedor-banners { width: 100%; margin-bottom: 40px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-fino); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .item-banner { position: relative; width: 100%; background: #000; display: block; }
-        .item-banner img { width: 100%; max-height: 250px; object-fit: cover; display: block; }
+        /* CARRUSEL DE BANNERS / ANUNCIOS AUTOMÁTICO */
+        .contenedor-banners { 
+            position: relative; 
+            width: 100%; 
+            margin-bottom: 40px; 
+            border-radius: 4px; 
+            overflow: hidden; 
+            border: 1px solid var(--border-fino); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); 
+        }
+        .item-banner { 
+            position: relative; 
+            width: 100%; 
+            background: #000; 
+            display: none; /* Oculto por defecto */
+            animation: fadeInOut 1s ease-in-out;
+        }
+        .item-banner.active {
+            display: block; /* Solo se muestra el activo */
+        }
+        @keyframes fadeInOut {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        /* Ajuste para que tome el tamaño natural de la imagen */
+        .item-banner img { 
+            width: 100%; 
+            height: auto; /* Removido max-height y cover para que no haya recortes */
+            display: block; 
+        }
         .banner-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 20px; box-sizing: border-box; }
         .banner-titulo { color: var(--skin-beige); font-family: 'Playfair Display', serif; font-size: 1.5rem; border-left: 3px solid var(--luxury-gold); padding-left: 15px; }
 
@@ -217,11 +243,11 @@
         }
 
         /* =========================================
-           ZEDITH | IA CONCIERGE PREMIUM
+           ZEDITH | IA CONCIERGE PREMIUM (REUBICADO ARRIBA IZQUIERDA)
            ========================================= */
         .btn-zedith-trigger {
             position: fixed;
-            bottom: 30px;
+            top: 30px; /* Cambio solicitado de bottom a top */
             left: 30px;
             background: var(--card-black);
             backdrop-filter: blur(12px);
@@ -269,11 +295,11 @@
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(197, 168, 128, 0); }
         }
 
-        /* Modal del Chat */
+        /* Modal del Chat ajustado para que baje desde el botón */
         .zedith-modal {
             display: none;
             position: fixed;
-            bottom: 90px;
+            top: 90px; /* Reajustado para que caiga desde arriba */
             left: 30px;
             width: 360px;
             height: 550px;
@@ -413,7 +439,7 @@
         {% if anuncios %}
         <div class="contenedor-banners">
             {% for ad in anuncios %}
-            <div class="item-banner">
+            <div class="item-banner {% if loop.first %}active{% endif %}">
                 {% if ad.enlace_destino %}
                 <a href="{{ ad.enlace_destino }}" target="_blank" style="text-decoration: none;">
                 {% endif %}
@@ -553,7 +579,6 @@
                     <span>Total Estimado</span>
                     <span id="montoSidebar">$0.00</span>
                 </div>
-                <!-- Cambiado para mostrar primero el ticket de confirmación -->
                 <button type="button" id="btnProcesar" class="btn-confirmar" onclick="prepararTicketConfirmacion()">
                     Procesar Pedido
                 </button>
@@ -626,6 +651,28 @@
         </div>
     </div>
 
+    <div id="modalCodigoExito" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); z-index: 6000; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
+        <div class="ticket-contenido" style="border: 1px solid var(--luxury-gold); background: var(--card-black); max-width: 420px; width: 100%; padding: 45px 35px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.9); transform: translateY(20px); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 4px;">
+            
+            <h2 style="font-family: 'Playfair Display', serif; color: var(--skin-beige); font-size: 1.6rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">Recepción Confirmada</h2>
+            <p style="color: #888; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; line-height: 1.6; margin-bottom: 30px; font-weight: 300;">Presente la siguiente llave criptográfica en la sucursal para la entrega de su alta selección.</p>
+
+            <div style="background: #0A0A0A; border: 1px dashed #333; padding: 25px; border-radius: 4px; margin-bottom: 35px; position: relative;">
+                <span style="display: block; font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px;">Código de Identificación</span>
+                <span id="codigoExitoTexto" style="font-family: 'Playfair Display', serif; font-size: 2.4rem; color: var(--luxury-gold); letter-spacing: 5px; font-weight: 500;">DB-XXXX</span>
+            </div>
+
+            <div style="display: flex; gap: 12px; flex-direction: column;">
+                <button type="button" onclick="copiarCodigo()" style="background: var(--luxury-gold); color: var(--card-black); border: none; padding: 18px; font-family: 'Montserrat', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; font-size: 0.8rem; border-radius: 4px; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                    <span id="btnCopiarTexto">Copiar Código</span>
+                </button>
+                <button type="button" onclick="cerrarModalYPerfil()" style="background: transparent; color: #777; border: 1px solid #222; padding: 15px; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; border-radius: 4px;">Continuar a mi Perfil</button>
+                <button type="button" onclick="cerrarModalYTienda()" style="background: transparent; color: var(--luxury-gold); border: 1px solid var(--border-fino); padding: 15px; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; border-radius: 4px;">Volver a la Tienda</button>
+            </div>
+        </div>
+    </div>
+
     <div class="btn-zedith-trigger" onclick="toggleZedith()">
         <div class="zedith-dot"></div>
         <span class="zedith-texto">ZEDITH IA</span>
@@ -659,13 +706,24 @@
         const tiendaAbierta = {{ 'true' if tienda_abierta else 'false' }};
         const motivoCierre = {{ motivo_cierre|default('')|tojson }};
 
+        // LÓGICA DE CARRUSEL DE BANNERS AUTOMÁTICO
+        document.addEventListener("DOMContentLoaded", function() {
+            let currentSlide = 0;
+            const slides = document.querySelectorAll('.item-banner');
+            if (slides.length > 1) {
+                setInterval(() => {
+                    slides[currentSlide].classList.remove('active');
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    slides[currentSlide].classList.add('active');
+                }, 3000); // 3 Segundos por anuncio
+            }
+        });
+
         // LÓGICA DE FILTRADO POR CATEGORÍA
         function filtrarCategoria(categoria) {
-            // Estilos de botones
             document.querySelectorAll('.store-tab-btn').forEach(btn => btn.classList.remove('active'));
             event.currentTarget.classList.add('active');
 
-            // Mostrar / Ocultar Tarjetas
             const items = document.querySelectorAll('.item-categoria');
             items.forEach(item => {
                 if (item.classList.contains('cat-' + categoria)) {
@@ -676,7 +734,6 @@
             });
         }
 
-        // Inicializar filtro en el arranque (Mostrar solo el Catálogo Diario por defecto)
         document.addEventListener('DOMContentLoaded', () => {
             const items = document.querySelectorAll('.item-categoria');
             items.forEach(item => {
@@ -711,14 +768,12 @@
                 mensajeBloqueo = `RECEPCIÓN DE PEDIDOS CERRADA.<br>Horario operativo del Atelier: 1:00 AM a 4:00 PM.`;
             }
 
-            // Ejecutar el bloqueo frontal en la UI
             if (estaBloqueado) {
                 btnProcesar.disabled = true;
                 btnProcesar.innerText = 'CERRADO';
                 mensajeCierre.innerHTML = mensajeBloqueo;
                 mensajeCierre.style.display = 'block';
                 
-                // Desactivar todos los botones "+" para que nadie pueda agregar nada a la bolsa
                 botonesSuma.forEach(btn => {
                     btn.disabled = true;
                     btn.style.opacity = '0.3';
@@ -838,9 +893,6 @@
             }
         }
 
-        // =========================================
-        // PREPARACIÓN DE TICKET (NUEVO FLUJO)
-        // =========================================
         function prepararTicketConfirmacion() {
             var form = document.getElementById('pedidoForm');
             if (!form.checkValidity()) {
@@ -848,7 +900,6 @@
                 return;
             }
             
-            // Cerramos el carrito y pasamos directo al Ticket de confirmación
             document.getElementById('sidebarCarrito').classList.remove('abierto');
             generarTicketVista();
             document.getElementById('modalTicket').style.display = 'flex';
@@ -899,22 +950,14 @@
 
         function cerrarTicket() {
             document.getElementById('modalTicket').style.display = 'none';
-            
-            // Restauramos el botón por si se vuelve a abrir
             const btn = document.querySelector('#modalTicket .btn-enviar-ticket');
             btn.innerText = "Confirmar Orden en Sistema";
             btn.style.opacity = "1";
             btn.disabled = false;
-            
             abrirCarrito(); 
         }
 
-        // =========================================
-        // SISTEMA DE ENVÍO ASÍNCRONO Y MODAL DE CÓDIGO
-        // =========================================
-
         async function enviarAlBackend() {
-            // Bloqueamos el botón inmediatamente para evitar el doble clic
             const btn = document.querySelector('#modalTicket .btn-enviar-ticket');
             btn.innerText = "Procesando...";
             btn.style.opacity = "0.6";
@@ -923,13 +966,10 @@
             const form = document.getElementById('pedidoForm');
             const formData = new FormData(form);
 
-            // Ocultamos ticket y mostramos la Animación 3D de empaquetado
             document.getElementById('modalTicket').style.display = 'none';
             document.getElementById('modal-3d').style.display = 'flex';
 
             try {
-                // Ejecutamos la petición al servidor y un temporizador en paralelo 
-                // para asegurar que la animación se vea al menos 3.5 segundos.
                 const fetchPromise = fetch('/procesar_pedido', {
                     method: 'POST',
                     headers: { 'Accept': 'application/json' },
@@ -938,7 +978,6 @@
 
                 const animPromise = new Promise(resolve => setTimeout(resolve, 3500));
 
-                // Esperamos a que ambos terminen
                 const [data] = await Promise.all([fetchPromise, animPromise]);
 
                 document.getElementById('modal-3d').style.display = 'none';
@@ -951,23 +990,19 @@
                 }
             } catch (error) {
                 console.error("Error en transmisión:", error);
-                // Fallback de seguridad si falla el fetch
                 form.submit(); 
             }
         }
 
-        // Función para pedidos relámpago
         function mostrarTicketRelampago(codigo, mensaje) {
             mostrarModalCodigo(codigo);
         }
 
-        // Animación de entrada y renderizado del código
         function mostrarModalCodigo(codigo) {
             document.getElementById('codigoExitoTexto').innerText = codigo;
             const modal = document.getElementById('modalCodigoExito');
             modal.style.display = 'flex';
             
-            // Retardo mínimo para activar la transición CSS
             setTimeout(() => {
                 modal.style.opacity = '1';
                 modal.querySelector('.ticket-contenido').style.transform = 'translateY(0)';
@@ -990,11 +1025,12 @@
         function cerrarModalYPerfil() {
             window.location.href = "{{ url_for('perfil') }}";
         }
-
-        // =========================================
-        // LÓGICA VENTA RELÁMPAGO (ANIMACIÓN Y CÓDIGO)
-        // =========================================
         
+        function cerrarModalYTienda() {
+            document.getElementById('modalCodigoExito').style.display = 'none';
+            window.location.reload(); 
+        }
+
         let relampagoActivoId = null;
         let relampagoActivoCantidad = 1;
 
@@ -1008,7 +1044,6 @@
             document.getElementById('modalPagoRelampago').style.display = 'none';
             relampagoActivoId = null;
             
-            // Restaurar estado del botón
             const btn = document.querySelector('#modalPagoRelampago .btn-enviar-ticket');
             btn.innerText = "Confirmar y Empacar";
             btn.style.opacity = "1";
@@ -1016,7 +1051,6 @@
         }
 
         async function procesarCompraRelampago() {
-            // Bloqueamos botón para evitar doble clic
             const btn = document.querySelector('#modalPagoRelampago .btn-enviar-ticket');
             btn.innerText = "Procesando...";
             btn.style.opacity = "0.6";
@@ -1026,12 +1060,10 @@
             const idProductoAEnviar = relampagoActivoId; 
             const cantidadAEnviar = relampagoActivoCantidad;
 
-            // Cerramos modal y mostramos animación 3D
             document.getElementById('modalPagoRelampago').style.display = 'none';
             document.getElementById('modal-3d').style.display = 'flex';
             
             try {
-                // Petición al backend y tiempo de animación en paralelo
                 const fetchPromise = fetch('/procesar_sobrante', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1058,16 +1090,12 @@
             } catch(e) {
                 document.getElementById('modal-3d').style.display = 'none';
                 alert("Fallo de red. Verifique su conexión con ZmarthNet.");
-                // Si falla, restaurar el botón y dejar que intente de nuevo
                 btn.innerText = "Confirmar y Empacar";
                 btn.style.opacity = "1";
                 btn.disabled = false;
             }
         }
 
-        // =========================================
-        // LÓGICA ZEDITH IA
-        // =========================================
         function toggleZedith() {
             const modal = document.getElementById('zedithModal');
             if (modal.style.display === 'flex') {
@@ -1091,17 +1119,14 @@
 
             const chatBody = document.getElementById('zedithBody');
 
-            // 1. Mostrar mensaje del usuario
             const userDiv = document.createElement('div');
             userDiv.className = 'msg-usuario';
             userDiv.innerText = mensaje;
             chatBody.appendChild(userDiv);
             
-            // Limpiar input y hacer scroll
             inputField.value = "";
             chatBody.scrollTop = chatBody.scrollHeight;
 
-            // 2. Mostrar indicador de "Escribiendo..."
             const typingDiv = document.createElement('div');
             typingDiv.className = 'zedith-typing';
             typingDiv.innerText = "Zedith está redactando...";
@@ -1110,7 +1135,6 @@
             chatBody.scrollTop = chatBody.scrollHeight;
 
             try {
-                // 3. Fetch al backend de Python
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
@@ -1119,10 +1143,8 @@
                 
                 const data = await response.json();
                 
-                // Remover "Escribiendo..."
                 chatBody.removeChild(typingDiv);
 
-                // 4. Mostrar respuesta
                 const zedithDiv = document.createElement('div');
                 zedithDiv.className = 'msg-zedith';
                 zedithDiv.innerText = data.reply;
@@ -1141,16 +1163,10 @@
     </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
-    // Conexión al protocolo en tiempo real
     const socket = io();
     
     socket.on('actualizacion_global', function() {
-        // En una tienda ultra premium, queremos actualizar el inventario dinámicamente sin que el cliente pierda lo que tiene en su carrito.
-        // Un enfoque elegante es hacer un "soft reload" que mantenga el estado.
         console.log("ZMARTHNET: Datos en tiempo real sincronizados.");
-        
-        // Puedes optar por recargar la página para aplicar los cambios del admin
-        // O agregar notificaciones sutiles de UI.
         const carritoAbierto = document.getElementById('sidebarCarrito').classList.contains('abierto');
         if (!carritoAbierto) {
             location.reload();
@@ -1158,25 +1174,5 @@
     });
 </script>
 
-<div id="modalCodigoExito" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); z-index: 6000; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
-        <div class="ticket-contenido" style="border: 1px solid var(--luxury-gold); background: var(--card-black); max-width: 420px; width: 100%; padding: 45px 35px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.9); transform: translateY(20px); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 4px;">
-            
-            <h2 style="font-family: 'Playfair Display', serif; color: var(--skin-beige); font-size: 1.6rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">Recepción Confirmada</h2>
-            <p style="color: #888; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; line-height: 1.6; margin-bottom: 30px; font-weight: 300;">Presente la siguiente llave criptográfica en la sucursal para la entrega de su alta selección.</p>
-
-            <div style="background: #0A0A0A; border: 1px dashed #333; padding: 25px; border-radius: 4px; margin-bottom: 35px; position: relative;">
-                <span style="display: block; font-size: 0.65rem; color: #666; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 10px;">Código de Identificación</span>
-                <span id="codigoExitoTexto" style="font-family: 'Playfair Display', serif; font-size: 2.4rem; color: var(--luxury-gold); letter-spacing: 5px; font-weight: 500;">DB-XXXX</span>
-            </div>
-
-            <div style="display: flex; gap: 12px; flex-direction: column;">
-                <button type="button" onclick="copiarCodigo()" style="background: var(--luxury-gold); color: var(--card-black); border: none; padding: 18px; font-family: 'Montserrat', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; font-size: 0.8rem; border-radius: 4px; display: flex; align-items: center; justify-content: center; gap: 10px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                    <span id="btnCopiarTexto">Copiar Código</span>
-                </button>
-                <button type="button" onclick="cerrarModalYPerfil()" style="background: transparent; color: #777; border: 1px solid #222; padding: 15px; font-family: 'Montserrat', sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; border-radius: 4px;">Continuar a mi Perfil</button>
-            </div>
-        </div>
-    </div>
 </body>
 </html>
