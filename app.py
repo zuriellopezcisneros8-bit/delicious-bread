@@ -834,10 +834,21 @@ def habilitar_dia(dia_id):
 @app.route('/admin/producto/toggle/<int:producto_id>', methods=['POST'])
 def toggle_producto(producto_id):
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    
     producto = Producto.query.get_or_404(producto_id)
+    
+    
     producto.disponible = not producto.disponible
+  
+    
     db.session.commit()
+    
+   
+    socketio.emit('actualizacion_global')
+    
+    flash(f'El estado del producto fue actualizado exitosamente.', 'success')
     return redirect(url_for('admin'))
+
 
 @app.route('/admin/eliminar_producto/<int:producto_id>', methods=['POST'])
 def eliminar_producto(producto_id):
@@ -848,19 +859,24 @@ def eliminar_producto(producto_id):
     tiene_ventas = DetallePedido.query.filter_by(producto_id=producto_id).first()
     
     if tiene_ventas:
+        # Si tiene ventas, el sistema lo protege y lo pausa. 
+        # Aseguramos que no cambie su categoría original.
         producto.disponible = False
         db.session.commit()
-        flash('El producto tenía ventas registradas, así que se ha PAUSADO automáticamente para mantener tu historial.', 'warning')
+        socketio.emit('actualizacion_global')
+        flash('El producto tenía ventas registradas, así que se ha PAUSADO automáticamente para mantener tu historial. Su categoría original se mantiene intacta.', 'warning')
     else:
         try:
             db.session.delete(producto)
             db.session.commit()
+            socketio.emit('actualizacion_global')
             flash('Producto eliminado permanentemente del catálogo.', 'success')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al eliminar: {str(e)}', 'danger')
             
     return redirect(url_for('admin'))
+
 
 @app.route('/admin/producto/editar/<int:producto_id>', methods=['POST'])
 def editar_producto(producto_id):
@@ -872,6 +888,12 @@ def editar_producto(producto_id):
     producto.precio = float(request.form.get('precio'))
     producto.stock_sobrante = int(request.form.get('stock_sobrante', 0))
     
+    # Blindaje extra: Si guardas cambios en la edición, comprobamos si enviaste una categoría.
+    # Si no la enviaste, conservamos la que ya tenía para que no se convierta en 'pan' por accidente.
+    categoria_form = request.form.get('categoria')
+    if categoria_form:
+        producto.categoria = categoria_form
+    
     file = request.files.get('imagen_file')
     if file and file.filename != '':
         nueva_imagen_url = subir_a_cloudinary(file)
@@ -879,6 +901,7 @@ def editar_producto(producto_id):
             producto.imagen_url = nueva_imagen_url
         
     db.session.commit()
+    socketio.emit('actualizacion_global')
     return redirect(url_for('admin'))
 
 # ================= SUBIDA DE COMPROBANTES (TIENDA REGULAR) =================

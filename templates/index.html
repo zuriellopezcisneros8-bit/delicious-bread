@@ -100,14 +100,29 @@
             position: relative;
         }
         .tienda-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
+        
+        /* CORRECCIÓN DE LA IMAGEN DE TIENDA (PARA QUE NO SE CORTE) */
         .tienda-card .img-contenedor {
             width: 100%;
-            aspect-ratio: 1 / 1;
+            aspect-ratio: 1 / 1; /* Mantiene la proporción cuadrada perfecta */
             overflow: hidden;
             border-radius: 4px;
             margin-bottom: 10px;
             position: relative;
+            background-color: #ffffff; /* Fondo blanco para que luzcan los productos */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
+        .tienda-card .img-contenedor img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; /* ESTO HACE QUE LA IMAGEN SE VEA COMPLETA Y NO SE CORTE */
+            object-position: center;
+            padding: 10px; /* Le da un ligero margen interno para que no pegue con los bordes */
+            transition: var(--transition-smooth);
+        }
+
         .tienda-card h4 {
             font-size: 0.9rem;
             color: var(--skin-beige);
@@ -167,9 +182,9 @@
         }
         .tienda-card .overlay-pausado { font-size: 0.9rem; letter-spacing: 1px; } /* Ajuste para tarjeta pequeña */
 
-        /* IMAGEN DE ESQUINA A ESQUINA */
-        .img-contenedor { width: 100%; aspect-ratio: 4 / 3; overflow: hidden; position: relative; }
-        .img-contenedor img { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: var(--transition-smooth); }
+        /* IMAGEN DE ESQUINA A ESQUINA (PARA EL PAN) */
+        .card-producto .img-contenedor { width: 100%; aspect-ratio: 4 / 3; overflow: hidden; position: relative; }
+        .card-producto .img-contenedor img { width: 100%; height: 100%; object-fit: cover; object-position: center; transition: var(--transition-smooth); }
         .card-producto:hover .img-contenedor img { transform: scale(1.05); }
         .tienda-card:hover .img-contenedor img { transform: scale(1.05); }
 
@@ -670,10 +685,7 @@
                     <label for="horario">Horario de Recogida</label>
                     <select id="horario" name="horario" required>
                         <option value="" disabled selected>Seleccione la hora de retiro...</option>
-                        <option value="05:00 PM">05:00 PM - Recién Horneado</option>
-                        <option value="06:00 PM">06:00 PM - Temperado Ideal</option>
-                        <option value="07:00 PM">07:00 PM - Reposado Óptimo</option>
-                    </select>
+                        </select>
                 </div>
 
                 <div class="grupo-campo">
@@ -918,24 +930,40 @@
                     valorActual = "";
                 }
             } else {
-                opcionesHTML += `
-                    <option value="12:00 PM">12:00 PM</option>
-                    <option value="01:00 PM">01:00 PM</option>
-                    <option value="02:00 PM">02:00 PM</option>
-                    <option value="03:00 PM">03:00 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                    <option value="05:00 PM">05:00 PM</option>
-                    <option value="06:00 PM">06:00 PM</option>
-                    <option value="07:00 PM">07:00 PM</option>
-                    <option value="08:00 PM">08:00 PM</option>
-                    <option value="09:00 PM">09:00 PM</option>
-                    <option value="10:00 PM">10:00 PM</option>
-                `;
+                // NUEVA LÓGICA DINÁMICA PARA ABARROTES: Solo horas futuras, entre 6 AM y 10 PM
+                var fechaHoy = new Date();
+                var horaActual = fechaHoy.getHours(); // Hora en formato 0-23
+                var opcionesAbarrotes = '';
+                var hayHorariosDisponibles = false;
+
+                // Ciclo desde las 6 AM (6) hasta las 10 PM (22)
+                for (var i = 6; i <= 22; i++) {
+                    if (i > horaActual) { // Si la hora ya pasó, no la muestra
+                        var ampm = i >= 12 ? 'PM' : 'AM';
+                        var hora12 = i % 12;
+                        hora12 = hora12 ? hora12 : 12; // el 0 se vuelve 12
+                        // Formato de dos dígitos, ej. "05:00 PM"
+                        var horaStr = (hora12 < 10 ? '0' : '') + hora12 + ':00 ' + ampm;
+                        opcionesAbarrotes += '<option value="' + horaStr + '">' + horaStr + '</option>';
+                        hayHorariosDisponibles = true;
+                    }
+                }
+
+                if (hayHorariosDisponibles) {
+                    opcionesHTML += opcionesAbarrotes;
+                } else {
+                    opcionesHTML += '<option value="" disabled>Horarios agotados por hoy. Regrese mañana a las 6 AM.</option>';
+                    if (valorActual) valorActual = ""; // Resetea el valor si ya no hay horas
+                }
             }
 
             selectHorario.innerHTML = opcionesHTML;
-            if (valorActual) {
+            
+            // Re-asignar el valor seleccionado previamente si todavía existe en las opciones actuales
+            if (valorActual && opcionesHTML.includes('value="' + valorActual + '"')) {
                 selectHorario.value = valorActual;
+            } else {
+                selectHorario.value = "";
             }
         }
 
@@ -953,7 +981,7 @@
                     var nombre = input.getAttribute('data-nombre') || 'Producto';
                     var categoria = input.getAttribute('data-categoria') || 'pan';
                     
-                    if (categoria !== 'tienda' && categoria !== 'abarrotes') {
+                    if (categoria !== 'tienda' && categoria !== 'abarrotes' && categoria !== 'Tienda' && categoria !== 'Abarrotes') {
                         contienePan = true;
                     }
 
