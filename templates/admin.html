@@ -281,7 +281,7 @@
 
     <div id="activos" class="tab-content active">
         
-        <input type="text" id="buscadorTickets" class="search-bar" autocomplete="off" placeholder="🔍 Rastrear código SMART-..." oninput="filtrarTickets()">
+        <input type="text" id="buscadorTickets" class="search-bar" autocomplete="off" placeholder="🔍 Rastrear código DB-..." oninput="filtrarTickets()">
 
         <div class="admin-grid">
             <div style="display: flex; flex-direction: column; gap: 20px;">
@@ -325,7 +325,7 @@
                                     {% if not pedido.es_relampago %}
                                         {% set ns_normal.hay_pedidos = true %}
                                         <tr>
-                                            <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
+                                            <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
                                             <td>
                                                 <div style="font-weight: bold;">{{ pedido.cliente.nombre }}</div>
                                                 {% if pedido.pagado %}
@@ -343,7 +343,7 @@
                                         <div id="modal-{{ pedido.id }}" class="modal-overlay">
                                             <div class="modal-content">
                                                 <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
-                                                <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">TICKET: SMART-{{ pedido.codigo_recogida }}</h2>
+                                                <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">TICKET: {{ pedido.codigo_recogida }}</h2>
                                                 <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
                                                 <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
                                                 
@@ -436,7 +436,7 @@
                                     {% if pedido.es_relampago %}
                                         {% set ns_flash.hay_pedidos = true %}
                                         <tr>
-                                            <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
+                                            <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
                                             <td>
                                                 <div style="font-weight: bold; color: var(--text-white);">{{ pedido.cliente.nombre }}</div>
                                                 {% if pedido.pagado %}
@@ -450,7 +450,7 @@
                                         <div id="modal-{{ pedido.id }}" class="modal-overlay">
                                             <div class="modal-content" style="border: 1px solid var(--accent-gold);">
                                                 <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
-                                                <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">⚡ TICKET: SMART-{{ pedido.codigo_recogida }}</h2>
+                                                <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">⚡ TICKET: {{ pedido.codigo_recogida }}</h2>
                                                 <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
                                                 <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
                                                 
@@ -835,7 +835,7 @@
                                         <span style="color: var(--text-gray); font-size: 0.65rem; font-weight: normal; border: 1px solid #333; padding: 2px 6px; border-radius: 4px;">NORMAL</span>
                                     {% endif %}
                                 </td>
-                                <td style="padding: 12px; color: var(--text-gray); font-weight: bold; font-size: 0.8rem;">SMART-{{ pedido.codigo_recogida }}</td>
+                                <td style="padding: 12px; color: var(--text-gray); font-weight: bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
                                 <td style="padding: 12px; font-weight: bold; font-size: 0.85rem; color: var(--text-white);">{{ pedido.cliente.nombre }}</td>
                                 <td style="padding: 12px; font-weight:bold; color: var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</td>
                                 <td style="padding: 12px;">
