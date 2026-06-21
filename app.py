@@ -999,15 +999,27 @@ def procesar_pedido():
     horario = request.form.get('horario')
     metodo_pago = request.form.get('metodo_pago')
     
+    # === OBTENER HORA LOCAL (UTC - 6) ===
+    hora_actual_local = (datetime.utcnow() - timedelta(hours=6)).hour
+
     productos = Producto.query.all()
     monto_total = 0
     detalles_a_crear = []
     
-    # 3. Procesamiento de productos
+    # 3. Procesamiento y validación estricta por categoría
     for prod in productos:
         cant = request.form.get(f'cantidad_{prod.id}', 0)
         if cant and int(cant) > 0:
             cantidad = int(cant)
+
+            # === BLOQUEO EXCLUSIVO PARA PAN DESPUÉS DE LAS 4 PM ===
+            es_tienda = prod.categoria in ['tienda', 'abarrotes', 'Tienda', 'Abarrotes']
+            if not es_tienda and (hora_actual_local >= 16 or hora_actual_local < 1):
+                return jsonify({
+                    'success': False, 
+                    'message': f'La recepción de {prod.nombre} ha cerrado por hoy. Solo artículos de tienda están disponibles.'
+                }), 400
+
             monto_total += prod.precio * float(cantidad)
             detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)
             detalles_a_crear.append(detalle)
@@ -1033,13 +1045,11 @@ def procesar_pedido():
         # ---> SINCRONIZACIÓN EN TIEMPO REAL ZMARTHNET <---
         socketio.emit('actualizacion_global')
         
-        # 6. Respuesta JSON para el Frontend
         return jsonify({
             'success': True,
             'codigo': nuevo_pedido.codigo_recogida
         })
 
-    # Caso en que no haya productos seleccionados
     return jsonify({'success': False, 'message': 'Pedido vacío'}), 400
 
 
