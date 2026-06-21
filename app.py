@@ -98,6 +98,7 @@ class Producto(db.Model):
     disponible = db.Column(db.Boolean, default=True)
     stock_sobrante = db.Column(db.Integer, default=0)
     categoria = db.Column(db.String(50), default='pan')
+    stock_tienda = db.Colum(db.Integrer, nillable=True, default=None)
 
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -711,23 +712,33 @@ def admin():
         descripcion = request.form.get('descripcion')
         precio = float(request.form.get('precio'))
         stock_sob = int(request.form.get('stock_sobrante', 0))
+        categoria = request.form.get('categoria', 'pan')
+        
+        # === CAPTURA DE STOCK DE TIENDA ===
+        stock_tienda_form = request.form.get('stock_tienda')
+        # Si envían el campo vacío, se guarda como None (infinito, usado para el pan)
+        stock_tienda_val = int(stock_tienda_form) if stock_tienda_form and stock_tienda_form.strip() else None
         
         file = request.files.get('imagen_file')
         imagen_url = None
         
         if file and file.filename != '':
             imagen_url = subir_a_cloudinary(file)
-        
-        # Modifica estas líneas donde creas el nuevo producto
-        categoria = request.form.get('categoria', 'pan')
 
-        nuevo_prod = Producto(nombre=nombre, descripcion=descripcion, precio=precio, imagen_url=imagen_url, stock_sobrante=stock_sob, categoria=categoria)
+        nuevo_prod = Producto(
+            nombre=nombre, 
+            descripcion=descripcion, 
+            precio=precio, 
+            imagen_url=imagen_url, 
+            stock_sobrante=stock_sob, 
+            categoria=categoria,
+            stock_tienda=stock_tienda_val
+        )
         db.session.add(nuevo_prod)
         db.session.commit()
         
         socketio.emit('actualizacion_global')
         return redirect(url_for('admin'))
-
     filtro = request.args.get('filtro', 'hoy')
     todos_pedidos = Pedido.query.order_by(Pedido.fecha_pedido.desc()).all()
     hoy = datetime.utcnow().date()
@@ -888,8 +899,10 @@ def editar_producto(producto_id):
     producto.precio = float(request.form.get('precio'))
     producto.stock_sobrante = int(request.form.get('stock_sobrante', 0))
     
-    # Blindaje extra: Si guardas cambios en la edición, comprobamos si enviaste una categoría.
-    # Si no la enviaste, conservamos la que ya tenía para que no se convierta en 'pan' por accidente.
+    # === ACTUALIZACIÓN DE STOCK DE TIENDA ===
+    stock_tienda_form = request.form.get('stock_tienda')
+    producto.stock_tienda = int(stock_tienda_form) if stock_tienda_form and stock_tienda_form.strip() else None
+    
     categoria_form = request.form.get('categoria')
     if categoria_form:
         producto.categoria = categoria_form
@@ -1012,13 +1025,31 @@ def procesar_pedido():
         if cant and int(cant) > 0:
             cantidad = int(cant)
 
-            # === BLOQUEO EXCLUSIVO PARA PAN DESPUÉS DE LAS 4 PM ===
             es_tienda = prod.categoria in ['tienda', 'abarrotes', 'Tienda', 'Abarrotes']
+            
+            # === REGLA 1: BLOQUEO EXCLUSIVO PARA PAN DESPUÉS DE LAS 4 PM ===
             if not es_tienda and (hora_actual_local >= 16 or hora_actual_local < 1):
                 return jsonify({
                     'success': False, 
                     'message': f'La recepción de {prod.nombre} ha cerrado por hoy. Solo artículos de tienda están disponibles.'
                 }), 400
+
+            # === REGLA 2: CONTROL DE STOCK EXCLUSIVO PARA TIENDA ===
+            if es_tienda and prod.stock_tienda is not None:
+                # Validar que no pidan más de lo que hay
+                if cantidad > prod.stock_tienda:
+                    return jsonify({
+                        'success': False, 
+                        'message': f'Inventario insuficiente para {prod.nombre}. Solo quedan {prod.stock_tienda} unidades en Atelier.'
+                    }), 400
+                
+                # Restar el stock provisionalmente
+                prod.stock_tienda -= cantidad
+                
+                # Si el stock llega a 0, inhabilitar automáticamente
+                if prod.stock_tienda <= 0:
+                    prod.stock_tienda = 0
+                    prod.disponible = False
 
             monto_total += prod.precio * float(cantidad)
             detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)

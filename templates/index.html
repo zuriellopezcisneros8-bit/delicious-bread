@@ -670,10 +670,15 @@
                         <h4>{{ producto.nombre }}</h4>
                         <div class="precio">${{ "%.2f"|format(producto.precio) }} MXN</div>
                         
+                        {% if producto.stock_tienda == 1 %}
+                        <div style="color: var(--luxury-gold); font-size: 0.70rem; letter-spacing: 2px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; font-family: 'Montserrat', sans-serif; animation: pulse 2s infinite;">
+                            ¡Última Unidad!
+                        </div>
+                        {% endif %}
                         <div class="control-cantidad-tienda">
                             {% if producto.disponible %}
                                 <button type="button" onclick="cambiarCantidad('cant_{{ producto.id }}', -1)">-</button>
-                                <input type="number" class="input-cantidad" id="cant_{{ producto.id }}" name="cantidad_{{ producto.id }}" value="0" min="0" data-precio="{{ producto.precio }}" data-nombre="{{ producto.nombre }}" data-categoria="{{ producto.categoria|default('tienda') }}" readonly>
+                                <input type="number" class="input-cantidad" id="cant_{{ producto.id }}" name="cantidad_{{ producto.id }}" value="0" min="0" max="{{ producto.stock_tienda if producto.stock_tienda is not none else '' }}" data-precio="{{ producto.precio }}" data-nombre="{{ producto.nombre }}" data-categoria="{{ producto.categoria|default('tienda') }}" readonly>
                                 <button type="button" class="btn-suma-dinamico" onclick="cambiarCantidad('cant_{{ producto.id }}', 1)">+</button>
                             {% else %}
                                 <span style="color: #ff4d4d; font-size: 0.70rem; letter-spacing: 1px; padding: 10px; font-weight: 600; text-transform: uppercase; width: 100%; text-align: center;">Agotado</span>
