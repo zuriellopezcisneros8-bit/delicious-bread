@@ -621,9 +621,12 @@
 </select>
                     <textarea name="descripcion" class="form-control" placeholder="Descripción" style="height:60px; resize: none;"></textarea>
                     
-                    <div class="edit-grid" style="margin-bottom: 15px;">
+                    <div class="edit-grid" style="margin-bottom: 10px;">
                         <input type="number" step="0.50" name="precio" class="form-control" required placeholder="Precio Base ($)" style="margin-bottom: 0;">
-                        <input type="number" name="stock_sobrante" class="form-control" min="0" value="0" placeholder="Stock Sobrante / Venta Flash (Piezas)" style="margin-bottom: 0;">
+                        <input type="number" name="stock_sobrante" class="form-control" min="0" value="0" placeholder="Stock Flash (Piezas)" style="margin-bottom: 0;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <input type="number" name="stock_tienda" class="form-control" min="0" placeholder="📦 Stock Exclusivo Tienda (Dejar vacío si es pan)">
                     </div>
                     
                     <div style="margin-bottom: 15px; background: var(--input-bg); border: 1px solid var(--border-dark); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px;">
@@ -660,7 +663,9 @@
                                 {% if prod.stock_sobrante and prod.stock_sobrante > 0 %}
                                     <span style="background: #1C333B; color: #6BE0FF; font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid #2B525F;">⚡ FLASH: {{ prod.stock_sobrante }} PZS</span>
                                 {% endif %}
-                                
+                                {% if prod.stock_tienda is not none %}
+                                    <span style="background: #1F1A15; color: var(--accent-gold); font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid var(--accent-gold);">📦 TIENDA: {{ prod.stock_tienda }} PZS</span>
+                                {% endif %}
                                 {% if prod.es_pedido_grande %}
                                     <span style="background: #3b2b1a; color: var(--accent-gold); font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid var(--accent-gold);">MAYOREO</span>
                                 {% endif %}
@@ -715,13 +720,17 @@
                             
                             <div class="edit-grid" style="margin-top: 10px;">
                                 <div>
-                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Modificar Sobrante (Venta Flash):</label>
+                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Sobrante (Venta Flash):</label>
                                     <input type="number" name="stock_sobrante" class="form-control" value="{{ prod.stock_sobrante or 0 }}" min="0">
                                 </div>
-                                <div style="display: flex; align-items: center; padding-top: 15px;">
-                                    <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--accent-gold); width: 16px; height: 16px; margin-right: 8px;">
-                                    <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Mayoreo</label>
+                                <div>
+                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Stock Tienda (Vacío si es pan):</label>
+                                    <input type="number" name="stock_tienda" class="form-control" value="{{ prod.stock_tienda if prod.stock_tienda is not none else '' }}" min="0">
                                 </div>
+                            </div>
+                            <div style="display: flex; align-items: center; padding-top: 5px; margin-bottom: 10px;">
+                                <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--accent-gold); width: 16px; height: 16px; margin-right: 8px;">
+                                <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Mayoreo</label>
                             </div>
 
                             <textarea name="descripcion" class="form-control" style="height:60px; resize:none; margin-top: 10px;">{{ prod.descripcion }}</textarea>
