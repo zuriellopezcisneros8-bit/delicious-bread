@@ -15,7 +15,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 
-    <style>
+   <style>
         :root {
             --bg-beige: #EADBC8;
             /* Fondo Beige Ultra Premium */
@@ -70,7 +70,7 @@
 
         .grid-productos { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 40px; margin-bottom: 80px; }
 
-        /* TARJETAS NEGRO MATE (PAN) */
+        /* TARJETAS NEGRO MATE (PAN PRINCIPAL - INTACTO) */
         .card-producto {
             background: var(--card-black);
             border-radius: 4px; overflow: hidden; 
@@ -99,6 +99,7 @@
     box-shadow: 0 10px 25px rgba(0,0,0,0.15);
     transition: var(--transition-smooth);
     position: relative;
+    overflow: hidden; /* 🔥 Asegura que la imagen no sobresalga de las esquinas redondeadas */
 }
 
 .tienda-card:hover {
@@ -106,15 +107,14 @@
     box-shadow: 0 15px 35px rgba(0,0,0,0.3);
 }
 
-/* 🔥 FIX REAL: IMAGEN SIN RECORTE */
+/* 🔥 FIX REAL: IMAGEN DE ESQUINA A ESQUINA SIN BORDES BLANCOS */
 .tienda-card .img-contenedor {
-    width: 100%;
-    aspect-ratio: 1 / 1;
+    width: calc(100% + 24px); /* Expande para anular el padding de la tarjeta */
+    margin: -12px -12px 12px -12px; /* Pega la imagen arriba y a los lados */
+    aspect-ratio: 4 / 5; /* Proporción ideal para cubrir perfectamente leches y donas */
     overflow: hidden;
-    border-radius: 4px;
-    margin-bottom: 10px;
     position: relative;
-    background-color: #ffffff;
+    background-color: var(--bg-beige); /* Fondo neutral premium acorde a tu diseño */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -123,7 +123,7 @@
 .tienda-card .img-contenedor img {
     width: 100%;
     height: 100%;
-    object-fit: contain; /* 👈 CLAVE: YA NO RECORTA */
+    object-fit: cover; /* 👈 CLAVE: Llena todo el espacio sin dejar huecos */
     object-position: center;
     transition: var(--transition-smooth);
 }
@@ -367,7 +367,6 @@
             font-weight: 300; font-size: 0.65rem;
             letter-spacing: 3px; color: #666; text-transform: uppercase; margin: 0;
         }
-
         /* =========================================
            ZEDITH | IA CONCIERGE PREMIUM
            ========================================= */
