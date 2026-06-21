@@ -80,95 +80,116 @@
         .card-producto:hover { transform: translateY(-8px); box-shadow: 0 25px 45px rgba(0,0,0,0.3); }
 
         /* NUEVO: PRODUCTOS DE TIENDA (2 COLUMNAS) */
-        .tienda-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 80px;
-        }
-        .tienda-card {
-            background: var(--card-black);
-            border: 1px solid var(--border-fino);
-            border-radius: 4px;
-            padding: 12px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            transition: var(--transition-smooth);
-            position: relative;
-        }
-        .tienda-card:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.3); }
-        
-        /* CORRECCIÓN DE LA IMAGEN DE TIENDA (PARA QUE NO SE CORTE) */
-        .tienda-card .img-contenedor {
-            width: 100%;
-            aspect-ratio: 1 / 1; /* Mantiene la proporción cuadrada perfecta */
-            overflow: hidden;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            position: relative;
-            background-color: #ffffff; /* Fondo blanco para que luzcan los productos */
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .tienda-card .img-contenedor img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* ESTO HACE QUE LA IMAGEN SE VEA COMPLETA Y NO SE CORTE */
-            object-position: center;
-            transition: var(--transition-smooth);
-        }
+.tienda-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 80px;
+}
 
-        .tienda-card h4 {
-            font-size: 0.9rem;
-            color: var(--skin-beige);
-            margin-bottom: 5px;
-            font-weight: 500;
-            line-height: 1.2;
-            height: 32px;
-            overflow: hidden;
-            font-family: 'Montserrat', sans-serif;
-        }
-        .tienda-card .precio {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.1rem;
-            color: var(--luxury-gold);
-            font-weight: 400;
-            margin-bottom: 10px;
-        }
-        .control-cantidad-tienda {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #080808;
-            border: 1px solid var(--border-fino);
-            border-radius: 4px;
-        }
-        .control-cantidad-tienda button {
-            background: transparent;
-            color: var(--luxury-gold);
-            border: none;
-            padding: 8px 12px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: var(--transition-smooth);
-        }
-        .control-cantidad-tienda button:hover { background: #141414; color: var(--skin-beige); }
-        .control-cantidad-tienda input {
-            background: transparent;
-            color: var(--skin-beige);
-            border: none;
-            text-align: center;
-            width: 30px;
-            font-size: 0.9rem;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 500;
-        }
-        .control-cantidad-tienda input:focus { outline: none; }
+.tienda-card {
+    background: var(--card-black);
+    border: 1px solid var(--border-fino);
+    border-radius: 4px;
+    padding: 12px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    transition: var(--transition-smooth);
+    position: relative;
+}
 
+.tienda-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+}
+
+/* 🔥 FIX REAL: IMAGEN SIN RECORTE */
+.tienda-card .img-contenedor {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    position: relative;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tienda-card .img-contenedor img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* 👈 CLAVE: YA NO RECORTA */
+    object-position: center;
+    transition: var(--transition-smooth);
+}
+
+/* Hover bonito sin romper proporción */
+.tienda-card:hover .img-contenedor img {
+    transform: scale(1.05);
+}
+
+.tienda-card h4 {
+    font-size: 0.9rem;
+    color: var(--skin-beige);
+    margin-bottom: 5px;
+    font-weight: 500;
+    line-height: 1.2;
+    height: 32px;
+    overflow: hidden;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.tienda-card .precio {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--luxury-gold);
+    font-weight: 400;
+    margin-bottom: 10px;
+}
+
+.control-cantidad-tienda {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #080808;
+    border: 1px solid var(--border-fino);
+    border-radius: 4px;
+}
+
+.control-cantidad-tienda button {
+    background: transparent;
+    color: var(--luxury-gold);
+    border: none;
+    padding: 8px 12px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+
+.control-cantidad-tienda button:hover {
+    background: #141414;
+    color: var(--skin-beige);
+}
+
+.control-cantidad-tienda input {
+    background: transparent;
+    color: var(--skin-beige);
+    border: none;
+    text-align: center;
+    width: 30px;
+    font-size: 0.9rem;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+}
+
+.control-cantidad-tienda input:focus {
+    outline: none;
+}
         /* PRODUCTO PAUSADO */
         .card-producto.pausado, .tienda-card.pausado { opacity: 0.65; filter: grayscale(80%); pointer-events: none; }
         .overlay-pausado {
