@@ -98,7 +98,7 @@ class Producto(db.Model):
     disponible = db.Column(db.Boolean, default=True)
     stock_sobrante = db.Column(db.Integer, default=0)
     categoria = db.Column(db.String(50), default='pan')
-    stock_tienda = db.Colum(db.Integrer, nillable=True, default=None)
+    stock_tienda = db.Colum(db.Integrer, nullable=True, default=None)
 
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
