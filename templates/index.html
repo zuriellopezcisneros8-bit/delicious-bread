@@ -1064,14 +1064,46 @@ if (contienePan && (horaActualLocal >= 16 || horaActualLocal < 1)) {
         }
 
         function cambiarCantidad(inputId, delta) {
-            var input = document.getElementById(inputId);
-            var valorActual = parseInt(input.value) || 0;
-            var nuevoValor = valorActual + delta;
-            if (nuevoValor >= 0) {
-                input.value = nuevoValor;
-                calcularTotal(); 
+    var input = document.getElementById(inputId);
+    var valorActual = parseInt(input.value) || 0;
+    var nuevoValor = valorActual + delta;
+
+    // Extraemos el límite de stock directamente del HTML que ya tienes armado
+    var maxAttr = input.getAttribute('max');
+    var maxStock = (maxAttr && maxAttr !== '') ? parseInt(maxAttr) : null;
+
+    // 1. Evitar números negativos
+    if (nuevoValor < 0) {
+        nuevoValor = 0;
+    }
+
+    // 2. Bloqueador inteligente: Si existe un límite y el usuario intenta superarlo, lo estancamos en el máximo
+    if (maxStock !== null && nuevoValor >= maxStock) {
+        nuevoValor = maxStock;
+    }
+
+    // 3. Actualizamos la pantalla y los totales del carrito
+    input.value = nuevoValor;
+    calcularTotal(); 
+
+    // 4. Control visual del botón "+": Apagarlo cuando ya no haya más inventario
+    if (maxStock !== null) {
+        var btnSuma = input.nextElementSibling; // Toma el botón "+" de forma automática
+        if (btnSuma && btnSuma.classList.contains('btn-suma-dinamico')) {
+            if (nuevoValor >= maxStock) {
+                // Bloquea el botón
+                btnSuma.disabled = true;
+                btnSuma.style.opacity = '0.3';
+                btnSuma.style.cursor = 'not-allowed';
+            } else {
+                // Reactiva el botón si el cliente resta artículos
+                btnSuma.disabled = false;
+                btnSuma.style.opacity = '1';
+                btnSuma.style.cursor = 'pointer';
             }
         }
+    }
+}
 
         function personalizarSaludo() {
             const frases = [
