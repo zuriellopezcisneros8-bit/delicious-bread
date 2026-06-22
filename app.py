@@ -113,6 +113,29 @@ class Pedido(db.Model):
     comprobante_url = db.Column(db.String(500), nullable=True)
     es_relampago = db.Column(db.Boolean, default=False)
     pagado = db.Column(db.Boolean, default=False)
+# === DENTRO DE CLASS PEDIDO ===
+    @property
+    def tipo_pedido(self):
+        if not self.detalles:
+            return 'puros_abarrotes'
+        
+        tiene_pan = False
+        tiene_abarrotes = False
+        
+        for detalle in self.detalles:
+            if detalle.producto:
+                # Clasifica basándose en si la categoría es pan o tienda
+                if detalle.producto.categoria.lower() == 'pan':
+                    tiene_pan = True
+                else:
+                    tiene_abarrotes = True
+                    
+        if tiene_pan and tiene_abarrotes:
+            return 'combinado'
+        elif tiene_pan:
+            return 'puro_pan'
+        else:
+            return 'puros_abarrotes'
 
 class DetallePedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)

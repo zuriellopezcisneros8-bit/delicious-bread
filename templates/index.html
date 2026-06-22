@@ -655,6 +655,58 @@
                 {% endfor %}
             </div>
 
+
+<div class="search-container-tienda" style="max-width: 500px; margin: 0 auto 25px auto; padding: 0 15px;">
+    <div style="position: relative; background: #000000; border-radius: 30px; border: 1px solid var(--border-fino); padding: 4px 15px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+        <input type="text" id="busquedaProductos" placeholder="Buscar productos en tienda..." 
+               style="width: 100%; background: transparent; border: none; color: var(--skin-beige); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; letter-spacing: 2px; padding: 10px 5px; outline: none; text-transform: uppercase;">
+        <span style="color: var(--luxury-gold); font-size: 1rem; cursor: default; padding-right: 5px;">🔍</span>
+    </div>
+</div>
+
+<div class="category-carousel-wrapper" style="max-width: 850px; margin: 0 auto 40px auto; padding: 0 15px;">
+    <div class="category-carousel-strip" style="background: #000000; border-radius: 40px; padding: 12px 25px; display: flex; gap: 12px; overflow-x: auto; white-space: nowrap; border: 1px solid var(--border-fino); scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+        <button class="category-carousel-btn active" data-filter="todos">Todos</button>
+        <button class="category-carousel-btn" data-filter="leche">Leche</button>
+        <button class="category-carousel-btn" data-filter="bebidas">Bebidas</button>
+        <button class="category-carousel-btn" data-filter="snacks">Snacks</button>
+        <button class="category-carousel-btn" data-filter="abarrotes">Abarrotes</button>
+        <button class="category-carousel-btn" data-filter="cremería">Cremería</button>
+    </div>
+</div>
+
+<style>
+    /* Desactivar barras de scroll visuales para mantener limpieza minimalista */
+    .category-carousel-strip::-webkit-scrollbar { display: none; }
+    .category-carousel-strip { -ms-overflow-style: none; scrollbar-width: none; }
+    
+    .category-carousel-btn {
+        background: transparent;
+        color: #777777;
+        border: none;
+        padding: 10px 24px;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.75rem;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        font-weight: 600;
+        cursor: pointer;
+        border-radius: 30px;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .category-carousel-btn.active {
+        background: var(--luxury-gold);
+        color: #000000;
+        box-shadow: 0 4px 10px rgba(197, 168, 128, 0.3);
+    }
+    
+    .category-carousel-btn:hover:not(.active) {
+        color: var(--skin-beige);
+        background: #141414;
+    }
+</style>
+
             <div id="seccion-tienda" class="tienda-grid" style="display: none;">
                 {% for producto in productos if producto.categoria and producto.categoria in ['tienda', 'abarrotes', 'Tienda', 'Abarrotes'] %}
                 <div class="tienda-card {% if not producto.disponible %}pausado{% endif %}">
@@ -1418,6 +1470,9 @@ if (contienePan && (horaActualLocal >= 16 || horaActualLocal < 1)) {
             }
         }
     </script>
+
+
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 <script>
     const socket = io();
@@ -1441,5 +1496,45 @@ if (contienePan && (horaActualLocal >= 16 || horaActualLocal < 1)) {
     });
 </script>
 
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById("busquedaProductos");
+    const categoryButtons = document.querySelectorAll(".category-carousel-btn");
+    const tiendaCards = document.querySelectorAll(".tienda-card");
+    
+    let filtroCategoria = "todos";
+    let filtroTexto = "";
+
+    function ejecutarFiltro() {
+        tiendaCards.forEach(card => {
+            const catCard = card.getAttribute("data-categoria") || "";
+            const nombreCard = card.getAttribute("data-nombre") || "";
+            
+            const cumpleCategoria = (filtroCategoria === "todos" || catCard === filtroCategoria);
+            const cumpleBuscador = nombreCard.includes(filtroTexto);
+            
+            if (cumpleCategoria && cumpleBuscador) {
+                card.style.display = "flex";
+            } else {
+                card.style.display = "none";
+            }
+        });
+    }
+
+    if (searchInput) {
+        searchInput.addEventListener("input", function(e) {
+            filtroTexto = e.target.value.toLowerCase().trim();
+            ejecutarFiltro();
+        });
+    }
+
+    categoryButtons.forEach(btn => {
+        btn.addEventListener("click", function() {
+            categoryButtons.forEach(b => b.classList.remove("active"));
+            this.classList.add("active");
+            filtroCategoria = this.getAttribute("data-filter").toLowerCase().trim();
+            ejecutarFiltro();
+        });
+    });
+});
 </body>
 </html>

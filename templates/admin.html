@@ -523,15 +523,33 @@
                                                     {% endif %}
                                                 {% endif %}
                                                 
-                                                <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
-                                                    <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
-                                                    <select name="estado" class="form-control" style="margin-bottom: 0; border-color: var(--accent-gold);" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
-                                                        <option value="Venta Flash Excedente" {% if pedido.estado == 'Venta Flash Excedente' %}selected{% endif %}>Reservado (Esperando Cliente)</option>
-                                                        <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Empaquetado para entregar</option>
-                                                        <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado (Cerrar)</option>
-                                                        <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado (Retornar Stock)</option>
-                                                    </select>
-                                                </form>
+                                                <form action="{{ url_for('cambiar_estado_pedido', pedido_id=pedido.id) }}" method="POST" style="display:inline;">
+    <select name="estado" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre }}', '{{ pedido.codigo_recogida }}')" class="form-control" style="margin-bottom:0; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; background: var(--input-bg); color: var(--accent-gold); border: 1px solid var(--accent-gold); font-weight: bold;">
+        
+        {% if pedido.tipo_pedido == 'puro_pan' %}
+            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+            <option value="En Horno" {% if pedido.estado == 'En Horno' %}selected{% endif %}>En Horno 🥖</option>
+            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
+            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
+            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+            
+        {% elif pedido.tipo_pedido == 'puros_abarrotes' %}
+            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+            <option value="Preparando" {% if pedido.estado == 'Preparando' %}selected{% endif %}>Preparando Pedido 📦</option>
+            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
+            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
+            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+            
+        {% elif pedido.tipo_pedido == 'combinado' %}
+            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+            <option value="Pan en Horno / Armando Pedido" {% if pedido.estado == 'Pan en Horno / Armando Pedido' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
+            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
+            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
+            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+        {% endif %}
+        
+    </select>
+</form>
                                             </div>
                                         </div>
                                     {% endif %}
