@@ -709,7 +709,7 @@
 
             <div id="seccion-tienda" class="tienda-grid" style="display: none;">
                 {% for producto in productos if producto.categoria and producto.categoria in ['tienda', 'abarrotes', 'Tienda', 'Abarrotes'] %}
-                <div class="tienda-card {% if not producto.disponible %}pausado{% endif %}">
+                <div class="tienda-card {% if not producto.disponible %}pausado{% endif %}" data-categoria="{{ producto.categoria|default('tienda') }}" data-nombre="{{ producto.nombre }}">
                     
                     <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
                         <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/400x400/121212/C5A059?text=Tienda' }}" alt="{{ producto.nombre }}">
@@ -915,7 +915,7 @@
         // VARIABLES JINJA-PYTHON HACIA JAVASCRIPT
         const nombreUsuarioGlobal = {{ nombre_usuario|default('Señor Zmarth')|tojson }};
         const tiendaAbierta = {{ 'true' if tienda_abierta else 'false' }};
-        const motivoCierre = {{ motivoCierre|default('')|tojson }};
+        const motivoCierre = {{ motivo_cierre|default('')|tojson }};
 
         // LÓGICA DE CARRUSEL DE BANNERS AUTOMÁTICO
         document.addEventListener("DOMContentLoaded", function() {
@@ -1495,7 +1495,7 @@ if (contienePan && (horaActualLocal >= 16 || horaActualLocal < 1)) {
         }
     });
 </script>
-
+<script>
 document.addEventListener("DOMContentLoaded", function() {
     const searchInput = document.getElementById("busquedaProductos");
     const categoryButtons = document.querySelectorAll(".category-carousel-btn");
@@ -1536,5 +1536,6 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 });
+</script>
 </body>
 </html>
