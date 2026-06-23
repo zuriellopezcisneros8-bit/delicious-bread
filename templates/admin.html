@@ -634,8 +634,13 @@
                     <input type="hidden" name="nuevo_producto" value="1">
                     <input type="text" name="nombre" class="form-control" required placeholder="Nombre (Ej. Charola de Empanadas)">
 <select name="categoria" class="form-control" style="margin-bottom: 15px;">
-    <option value="pan">Panadería (Entrega 5 a 7 PM)</option>
-    <option value="abarrotes">Tienda / Abarrotes (Entrega Libre)</option>
+    <option value="pan">🥖 Panadería (Entrega 5 a 7 PM)</option>
+    <option value="leche">🥛 Leche</option>
+    <option value="bebidas">🥤 Bebidas</option>
+    <option value="snacks">🍫 Snacks y Frituras</option>
+    <option value="abarrotes">🥫 Abarrotes Generales</option>
+    <option value="cremeria">🧀 Cremería y Lácteos</option>
+    <option value="verduras">🥬 Verduras y Frescos</option>
 </select>
                     <textarea name="descripcion" class="form-control" placeholder="Descripción" style="height:60px; resize: none;"></textarea>
                     
@@ -746,6 +751,20 @@
                                     <input type="number" name="stock_tienda" class="form-control" value="{{ prod.stock_tienda if prod.stock_tienda is not none else '' }}" min="0">
                                 </div>
                             </div>
+
+
+<div style="margin-top: 10px;">
+    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Categoría del Producto:</label>
+    <select name="categoria" class="form-control">
+        <option value="pan" {% if prod.categoria == 'pan' %}selected{% endif %}>🥖 Panadería</option>
+        <option value="leche" {% if prod.categoria == 'leche' %}selected{% endif %}>🥛 Leche</option>
+        <option value="bebidas" {% if prod.categoria == 'bebidas' %}selected{% endif %}>🥤 Bebidas</option>
+        <option value="snacks" {% if prod.categoria == 'snacks' %}selected{% endif %}>🍫 Snacks y Frituras</option>
+        <option value="abarrotes" {% if prod.categoria == 'abarrotes' %}selected{% endif %}>🥫 Abarrotes Generales</option>
+        <option value="cremeria" {% if prod.categoria == 'cremeria' %}selected{% endif %}>🧀 Cremería y Lácteos</option>
+        <option value="verduras" {% if prod.categoria == 'verduras' %}selected{% endif %}>🥬 Verduras y Frescos</option>
+    </select>
+</div>
                             <div style="display: flex; align-items: center; padding-top: 5px; margin-bottom: 10px;">
                                 <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--accent-gold); width: 16px; height: 16px; margin-right: 8px;">
                                 <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Mayoreo</label>
@@ -832,6 +851,8 @@
                                 <input type="date" name="fecha_fin" class="form-control" required style="padding: 10px; margin-bottom: 10px;">
                             </div>
                         </div>
+
+
                         <input type="text" name="motivo" class="form-control" placeholder="Motivo (Ej. Mantenimiento del Atelier)">
                         <button type="submit" class="btn-action">Ejecutar Bloqueo</button>
                     </form>

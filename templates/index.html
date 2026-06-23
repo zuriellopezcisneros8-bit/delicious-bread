@@ -624,6 +624,8 @@
             
             <div id="seccion-pan" class="grid-productos" style="display: grid;">
                 {% for producto in productos if not producto.categoria or producto.categoria not in ['tienda', 'abarrotes', 'Tienda', 'Abarrotes'] %}
+
+{% for producto in productos if not producto.categoria or producto.categoria|lower == 'pan' %}
                 <div class="card-producto {% if not producto.disponible %}pausado{% endif %}">
                     
                     <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
@@ -709,6 +711,8 @@
 
             <div id="seccion-tienda" class="tienda-grid" style="display: none;">
                 {% for producto in productos if producto.categoria and producto.categoria in ['tienda', 'abarrotes', 'Tienda', 'Abarrotes'] %}
+
+{% for producto in productos if producto.categoria and producto.categoria|lower != 'pan' %}
                 <div class="tienda-card {% if not producto.disponible %}pausado{% endif %}" data-categoria="{{ producto.categoria|default('tienda') }}" data-nombre="{{ producto.nombre }}">
                     
                     <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
@@ -975,7 +979,7 @@
         // Bloqueo parcial automático (Solo restringe pan, libera tienda)
         inputsCantidad.forEach(input => {
             const categoria = input.getAttribute('data-categoria') || 'pan';
-            const esTienda = ['tienda', 'abarrotes', 'Tienda', 'Abarrotes'].includes(categoria);
+            const esTienda = categoria.toLowerCase() !== 'pan';
 
             if (!esTienda) {
                 // Inhabilitar solo el botón "+" correspondiente a productos de pan
@@ -1469,6 +1473,37 @@ if (contienePan && (horaActualLocal >= 16 || horaActualLocal < 1)) {
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
         }
+
+document.addEventListener("DOMContentLoaded", function() {
+    const categoryBtns = document.querySelectorAll('.category-carousel-btn');
+    const tiendaCards = document.querySelectorAll('.tienda-card');
+
+    categoryBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // 1. Efecto visual de botones
+            categoryBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // 2. Obtener el filtro a aplicar
+            // Asegúrate de que cremería se limpie de tildes si es necesario, 
+            // pero si tus 'value' en admin no tienen tildes, usa:
+            let filtro = this.getAttribute('data-filter').toLowerCase();
+            if(filtro === 'cremería') filtro = 'cremeria'; // Normalización simple
+
+            // 3. Filtrar las tarjetas
+            tiendaCards.forEach(card => {
+                const categoriaCard = card.getAttribute('data-categoria');
+                
+                if (filtro === 'todos' || categoriaCard === filtro) {
+                    card.style.display = 'flex'; // o 'block' según esté configurado tu CSS
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    });
+});
+
     </script>
 
 
@@ -1494,6 +1529,8 @@ if (contienePan && (horaActualLocal >= 16 || horaActualLocal < 1)) {
             console.log("ZMARTHNET: Recarga interceptada. El cliente se encuentra en un flujo operativo activo.");
         }
     });
+
+
 </script>
 <script>
 document.addEventListener("DOMContentLoaded", function() {

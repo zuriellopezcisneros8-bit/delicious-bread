@@ -1048,7 +1048,7 @@ def procesar_pedido():
         if cant and int(cant) > 0:
             cantidad = int(cant)
 
-            es_tienda = prod.categoria in ['tienda', 'abarrotes', 'Tienda', 'Abarrotes']
+            es_tienda = prod.categoria.lower() != 'pan'
             
             # === REGLA 1: BLOQUEO EXCLUSIVO PARA PAN DESPUÉS DE LAS 4 PM ===
             if not es_tienda and (hora_actual_local >= 16 or hora_actual_local < 1):
