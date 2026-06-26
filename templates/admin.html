@@ -523,7 +523,7 @@
                                                     {% endif %}
                                                 {% endif %}
                                                 
-                                                <form action="{{ url_for('cambiar_estado_pedido', pedido_id=pedido.id) }}" method="POST" style="display:inline;">
+                                                <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST" style="display:inline;">
     <select name="estado" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre }}', '{{ pedido.codigo_recogida }}')" class="form-control" style="margin-bottom:0; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; background: var(--input-bg); color: var(--accent-gold); border: 1px solid var(--accent-gold); font-weight: bold;">
         
         {% if pedido.tipo_pedido == 'puro_pan' %}

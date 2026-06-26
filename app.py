@@ -115,27 +115,29 @@ class Pedido(db.Model):
     pagado = db.Column(db.Boolean, default=False)
 # === DENTRO DE CLASS PEDIDO ===
     @property
-    def tipo_pedido(self):
-        if not self.detalles:
-            return 'puros_abarrotes'
-        
-        tiene_pan = False
-        tiene_abarrotes = False
-        
-        for detalle in self.detalles:
-            if detalle.producto:
-                # Clasifica basándose en si la categoría es pan o tienda
-                if detalle.producto.categoria.lower() == 'pan':
-                    tiene_pan = True
-                else:
-                    tiene_abarrotes = True
-                    
-        if tiene_pan and tiene_abarrotes:
-            return 'combinado'
-        elif tiene_pan:
-            return 'puro_pan'
-        else:
-            return 'puros_abarrotes'
+def tipo_pedido(self):
+    if not self.detalles:
+        return 'puros_abarrotes'
+
+    tiene_pan = False
+    tiene_abarrotes = False
+
+    for detalle in self.detalles:
+        if detalle.producto:
+            # Protegemos el código: si la categoría es None (vieja), asume 'pan'
+            categoria_segura = detalle.producto.categoria.lower() if detalle.producto.categoria else 'pan'
+
+            if categoria_segura == 'pan':
+                tiene_pan = True
+            else:
+                tiene_abarrotes = True
+
+    if tiene_pan and tiene_abarrotes:
+        return 'combinado'
+    elif tiene_pan:
+        return 'puro_pan'
+    else:
+        return 'puros_abarrotes'
 
 class DetallePedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -780,7 +782,8 @@ def admin():
 
     produccion_total = {}
     for p in pedidos_activos:
-        for detalle in p.detalles:
+    for detalle in p.detalles:
+        if detalle.producto: 
             prod_nombre = detalle.producto.nombre
             produccion_total[prod_nombre] = produccion_total.get(prod_nombre, 0) + detalle.cantidad
 
@@ -1048,7 +1051,8 @@ def procesar_pedido():
         if cant and int(cant) > 0:
             cantidad = int(cant)
 
-            es_tienda = prod.categoria.lower() != 'pan'
+            categoria_segura = prod.categoria.lower() if prod.categoria else 'pan'
+            es_tienda = categoria_segura != 'pan'
             
             # === REGLA 1: BLOQUEO EXCLUSIVO PARA PAN DESPUÉS DE LAS 4 PM ===
             if not es_tienda and (hora_actual_local >= 16 or hora_actual_local < 1):
