@@ -781,11 +781,10 @@ def admin():
 
     produccion_total = {}
     for p in pedidos_activos:
-    for detalle in p.detalles:
-        if detalle.producto: 
-            prod_nombre = detalle.producto.nombre
-            produccion_total[prod_nombre] = produccion_total.get(prod_nombre, 0) + detalle.cantidad
-
+        for detalle in p.detalles: # ✅ Indentación corregida
+            if detalle.producto: 
+                prod_nombre = detalle.producto.nombre
+                produccion_total[prod_nombre] = produccion_total.get(prod_nombre, 0) + detalle.cantidad
     productos = Producto.query.all()
     dias_bloqueados_lista = DiaInhabil.query.order_by(DiaInhabil.fecha.asc()).all()
     
