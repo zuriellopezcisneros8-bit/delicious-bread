@@ -623,10 +623,8 @@
         <div class="container">
             
             <div id="seccion-pan" class="grid-productos" style="display: grid;">
-                {% for producto in productos if not producto.categoria or producto.categoria not in ['tienda', 'abarrotes', 'Tienda', 'Abarrotes'] %}
-
-{% for producto in productos if not producto.categoria or producto.categoria|lower == 'pan' %}
-                <div class="card-producto {% if not producto.disponible %}pausado{% endif %}">
+    {% for producto in productos if not producto.categoria or producto.categoria|lower == 'pan' %}
+    <div class="card-producto {% if not producto.disponible %}pausado{% endif %}">
                     
                     <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
                         <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/600x450/121212/C5A059?text=Atelier' }}" alt="{{ producto.nombre }}">
@@ -710,10 +708,9 @@
 </style>
 
             <div id="seccion-tienda" class="tienda-grid" style="display: none;">
-                {% for producto in productos if producto.categoria and producto.categoria in ['tienda', 'abarrotes', 'Tienda', 'Abarrotes'] %}
-
-{% for producto in productos if producto.categoria and producto.categoria|lower != 'pan' %}
-                <div class="tienda-card {% if not producto.disponible %}pausado{% endif %}" data-categoria="{{ producto.categoria|default('tienda') }}" data-nombre="{{ producto.nombre }}">
+    {% for producto in productos if producto.categoria and producto.categoria|lower != 'pan' %}
+    <div class="tienda-card {% if not producto.disponible %}pausado{% endif %}" data-categoria="{{ producto.categoria|default('tienda') }}" data-nombre="{{ producto.nombre }}">
+       
                     
                     <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
                         <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/400x400/121212/C5A059?text=Tienda' }}" alt="{{ producto.nombre }}">
