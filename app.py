@@ -115,7 +115,7 @@ class Pedido(db.Model):
     pagado = db.Column(db.Boolean, default=False)
 # === DENTRO DE CLASS PEDIDO ===
     @property
-def tipo_pedido(self):
+    def tipo_pedido(self):
     if not self.detalles:
         return 'puros_abarrotes'
 
