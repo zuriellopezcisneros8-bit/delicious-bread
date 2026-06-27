@@ -689,26 +689,28 @@
     }
 </style>
 
-            <div id="seccion-tienda" class="tienda-grid" style="display: none;">
+            <!-- === ESTE ES TU CONTENEDOR DE LA TIENDA === -->
+<div id="seccion-tienda" class="tienda-grid" style="display: none;">
 
-<div class="search-container-tienda" style="max-width: 500px; margin: 0 auto 25px auto; padding: 0 15px;">
-    <div style="position: relative; background: #000000; border-radius: 30px; border: 1px solid var(--border-fino); padding: 4px 15px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
-        <input type="text" id="busquedaProductos" placeholder="Buscar productos en tienda..." 
-               style="width: 100%; background: transparent; border: none; color: var(--skin-beige); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; letter-spacing: 2px; padding: 10px 5px; outline: none; text-transform: uppercase;">
-        <span style="color: var(--luxury-gold); font-size: 1rem; cursor: default; padding-right: 5px;">🔍</span>
+    <!-- 1. MOVER EL BUSCADOR AQUÍ ADENTRO -->
+    <div class="search-container-tienda" style="max-width: 500px; margin: 0 auto 25px auto; padding: 0 15px; grid-column: 1 / -1;">
+        <div style="position: relative; background: #000000; border-radius: 30px; border: 1px solid var(--border-fino); padding: 4px 15px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
+            <input type="text" id="busquedaProductos" placeholder="Buscar productos..." 
+                   style="width: 100%; background: transparent; border: none; color: var(--skin-beige); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; letter-spacing: 2px; padding: 10px 5px; outline: none; text-transform: uppercase;">
+            <span style="color: var(--luxury-gold); font-size: 1rem; cursor: default; padding-right: 5px;">🔍</span>
+        </div>
     </div>
-</div>
 
-<div class="category-carousel-wrapper" style="max-width: 850px; margin: 0 auto 40px auto; padding: 0 15px;">
-    <div class="category-carousel-strip" style="background: #000000; border-radius: 40px; padding: 12px 25px; display: flex; gap: 12px; overflow-x: auto; white-space: nowrap; border: 1px solid var(--border-fino); scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
-        <button class="category-carousel-btn active" data-filter="todos">Todos</button>
-        <button class="category-carousel-btn" data-filter="leche">Leche</button>
-        <button class="category-carousel-btn" data-filter="bebidas">Bebidas</button>
-        <button class="category-carousel-btn" data-filter="snacks">Snacks</button>
-        <button class="category-carousel-btn" data-filter="abarrotes">Abarrotes</button>
-        <button class="category-carousel-btn" data-filter="cremería">Cremería</button>
+    <!-- 2. MOVER EL CARRUSEL AQUÍ ADENTRO -->
+    <div class="category-carousel-wrapper" style="max-width: 850px; margin: 0 auto 40px auto; padding: 0 15px; grid-column: 1 / -1;">
+        <div class="category-carousel-strip" style="background: #000000; border-radius: 40px; padding: 12px 25px; display: flex; gap: 12px; overflow-x: auto; white-space: nowrap; border: 1px solid var(--border-fino); scroll-behavior: smooth; -webkit-overflow-scrolling: touch;">
+            <button class="category-carousel-btn active" data-filter="todos">Todos</button>
+            <button class="category-carousel-btn" data-filter="bebidas">Bebidas</button>
+            <button class="category-carousel-btn" data-filter="cremería">Cremería</button>
+            <button class="category-carousel-btn" data-filter="abarrotes">Abarrotes</button>
+            <button class="category-carousel-btn" data-filter="snacks">Snacks</button>
+        </div>
     </div>
-</div>
 
     {% for producto in productos if producto.categoria and producto.categoria|lower != 'pan' %}
     <div class="tienda-card {% if not producto.disponible %}pausado{% endif %}" data-categoria="{{ producto.categoria|default('tienda') }}" data-nombre="{{ producto.nombre }}">
