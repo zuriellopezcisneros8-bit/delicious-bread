@@ -116,29 +116,28 @@ class Pedido(db.Model):
 # === DENTRO DE CLASS PEDIDO ===
     @property
     def tipo_pedido(self):
-    if not self.detalles:
-        return 'puros_abarrotes'
+        if not self.detalles:
+            return 'puros_abarrotes'
 
-    tiene_pan = False
-    tiene_abarrotes = False
+        tiene_pan = False
+        tiene_abarrotes = False
 
-    for detalle in self.detalles:
-        if detalle.producto:
-            # Protegemos el código: si la categoría es None (vieja), asume 'pan'
-            categoria_segura = detalle.producto.categoria.lower() if detalle.producto.categoria else 'pan'
+        for detalle in self.detalles:
+            if detalle.producto:
+                # Protegemos el código: si la categoría es None (vieja), asume 'pan'
+                categoria_segura = detalle.producto.categoria.lower() if detalle.producto.categoria else 'pan'
 
-            if categoria_segura == 'pan':
-                tiene_pan = True
-            else:
-                tiene_abarrotes = True
+                if categoria_segura == 'pan':
+                    tiene_pan = True
+                else:
+                    tiene_abarrotes = True
 
-    if tiene_pan and tiene_abarrotes:
-        return 'combinado'
-    elif tiene_pan:
-        return 'puro_pan'
-    else:
-        return 'puros_abarrotes'
-
+        if tiene_pan and tiene_abarrotes:
+            return 'combinado'
+        elif tiene_pan:
+            return 'puro_pan'
+        else:
+            return 'puros_abarrotes'
 class DetallePedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pedido_id = db.Column(db.Integer, db.ForeignKey('pedido.id'), nullable=False)
