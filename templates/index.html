@@ -953,39 +953,37 @@
         }
 
         // LÓGICA DE BLOQUEO MAESTRO (HORARIO Y ADMIN)
-        function validarHorarioOperativo() {
+       function validarHorarioOperativo() {
     const btnProcesar = document.getElementById('btnProcesar');
     const mensajeCierre = document.getElementById('mensajeCierre');
     const inputsCantidad = document.querySelectorAll('.input-cantidad');
 
     const fecha = new Date();
-    const horaActual = fecha.getHours(); 
-
+    const horaActual = fecha.getHours();
+    
     let cierreAdmin = !tiendaAbierta;
-    let cierrePan = (horaActual >= 16 || horaActual < 1);
+    let cierrePan = (horaActual >= 16 || horaActual < 1); // Cierre de pan (después de 4 PM)
+    let cierreTienda = (horaActual < 10 || horaActual >= 20); // Cierre de tienda (antes de 10 AM o después de 8 PM)
 
     if (cierreAdmin) {
-        // Bloqueo total por administrador
         btnProcesar.disabled = true;
         btnProcesar.innerText = 'CERRADO';
         mensajeCierre.innerHTML = `ATELIER BLOQUEADO HOY.<br>Motivo: <b>${motivoCierre}</b>`;
         mensajeCierre.style.display = 'block';
-        
         document.querySelectorAll('.btn-suma-dinamico').forEach(btn => {
             btn.disabled = true;
             btn.style.opacity = '0.3';
             btn.style.cursor = 'not-allowed';
         });
-    } else if (cierrePan) {
-        // Bloqueo parcial automático (Solo restringe pan, libera tienda)
+    } else {
         inputsCantidad.forEach(input => {
-            const categoria = input.getAttribute('data-categoria') || 'pan';
-            const esTienda = categoria.toLowerCase() !== 'pan';
+            const categoria = (input.getAttribute('data-categoria') || 'pan').toLowerCase();
+            const esPan = (categoria === 'pan');
 
-            if (!esTienda) {
-                // Inhabilitar solo el botón "+" correspondiente a productos de pan
-                const btnSuma = input.nextElementSibling;
-                if (btnSuma && btnSuma.classList.contains('btn-suma-dinamico')) {
+            const btnSuma = input.nextElementSibling;
+            if (btnSuma && btnSuma.classList.contains('btn-suma-dinamico')) {
+                // Si es pan y está cerrado el pan, o si es tienda y está cerrada la tienda: se bloquea
+                if ((esPan && cierrePan) || (!esPan && cierreTienda)) {
                     btnSuma.disabled = true;
                     btnSuma.style.opacity = '0.3';
                     btnSuma.style.cursor = 'not-allowed';
@@ -993,9 +991,17 @@
             }
         });
 
-        // Mostrar aviso dinámico sin bloquear el procesamiento
-        mensajeCierre.innerHTML = `RECEPCIÓN DE PAN CERRADA.<br>Los artículos de la tienda continúan disponibles.`;
-        mensajeCierre.style.display = 'block';
+        // Mensajes dinámicos
+        if (cierrePan && cierreTienda) {
+            mensajeCierre.innerHTML = `BOUTIQUE Y PANADERÍA CERRADAS.<br>Horario de tienda: 10:00 AM a 8:00 PM.`;
+            mensajeCierre.style.display = 'block';
+        } else if (cierrePan) {
+            mensajeCierre.innerHTML = `RECEPCIÓN DE PAN CERRADA.<br>Los artículos de la tienda continúan disponibles.`;
+            mensajeCierre.style.display = 'block';
+        } else if (cierreTienda) {
+            mensajeCierre.innerHTML = `ARTÍCULOS DE TIENDA CERRADOS.<br>Horario: 10:00 AM a 8:00 PM. La panadería continúa disponible.`;
+            mensajeCierre.style.display = 'block';
+        }
     }
 }
         window.onload = validarHorarioOperativo;
@@ -1063,6 +1069,7 @@
             var totalAcumulado = 0;
             var articulosTotales = 0;
             var listaHtml = '';
+            var contieneTienda = false;
             var contienePan = false;
 
             inputs.forEach(function(input) {
@@ -1071,10 +1078,14 @@
                     var precio = parseFloat(input.getAttribute('data-precio')) || 0;
                     var nombre = input.getAttribute('data-nombre') || 'Producto';
                     var categoria = input.getAttribute('data-categoria') || 'pan';
+categoria = categoria.toLowerCase(); // Convertimos a minúsculas por seguridad
                     
-                    if (categoria !== 'tienda' && categoria !== 'abarrotes' && categoria !== 'Tienda' && categoria !== 'Abarrotes') {
-                        contienePan = true;
-                    }
+// Si es explícitamente 'pan', activamos contienePan. Si es otra cosa, es tienda.
+if (categoria === 'pan') {
+    contienePan = true;
+} else {
+    contieneTienda = true; // Agregamos esta variable para usarla en los bloqueos más abajo
+}
 
                     var subtotal = cantidad * precio;
                     
@@ -1102,13 +1113,24 @@
             evaluarHorariosDisponibles(contienePan, articulosTotales);
  
 const horaActualLocal = new Date().getHours();
-if (contienePan && (horaActualLocal >= 16 || horaActualLocal < 1)) {
-    document.getElementById('btnProcesar').disabled = true;
-    document.getElementById('btnProcesar').innerText = 'RETIRE PAN DEL CARRITO';
-} else {
-    document.getElementById('btnProcesar').disabled = false;
-    document.getElementById('btnProcesar').innerText = 'Procesar Pedido';
-}
+    
+    // Verificamos qué bloqueos aplican a lo que hay en el carrito
+    let panBloqueado = contienePan && (horaActualLocal >= 16 || horaActualLocal < 1);
+    let tiendaBloqueada = contieneTienda && (horaActualLocal < 10 || horaActualLocal >= 20);
+
+    if (panBloqueado && tiendaBloqueada) {
+        document.getElementById('btnProcesar').disabled = true;
+        document.getElementById('btnProcesar').innerText = 'RETIRE PRODUCTOS (FUERA DE HORARIO)';
+    } else if (panBloqueado) {
+        document.getElementById('btnProcesar').disabled = true;
+        document.getElementById('btnProcesar').innerText = 'RETIRE PAN DEL CARRITO';
+    } else if (tiendaBloqueada) {
+        document.getElementById('btnProcesar').disabled = true;
+        document.getElementById('btnProcesar').innerText = 'RETIRE ARTÍCULOS DE TIENDA';
+    } else {
+        document.getElementById('btnProcesar').disabled = false;
+        document.getElementById('btnProcesar').innerText = 'Procesar Pedido';
+    }
             var btnTop = document.getElementById('btnCarritoTop');
             if (articulosTotales > 0) {
                 btnTop.classList.add('visible');
