@@ -80,6 +80,10 @@ def verificar_db():
         print(f"✗ Error de conexión: {e}")
 
 # ================= MODELOS DE BASE DE DATOS =================
+class ConfiguracionTienda(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    clave = db.Column(db.String(50), unique=True, nullable=False)
+    valor_booleano = db.Column(db.Boolean, default=False)
 
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -192,6 +196,17 @@ def generar_codigo():
 def generar_codigo_especial():
     caracteres = string.ascii_uppercase + string.digits
     return f"ZCW-EV-{''.join(random.choice(caracteres) for _ in range(5))}"
+
+# ================= CONFIGURACIÓN DE TEMPORADAS =================
+@app.route('/api/estado-temporada', methods=['GET'])
+def estado_temporada():
+    try:
+        conf = ConfiguracionTienda.query.filter_by(clave='temporada_halloween').first()
+        activa = conf.valor_booleano if conf else False
+        return jsonify({'temporada_halloween_activa': activa})
+    except Exception as e:
+        print(f"Error consultando temporada: {e}")
+        return jsonify({'temporada_halloween_activa': False})
 
 # ================= IA ZEDITH =================
 
@@ -788,8 +803,12 @@ def admin():
     productos = Producto.query.all()
     dias_bloqueados_lista = DiaInhabil.query.order_by(DiaInhabil.fecha.asc()).all()
     
+    
     anuncios_lista = Anuncio.query.all()
     pedidos_especiales_lista = PedidoEspecial.query.order_by(PedidoEspecial.fecha_creacion.desc()).all()
+
+    conf_halloween = ConfiguracionTienda.query.filter_by(clave='temporada_halloween').first()
+    estado_halloween = conf_halloween.valor_booleano if conf_halloween else False
 
     return render_template('admin.html', 
                            pedidos_activos=pedidos_activos, 
@@ -799,7 +818,9 @@ def admin():
                            filtro_actual=filtro,
                            dias_bloqueados_lista=dias_bloqueados_lista,
                            anuncios_lista=anuncios_lista,
-                           pedidos_especiales_lista=pedidos_especiales_lista)
+                           pedidos_especiales_lista=pedidos_especiales_lista,
+                           estado_halloween=estado_halloween)
+
 
 @app.route('/admin/anuncio/nuevo', methods=['POST'])
 def nuevo_anuncio():
@@ -940,6 +961,34 @@ def editar_producto(producto_id):
     db.session.commit()
     socketio.emit('actualizacion_global')
     return redirect(url_for('admin'))
+
+
+
+@app.route('/admin/toggle_temporada', methods=['POST'])
+def toggle_temporada():
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('admin_login'))
+    
+    conf = ConfiguracionTienda.query.filter_by(clave='temporada_halloween').first()
+    
+    # Si no existe en la base de datos, lo crea y lo activa
+    if not conf:
+        conf = ConfiguracionTienda(clave='temporada_halloween', valor_booleano=True)
+        db.session.add(conf)
+    else:
+        # Invierte el estado actual (True a False, o False a True)
+        conf.valor_booleano = not conf.valor_booleano
+    
+    db.session.commit()
+    
+    # Sincronización en tiempo real ZMARTHNET
+    socketio.emit('actualizacion_global')
+    
+    estado_texto = "ACTIVADA" if conf.valor_booleano else "DESACTIVADA"
+    flash(f'La temporada de Halloween ha sido {estado_texto} exitosamente.', 'success')
+    
+    return redirect(url_for('admin'))
+
 
 # ================= SUBIDA DE COMPROBANTES (TIENDA REGULAR) =================
 @app.route('/subir_comprobante/<int:pedido_id>', methods=['POST'])

@@ -635,7 +635,7 @@
                     <input type="text" name="nombre" class="form-control" required placeholder="Nombre (Ej. Charola de Empanadas)">
 <select name="categoria" class="form-control" style="margin-bottom: 15px;">
     <option value="pan">🥖 Panadería (Entrega 5 a 7 PM)</option>
-    <option value="leche">🥛 Leche</option>
+    <option value="halloween" style="color: #FF7A00; font-weight: bold;">🎃 Colección Halloween</option>
     <option value="bebidas">🥤 Bebidas</option>
     <option value="snacks">🍫 Snacks y Frituras</option>
     <option value="abarrotes">🥫 Abarrotes Generales</option>
@@ -757,7 +757,7 @@
     <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Categoría del Producto:</label>
     <select name="categoria" class="form-control">
         <option value="pan" {% if prod.categoria == 'pan' %}selected{% endif %}>🥖 Panadería</option>
-        <option value="leche" {% if prod.categoria == 'leche' %}selected{% endif %}>🥛 Leche</option>
+        <option value="halloween" {% if prod.categoria == 'halloween' %}selected{% endif %} style="color: #FF7A00; font-weight: bold;">🎃 Colección Halloween</option>
         <option value="bebidas" {% if prod.categoria == 'bebidas' %}selected{% endif %}>🥤 Bebidas</option>
         <option value="snacks" {% if prod.categoria == 'snacks' %}selected{% endif %}>🍫 Snacks y Frituras</option>
         <option value="abarrotes" {% if prod.categoria == 'abarrotes' %}selected{% endif %}>🥫 Abarrotes Generales</option>
@@ -791,6 +791,26 @@
 
     <div id="configuracion" class="tab-content">
         <div class="admin-grid">
+
+<div class="card" style="border: 1px solid #FF7A00;">
+    <h3 style="color: #FF7A00;">🎃 Modo Temporada: Halloween Collection</h3>
+    <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Activa o desactiva la inyección del carrusel y los productos exclusivos de Halloween en la tienda principal.</p>
+    
+    <form action="{{ url_for('toggle_temporada') }}" method="POST" style="background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <div>
+            <strong style="color: var(--text-white); display: block; font-size: 0.9rem;">Estado del Sistema:</strong>
+            {% if temporada_activa %}
+                <span style="color: #6BD968; font-size: 0.75rem; font-weight: bold;">🟢 ACTIVADO (Visible en Tienda)</span>
+            {% else %}
+                <span style="color: var(--text-gray); font-size: 0.75rem; font-weight: bold;">⚫ DESACTIVADO (Oculto)</span>
+            {% endif %}
+        </div>
+        <!-- El botón cambia de color y texto dependiendo del estado de la variable enviada por Flask -->
+        <button type="submit" class="btn-action" style="max-width: 200px; border-color: {% if temporada_activa %}#5C2B2B{% else %}#FF7A00{% endif %}; color: {% if temporada_activa %}#D96868{% else %}#FF7A00{% endif %};">
+            {% if temporada_activa %}Apagar Colección{% else %}Encender Halloween{% endif %}
+        </button>
+    </form>
+</div>
             <div class="card">
                 <h3>📢 Banner de Anuncios Corporativos</h3>
                 <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Publica banners con imágenes de alta definición y vínculos de redirección del ecosistema.</p>
