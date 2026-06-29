@@ -797,19 +797,20 @@
     <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Activa o desactiva la inyección del carrusel y los productos exclusivos de Halloween en la tienda principal.</p>
     
     <form action="{{ url_for('toggle_temporada') }}" method="POST" style="background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div>
-            <strong style="color: var(--text-white); display: block; font-size: 0.9rem;">Estado del Sistema:</strong>
-            {% if temporada_activa %}
-                <span style="color: #6BD968; font-size: 0.75rem; font-weight: bold;">🟢 ACTIVADO (Visible en Tienda)</span>
-            {% else %}
-                <span style="color: var(--text-gray); font-size: 0.75rem; font-weight: bold;">⚫ DESACTIVADO (Oculto)</span>
-            {% endif %}
-        </div>
-        <!-- El botón cambia de color y texto dependiendo del estado de la variable enviada por Flask -->
-        <button type="submit" class="btn-action" style="max-width: 200px; border-color: {% if temporada_activa %}#5C2B2B{% else %}#FF7A00{% endif %}; color: {% if temporada_activa %}#D96868{% else %}#FF7A00{% endif %};">
-            {% if temporada_activa %}Apagar Colección{% else %}Encender Halloween{% endif %}
-        </button>
-    </form>
+    <div>
+        <strong style="color: var(--text-white); display: block; font-size: 0.9rem;">Estado del Sistema:</strong>
+        
+        {% if estado_halloween %}
+            <span style="color: #6BD968; font-size: 0.75rem; font-weight: bold;">🟢 ACTIVADO (Visible en Tienda)</span>
+        {% else %}
+            <span style="color: var(--text-gray); font-size: 0.75rem; font-weight: bold;">⚫ DESACTIVADO (Oculto)</span>
+        {% endif %}
+    </div>
+    
+    <button type="submit" class="btn-action" style="max-width: 200px; border-color: {% if estado_halloween %}#5C2B2B{% else %}#FF7A00{% endif %}; color: {% if estado_halloween %}#D96868{% else %}#FF7A00{% endif %};">
+        {% if estado_halloween %}Apagar Colección{% else %}Encender Halloween{% endif %}
+    </button>
+</form>
 </div>
             <div class="card">
                 <h3>📢 Banner de Anuncios Corporativos</h3>
