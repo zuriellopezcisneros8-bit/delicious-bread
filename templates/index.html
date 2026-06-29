@@ -589,6 +589,51 @@
             <span style="font-size: 0.8rem; color: #a38c6d; font-style: normal;">{{ motivo_cierre }}</span>
         </div>
         {% endif %}
+
+
+{% if estado_halloween %}
+<div id="modal-halloween-collection" class="tu-clase-de-modal-elegante">
+    <div class="modal-content">
+        <h2>Halloween Collection | Preventa Exclusiva</h2>
+        <p>Asegure sus piezas de Pan de Muerto para nuestra temporada especial.</p>
+        
+        <!-- Formulario independiente para la preventa -->
+        <form action="{{ url_for('hacer_pedido_halloween') }}" method="POST">
+            
+            <div class="selector-fecha-estricto">
+                <label for="fecha_preventa">Seleccione el día de recogida (Oct - Nov 2026):</label>
+                <select id="fecha_preventa" name="fecha_preventa" required class="tu-clase-input-elegante">
+                    <option value="" disabled selected>Elija una fecha...</option>
+                    <option value="2026-10-28">Miércoles 28 de Octubre</option>
+                    <option value="2026-10-29">Jueves 29 de Octubre</option>
+                    <option value="2026-10-30">Viernes 30 de Octubre</option>
+                    <option value="2026-10-31">Sábado 31 de Octubre</option>
+                    <option value="2026-11-01">Domingo 1 de Noviembre</option>
+                    <option value="2026-11-02">Lunes 2 de Noviembre</option>
+                </select>
+            </div>
+
+            <div class="grid-productos">
+                <!-- Iteramos únicamente sobre los productos de Halloween -->
+                {% for producto in productos_halloween %}
+                    <div class="tarjeta-producto">
+                        {% if producto.imagen_url %}
+                            <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}">
+                        {% endif %}
+                        <h3>{{ producto.nombre }}</h3>
+                        <p>${{ producto.precio }} MXN</p>
+                        
+                        <!-- Control de cantidad -->
+                        <input type="number" name="cantidad_{{ producto.id }}" min="0" value="0">
+                    </div>
+                {% endfor %}
+            </div>
+            
+            <button type="submit" class="tu-clase-boton-dorado">Confirmar Preventa</button>
+        </form>
+    </div>
+</div>
+{% endif %}
         
         {% if productos_sobrantes %}
         <div class="seccion-flash">

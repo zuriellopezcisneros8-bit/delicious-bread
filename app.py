@@ -628,10 +628,23 @@ def index():
         session.pop('usuario_id', None)
         return redirect(url_for('login'))
         
-    productos = Producto.query.all()
-    anuncios = Anuncio.query.filter_by(activo=True).all()
+    # Consultar el estado de la temporada (el switch que ya tienes en el admin)
+    conf_halloween = ConfiguracionTienda.query.filter_by(clave='temporada_halloween').first()
+    estado_halloween = conf_halloween.valor_booleano if conf_halloween else False
+
+    # Traer todos los productos y separarlos en sus respectivas listas
+    todos_los_productos = Producto.query.all()
     
-    productos_sobrantes = [p for p in productos if p.stock_sobrante > 0]
+    productos_pan = [p for p in todos_los_productos if p.categoria.lower() == 'pan']
+    productos_tienda = [p for p in todos_los_productos if p.categoria.lower() == 'abarrotes'] # o la categoría que uses para tienda
+    
+    # Solo cargar la colección si la temporada está activa
+    productos_halloween = []
+    if estado_halloween:
+        productos_halloween = [p for p in todos_los_productos if p.categoria.lower() == 'halloween']
+        
+    productos_sobrantes = [p for p in todos_los_productos if p.stock_sobrante > 0]
+    anuncios = Anuncio.query.filter_by(activo=True).all()
     
     hoy = datetime.utcnow().date()
     dia_bloqueado = DiaInhabil.query.filter_by(fecha=hoy).first()
@@ -639,14 +652,16 @@ def index():
     motivo_cierre = dia_bloqueado.motivo if dia_bloqueado else ""
     
     return render_template('index.html', 
-                           productos=productos, 
+                           productos_pan=productos_pan, 
+                           productos_tienda=productos_tienda,
+                           productos_halloween=productos_halloween, # <--- Nueva lista de preventa
+                           estado_halloween=estado_halloween,       # <--- Señal de activación
                            productos_sobrantes=productos_sobrantes,
                            anuncios=anuncios,
                            usuario=usuario, 
                            nombre_usuario=usuario.nombre,
                            tienda_abierta=tienda_abierta,
                            motivo_cierre=motivo_cierre)
-
 
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
