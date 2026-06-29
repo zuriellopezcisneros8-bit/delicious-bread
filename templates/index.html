@@ -188,6 +188,82 @@
     font-weight: 500;
 }
 
+
+/* ================= PREVENTA HALLOWEEN PREMIUM ================= */
+.modal-halloween-premium {
+    background: var(--card-black);
+    border: 1px solid var(--luxury-gold);
+    padding: 40px;
+    margin-bottom: 50px;
+    border-radius: 4px;
+    text-align: center;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+}
+
+.modal-halloween-premium h2 {
+    color: var(--skin-beige);
+    font-family: 'Playfair Display', serif;
+    letter-spacing: 2px;
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.modal-halloween-premium > p {
+    color: #888;
+    font-size: 0.85rem;
+    margin-bottom: 35px;
+    font-weight: 300;
+}
+
+.selector-fecha-estricto {
+    margin-bottom: 40px;
+}
+
+.selector-fecha-estricto label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--light-brown);
+}
+
+.input-elegante-halloween {
+    background: #0A0A0A;
+    border: 1px solid var(--border-fino);
+    color: var(--skin-beige);
+    padding: 12px 20px;
+    font-family: 'Montserrat', sans-serif;
+    width: 100%;
+    max-width: 400px;
+    outline: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.input-elegante-halloween:focus {
+    border-color: var(--luxury-gold);
+}
+
+.btn-dorado-premium {
+    background: var(--luxury-gold);
+    color: var(--card-black);
+    border: none;
+    padding: 18px 40px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    border-radius: 4px;
+    margin-top: 30px;
+    font-size: 0.85rem;
+}
+
+.btn-dorado-premium:hover {
+    background: var(--skin-beige);
+}
+
+
 .control-cantidad-tienda input:focus {
     outline: none;
 }
@@ -592,115 +668,84 @@
 
 
 {% if estado_halloween %}
-<div id="modal-halloween-collection" class="tu-clase-de-modal-elegante">
-    <div class="modal-content">
-        <h2>Halloween Collection | Preventa Exclusiva</h2>
-        <p>Asegure sus piezas de Pan de Muerto para nuestra temporada especial.</p>
-        
-        <!-- Formulario independiente para la preventa -->
-        <form action="{{ url_for('hacer_pedido_halloween') }}" method="POST">
-            
-            <div class="selector-fecha-estricto">
-                <label for="fecha_preventa">Seleccione el día de recogida (Oct - Nov 2026):</label>
-                <select id="fecha_preventa" name="fecha_preventa" required class="tu-clase-input-elegante">
-                    <option value="" disabled selected>Elija una fecha...</option>
-                    <option value="2026-10-28">Miércoles 28 de Octubre</option>
-                    <option value="2026-10-29">Jueves 29 de Octubre</option>
-                    <option value="2026-10-30">Viernes 30 de Octubre</option>
-                    <option value="2026-10-31">Sábado 31 de Octubre</option>
-                    <option value="2026-11-01">Domingo 1 de Noviembre</option>
-                    <option value="2026-11-02">Lunes 2 de Noviembre</option>
-                </select>
-            </div>
-
-            <div class="grid-productos">
-                <!-- Iteramos únicamente sobre los productos de Halloween -->
-                {% for producto in productos_halloween %}
-                    <div class="tarjeta-producto">
-                        {% if producto.imagen_url %}
-                            <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}">
-                        {% endif %}
-                        <h3>{{ producto.nombre }}</h3>
-                        <p>${{ producto.precio }} MXN</p>
-                        
-                        <!-- Control de cantidad -->
-                        <input type="number" name="cantidad_{{ producto.id }}" min="0" value="0">
-                    </div>
-                {% endfor %}
-            </div>
-            
-            <button type="submit" class="tu-clase-boton-dorado">Confirmar Preventa</button>
-        </form>
-    </div>
-</div>
-{% endif %}
-        
-        {% if productos_sobrantes %}
-        <div class="seccion-flash">
-            <h2 style="color: var(--skin-beige); font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-top: 0; letter-spacing: 2px;">⚡ Adquisición Relámpago</h2>
-            <p style="color: #a0a0a0; font-size: 0.85rem; margin-bottom: 0;">Alta panadería artesanal con disponibilidad inmediata en Atelier.</p>
-            
-            <div class="grid-flash">
-                {% for prod in productos_sobrantes %}
-                <div class="card-flash">
-                    <img src="{{ prod.imagen_url if prod.imagen_url else 'https://via.placeholder.com/600x450/121212/C5A059?text=Atelier' }}" alt="{{ prod.nombre }}">
-                    <h4>{{ prod.nombre }}</h4>
-                    <p style="color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.2rem; margin: 10px 0;">${{ "%.2f"|format(prod.precio) }} MXN</p>
-                    <p style="color: #777; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Disponibilidad: <strong style="color: var(--skin-beige);">{{ prod.stock_sobrante }} u.</strong></p>
-                    
-                    <div style="display: flex; gap: 10px; justify-content: center; align-items: center; margin-top: 15px;">
-                        <input type="number" id="flash_cant_{{ prod.id }}" min="1" max="{{ prod.stock_sobrante }}" value="1" style="width: 60px; padding: 10px; background: transparent; border: 1px solid #333; color: #fff; text-align: center; border-radius: 4px;">
-                        <button type="button" class="btn-flash" onclick="abrirModalPagoRelampago('{{ prod.id }}')">Adquirir Instante</button>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="store-tabs">
-            <button type="button" class="store-tab-btn active" onclick="filtrarCategoria('pan')">Delicious Bread</button>
-            <button type="button" class="store-tab-btn" onclick="filtrarCategoria('tienda')">Productos de Delicious Bread</button>
-        </div>
-
-    </div> 
+<div id="modal-halloween-collection" class="modal-halloween-premium">
+    <h2>Halloween Collection | Preventa Exclusiva</h2>
+    <p>Asegure sus piezas de Pan de Muerto para nuestra temporada especial.</p>
     
-    <form id="pedidoForm" method="POST" action="/procesar_pedido">
-        <div class="container">
-            
-            <div id="seccion-pan" class="grid-productos" style="display: grid;">
-    {% for producto in productos if not producto.categoria or producto.categoria|lower == 'pan' %}
-    <div class="card-producto {% if not producto.disponible %}pausado{% endif %}">
-                    
-                    <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
-                        <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/600x450/121212/C5A059?text=Atelier' }}" alt="{{ producto.nombre }}">
-                        {% if not producto.disponible %}
-                        <div class="overlay-pausado">NO DISPONIBLE HOY</div>
-                        {% endif %}
+    <form action="{{ url_for('hacer_pedido_halloween') }}" method="POST">
+        
+        <div class="selector-fecha-estricto">
+            <label for="fecha_preventa">Seleccione el día de recogida (Oct - Nov 2026):</label>
+            <select id="fecha_preventa" name="fecha_preventa" required class="input-elegante-halloween">
+                <option value="" disabled selected>Elija una fecha...</option>
+                <option value="2026-10-28">Miércoles 28 de Octubre</option>
+                <option value="2026-10-29">Jueves 29 de Octubre</option>
+                <option value="2026-10-30">Viernes 30 de Octubre</option>
+                <option value="2026-10-31">Sábado 31 de Octubre</option>
+                <option value="2026-11-01">Domingo 1 de Noviembre</option>
+                <option value="2026-11-02">Lunes 2 de Noviembre</option>
+            </select>
+        </div>
+
+        <div class="grid-productos">
+            {% for producto in productos_halloween %}
+                <div class="card-producto">
+                    <div class="img-contenedor">
+                        <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/600x450/121212/C5A059?text=Halloween' }}" alt="{{ producto.nombre }}">
                     </div>
-                    
                     <div class="info-producto">
                         <h3>{{ producto.nombre }}</h3>
                         <p>{{ producto.descripcion }}</p>
-                        
                         <div class="meta-producto">
                             <span class="precio">${{ "%.2f"|format(producto.precio) }} MXN</span>
-                            
                             <div class="control-cantidad">
-                                {% if producto.disponible %}
-                                    <button type="button" onclick="cambiarCantidad('cant_{{ producto.id }}', -1)">-</button>
-                                    <input type="number" class="input-cantidad" id="cant_{{ producto.id }}" name="cantidad_{{ producto.id }}" value="0" min="0" data-precio="{{ producto.precio }}" data-nombre="{{ producto.nombre }}" data-categoria="{{ producto.categoria|default('pan') }}" readonly>
-                                    <button type="button" class="btn-suma-dinamico" onclick="cambiarCantidad('cant_{{ producto.id }}', 1)">+</button>
-                                {% else %}
-                                    <span style="color: #ff4d4d; font-size: 0.70rem; letter-spacing: 1px; padding: 10px 15px; font-weight: 600; text-transform: uppercase;">NO DISPONIBLE</span>
-                                {% endif %}
+                                <button type="button" onclick="cambiarCantidad('halloween_{{ producto.id }}', -1)">-</button>
+                                <input type="number" class="input-cantidad" id="halloween_{{ producto.id }}" name="cantidad_{{ producto.id }}" value="0" min="0" readonly>
+                                <button type="button" onclick="cambiarCantidad('halloween_{{ producto.id }}', 1)">+</button>
                             </div>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
-            </div>
+            {% endfor %}
+        </div>
+        
+        <button type="submit" class="btn-dorado-premium">Confirmar Preventa</button>
+    </form>
+</div>
+{% endif %}
 
+<div id="seccion-pan" class="grid-productos" style="display: grid;">
+    {% for producto in productos_pan %}
+    <div class="card-producto {% if not producto.disponible %}pausado{% endif %}">
+        
+        <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
+            <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/600x450/121212/C5A059?text=Atelier' }}" alt="{{ producto.nombre }}">
+            {% if not producto.disponible %}
+            <div class="overlay-pausado">NO DISPONIBLE HOY</div>
+            {% endif %}
+        </div>
+        
+        <div class="info-producto">
+            <h3>{{ producto.nombre }}</h3>
+            <p>{{ producto.descripcion }}</p>
+            
+            <div class="meta-producto">
+                <span class="precio">${{ "%.2f"|format(producto.precio) }} MXN</span>
+                
+                <div class="control-cantidad">
+                    {% if producto.disponible %}
+                        <button type="button" onclick="cambiarCantidad('cant_{{ producto.id }}', -1)">-</button>
+                        <input type="number" class="input-cantidad" id="cant_{{ producto.id }}" name="cantidad_{{ producto.id }}" value="0" min="0" data-precio="{{ producto.precio }}" data-nombre="{{ producto.nombre }}" data-categoria="{{ producto.categoria|default('pan') }}" readonly>
+                        <button type="button" class="btn-suma-dinamico" onclick="cambiarCantidad('cant_{{ producto.id }}', 1)">+</button>
+                    {% else %}
+                        <span style="color: #ff4d4d; font-size: 0.70rem; letter-spacing: 1px; padding: 10px 15px; font-weight: 600; text-transform: uppercase;">NO DISPONIBLE</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 
 
 <style>
@@ -757,9 +802,9 @@
     </div>
 
     <div class="tienda-grid">
-        {% for producto in productos if producto.categoria and producto.categoria|lower != 'pan' %}
-        <div class="tienda-card {% if not producto.disponible %}pausado{% endif %}" data-categoria="{{ producto.categoria|default('tienda') }}" data-nombre="{{ producto.nombre }}">
-           
+    {% for producto in productos_tienda %}
+    <div class="tienda-card {% if not producto.disponible %}pausado{% endif %}" data-categoria="{{ producto.categoria|default('tienda') }}" data-nombre="{{ producto.nombre }}">
+
             <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
                 <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/400x400/121212/C5A059?text=Tienda' }}" alt="{{ producto.nombre }}">
                 {% if not producto.disponible %}
