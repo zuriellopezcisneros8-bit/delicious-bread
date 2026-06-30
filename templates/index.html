@@ -316,27 +316,20 @@
         .btn-flash { background: var(--luxury-gold); color: var(--card-black); border: none; padding: 10px; width: 100%; font-family: 'Montserrat'; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; margin-top: 15px; font-size: 0.8rem; }
         .btn-flash:hover { background: var(--skin-beige); }
 
-        /* CARRUSEL DE BANNERS / ANUNCIOS AUTOMÁTICO */
-        .contenedor-banners { 
-            position: relative;
-            width: 100%; 
-            margin-bottom: 40px; 
-            border-radius: 4px; 
-            overflow: hidden; 
-            border: 1px solid var(--border-fino); 
+        /* CARRUSEL DE NOVEDADES (Anti-Adblock) */
+        .contenedor-novedades { 
+            position: relative; width: 100%; margin-bottom: 40px; 
+            border-radius: 4px; overflow: hidden; border: 1px solid var(--border-fino); 
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
-        .item-banner { 
-            position: relative;
-            width: 100%; 
-            background: #000; 
-            display: none; /* Oculto por defecto */
-            animation: fadeInOut 1s ease-in-out;
+        .item-novedad { 
+            position: relative; width: 100%; background: #000; 
+            display: none; animation: fadeInOut 1s ease-in-out;
         }
-        .item-banner.active {
-            display: block;
-            /* Solo se muestra el activo */
-        }
+        .item-novedad.active { display: block; }
+        .item-novedad img { width: 100%; height: auto; display: block; }
+        .novedad-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 20px; box-sizing: border-box; }
+        .novedad-titulo { color: var(--skin-beige); font-family: 'Playfair Display', serif; font-size: 1.5rem; border-left: 3px solid var(--luxury-gold); padding-left: 15px; }
         @keyframes fadeInOut {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -666,16 +659,16 @@
     <div class="container" style="padding: 0 15px;">
         
         {% if anuncios %}
-        <div class="contenedor-banners">
+        <div class="contenedor-novedades">
             {% for ad in anuncios %}
-            <div class="item-banner {% if loop.first %}active{% endif %}">
+            <div class="item-novedad {% if loop.first %}active{% endif %}">
                 {% if ad.enlace_destino %}
                 <a href="{{ ad.enlace_destino }}" target="_blank" style="text-decoration: none;">
                 {% endif %}
-                    <img src="{{ ad.imagen_url }}" alt="{{ ad.titulo or 'Anuncio DB' }}">
+                    <img src="{{ ad.imagen_url }}" alt="Promocion DB">
                     {% if ad.titulo %}
-                    <div class="banner-overlay">
-                        <div class="banner-titulo">{{ ad.titulo }}</div>
+                    <div class="novedad-overlay">
+                        <div class="novedad-titulo">{{ ad.titulo }}</div>
                     </div>
                     {% endif %}
                 {% if ad.enlace_destino %}
@@ -695,7 +688,8 @@
 
 
 {% if estado_halloween %}
-<div id="modal-halloween-collection" class="modal-halloween-premium">
+<div id="seccion-halloween" style="display: none;">
+    <div id="modal-halloween-collection" class="modal-halloween-premium">
     <h2>Halloween Collection | Preventa Exclusiva</h2>
     <p>Asegure sus piezas de Pan de Muerto para nuestra temporada especial.</p>
     
@@ -744,6 +738,9 @@
 <div class="store-tabs">
     <button type="button" class="store-tab-btn active" onclick="filtrarCategoria('pan')">Delicious Bread</button>
     <button type="button" class="store-tab-btn" onclick="filtrarCategoria('tienda')">Productos de Tienda</button>
+    {% if estado_halloween %}
+    <button type="button" class="store-tab-btn" onclick="filtrarCategoria('halloween')" style="border-color: #ff8c00; color: #ff8c00;">Halloween Collection</button>
+    {% endif %}
 </div>
 
 <div id="seccion-pan" class="grid-productos" style="display: grid;">
@@ -1044,34 +1041,42 @@
         const motivoCierre = {{ motivo_cierre|default('')|tojson }};
 
         // LÓGICA DE CARRUSEL DE BANNERS AUTOMÁTICO
+        // LÓGICA DE CARRUSEL DE NOVEDADES
         document.addEventListener("DOMContentLoaded", function() {
             let currentSlide = 0;
-            const slides = document.querySelectorAll('.item-banner');
+            const slides = document.querySelectorAll('.item-novedad');
             if (slides.length > 1) {
                 setInterval(() => {
                     slides[currentSlide].classList.remove('active');
                     currentSlide = (currentSlide + 1) % slides.length;
                     slides[currentSlide].classList.add('active');
-                }, 3000); // 3 Segundos por anuncio
+                }, 3000);
             }
         });
 
         // NUEVA LÓGICA DE FILTRADO POR CATEGORÍA (PAN vs TIENDA)
         function filtrarCategoria(categoria) {
-            document.querySelectorAll('.store-tab-btn').forEach(btn => btn.classList.remove('active'));
-            event.currentTarget.classList.add('active');
+    document.querySelectorAll('.store-tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.currentTarget.classList.add('active');
 
-            const seccionPan = document.getElementById('seccion-pan');
-            const seccionTienda = document.getElementById('seccion-tienda');
+    const seccionPan = document.getElementById('seccion-pan');
+    const seccionTienda = document.getElementById('seccion-tienda');
+    const seccionHalloween = document.getElementById('seccion-halloween');
 
-            if (categoria === 'pan') {
-                seccionPan.style.display = 'grid';
-                seccionTienda.style.display = 'none';
-            } else if (categoria === 'tienda') {
-                seccionPan.style.display = 'none';
-                seccionTienda.style.display = 'block'; // CLAVE: Cambiado de 'grid' a 'block'
-            }
-        }
+    // Primero ocultamos todas las secciones
+    if(seccionPan) seccionPan.style.display = 'none';
+    if(seccionTienda) seccionTienda.style.display = 'none';
+    if(seccionHalloween) seccionHalloween.style.display = 'none';
+
+    // Mostramos solo la categoría seleccionada
+    if (categoria === 'pan' && seccionPan) {
+        seccionPan.style.display = 'grid';
+    } else if (categoria === 'tienda' && seccionTienda) {
+        seccionTienda.style.display = 'block';
+    } else if (categoria === 'halloween' && seccionHalloween) {
+        seccionHalloween.style.display = 'block';
+    }
+}
 
         // LÓGICA DE BLOQUEO MAESTRO (HORARIO Y ADMIN)
        function validarHorarioOperativo() {
