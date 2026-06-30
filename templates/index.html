@@ -688,52 +688,38 @@
 
 
 {% if estado_halloween %}
-<div id="seccion-halloween" style="display: none;">
-    <div id="modal-halloween-collection" class="modal-halloween-premium">
-    <h2>Halloween Collection | Preventa Exclusiva</h2>
-    <p>Asegure sus piezas de Pan de Muerto para nuestra temporada especial.</p>
-    
-    <form id="form-halloween" action="{{ url_for('hacer_pedido_halloween') }}" method="POST" onsubmit="procesarPreventaHalloween(event)">
+<div id="seccion-halloween" class="grid-productos" style="display: none;">
+    {% for producto in productos_halloween %}
+    <div class="card-producto {% if not producto.disponible %}pausado{% endif %}">
         
-        <div class="selector-fecha-estricto">
-            <label for="fecha_preventa">Seleccione el día de recogida (Oct - Nov 2026):</label>
-            <select id="fecha_preventa" name="fecha_preventa" required class="input-elegante-halloween">
-                <option value="" disabled selected>Elija una fecha...</option>
-                <option value="2026-10-28">Miércoles 28 de Octubre</option>
-                <option value="2026-10-29">Jueves 29 de Octubre</option>
-                <option value="2026-10-30">Viernes 30 de Octubre</option>
-                <option value="2026-10-31">Sábado 31 de Octubre</option>
-                <option value="2026-11-01">Domingo 1 de Noviembre</option>
-                <option value="2026-11-02">Lunes 2 de Noviembre</option>
-            </select>
+        <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
+            <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/600x450/121212/C5A059?text=Halloween' }}" alt="{{ producto.nombre }}">
+            {% if not producto.disponible %}
+            <div class="overlay-pausado">AGOTADO</div>
+            {% endif %}
         </div>
-
-        <div class="grid-productos">
-            {% for producto in productos_halloween %}
-                <div class="card-producto">
-                    <div class="img-contenedor">
-                        <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/600x450/121212/C5A059?text=Halloween' }}" alt="{{ producto.nombre }}">
-                    </div>
-                    <div class="info-producto">
-                        <h3>{{ producto.nombre }}</h3>
-                        <p>{{ producto.descripcion }}</p>
-                        <div class="meta-producto">
-                            <span class="precio">${{ "%.2f"|format(producto.precio) }} MXN</span>
-                            <div class="control-cantidad">
-                                <button type="button" onclick="cambiarCantidad('halloween_{{ producto.id }}', -1)">-</button>
-                                <input type="number" class="input-cantidad" id="halloween_{{ producto.id }}" name="cantidad_{{ producto.id }}" value="0" min="0" readonly>
-                                <button type="button" onclick="cambiarCantidad('halloween_{{ producto.id }}', 1)">+</button>
-                            </div>
-                        </div>
-                    </div>
+        
+        <div class="info-producto">
+            <h3>{{ producto.nombre }}</h3>
+            <p>{{ producto.descripcion }}</p>
+            
+            <div class="meta-producto">
+                <span class="precio">${{ "%.2f"|format(producto.precio) }} MXN</span>
+                
+                <div class="control-cantidad">
+                    {% if producto.disponible %}
+                        <button type="button" onclick="cambiarCantidad('cant_{{ producto.id }}', -1)">-</button>
+                        <input type="number" class="input-cantidad" id="cant_{{ producto.id }}" name="cantidad_{{ producto.id }}" value="0" min="0" data-precio="{{ producto.precio }}" data-nombre="{{ producto.nombre }}" data-categoria="halloween" readonly>
+                        <button type="button" class="btn-suma-dinamico" onclick="cambiarCantidad('cant_{{ producto.id }}', 1)">+</button>
+                    {% else %}
+                        <span style="color: #ff4d4d; font-size: 0.70rem; letter-spacing: 1px; padding: 10px 15px; font-weight: 600; text-transform: uppercase;">NO DISPONIBLE</span>
+                    {% endif %}
                 </div>
-            {% endfor %}
+            </div>
         </div>
-        
-        <button type="submit" class="btn-dorado-premium">Confirmar Preventa</button>
-    </form>
-</div>
     </div>
+    {% endfor %}
+</div>
 {% endif %}
 
 <div class="store-tabs">
@@ -881,6 +867,19 @@
 
                 <h3 style="font-size: 1.1rem; color: var(--skin-beige); margin-bottom: 20px; margin-top: 30px; letter-spacing: 2px; text-transform: uppercase;">Logística de Recepción</h3>
                 
+
+                <div class="grupo-campo" id="grupoFechaHalloween" style="display: none;">
+    <label for="fecha_preventa" style="color: #ff8c00;">Día de Recogida (Colección Halloween)</label>
+    <select id="fecha_preventa" name="fecha_preventa" style="background: transparent; border: none; border-bottom: 1px solid #ff8c00; color: var(--skin-beige); padding: 12px 0; font-family: 'Montserrat', sans-serif; font-size: 0.85rem; width: 100%; cursor: pointer; outline: none;">
+        <option value="" disabled selected>Elija una fecha...</option>
+        <option value="28 Octubre">Miércoles 28 de Octubre</option>
+        <option value="29 Octubre">Jueves 29 de Octubre</option>
+        <option value="30 Octubre">Viernes 30 de Octubre</option>
+        <option value="31 Octubre">Sábado 31 de Octubre</option>
+        <option value="1 Noviembre">Domingo 1 de Noviembre</option>
+        <option value="2 Noviembre">Lunes 2 de Noviembre</option>
+    </select>
+</div>
                 <div class="grupo-campo">
                     <label for="horario">Horario de Recogida</label>
                     <select id="horario" name="horario" required>
@@ -1192,56 +1191,62 @@
         }
 
         function calcularTotal() {
-            var inputs = document.querySelectorAll('.input-cantidad');
-            var totalAcumulado = 0;
-            var articulosTotales = 0;
-            var listaHtml = '';
-            var contieneTienda = false;
-            var contienePan = false;
-
-            inputs.forEach(function(input) {
-                var cantidad = parseInt(input.value) || 0;
-                if (cantidad > 0) {
-                    var precio = parseFloat(input.getAttribute('data-precio')) || 0;
-                    var nombre = input.getAttribute('data-nombre') || 'Producto';
-                    var categoria = input.getAttribute('data-categoria') || 'pan';
-categoria = categoria.toLowerCase(); // Convertimos a minúsculas por seguridad
-                    
-// Si es explícitamente 'pan', activamos contienePan. Si es otra cosa, es tienda.
-if (categoria === 'pan') {
-    contienePan = true;
-} else {
-    contieneTienda = true; // Agregamos esta variable para usarla en los bloqueos más abajo
-}
-
-                    var subtotal = cantidad * precio;
-                    
-                    totalAcumulado += subtotal;
-                    articulosTotales += cantidad;
-
-                    listaHtml += `
-                        <div class="item-carrito">
-                            <span class="item-nombre">${cantidad}x ${nombre}</span>
-                            <span class="item-subtotal">$${subtotal.toFixed(2)}</span>
-                        </div>
-                    `;
-                }
-            });
-            var totalFormateado = '$' + totalAcumulado.toFixed(2) + ' MXN';
-            var totalShort = '$' + totalAcumulado.toFixed(2);
-
-            document.getElementById('montoTop').innerText = totalShort;
-            document.getElementById('badgeCantidad').innerText = articulosTotales;
-            document.getElementById('montoSidebar').innerText = totalFormateado;
-            
-            document.getElementById('listaCarrito').innerHTML = listaHtml || '<p style="color:#555; font-size:0.85rem; font-style:italic; letter-spacing:0.5px;">Su selección está vacía.</p>';
-
-            // Lógica Dominante Inyectada
-            evaluarHorariosDisponibles(contienePan, articulosTotales);
- 
-const horaActualLocal = new Date().getHours();
+    var inputs = document.querySelectorAll('.input-cantidad');
+    var totalAcumulado = 0;
+    var articulosTotales = 0;
+    var listaHtml = '';
     
-    // Verificamos qué bloqueos aplican a lo que hay en el carrito
+    // Variables de detección
+    var contieneTienda = false;
+    var contienePan = false;
+    var contieneHalloween = false; // Agregamos esta variable
+
+    inputs.forEach(function(input) {
+        var cantidad = parseInt(input.value) || 0;
+        if (cantidad > 0) {
+            var precio = parseFloat(input.getAttribute('data-precio')) || 0;
+            var nombre = input.getAttribute('data-nombre') || 'Producto';
+            var categoria = (input.getAttribute('data-categoria') || 'pan').toLowerCase();
+            
+            if (categoria === 'pan') { contienePan = true; } 
+            else if (categoria === 'halloween') { contieneHalloween = true; } 
+            else { contieneTienda = true; }
+
+            var subtotal = cantidad * precio;
+            totalAcumulado += subtotal;
+            articulosTotales += cantidad;
+
+            listaHtml += `
+                <div class="item-carrito">
+                    <span class="item-nombre">${cantidad}x ${nombre}</span>
+                    <span class="item-subtotal">$${subtotal.toFixed(2)}</span>
+                </div>
+            `;
+        }
+    });
+
+    var totalFormateado = '$' + totalAcumulado.toFixed(2) + ' MXN';
+    document.getElementById('montoTop').innerText = '$' + totalAcumulado.toFixed(2);
+    document.getElementById('badgeCantidad').innerText = articulosTotales;
+    document.getElementById('montoSidebar').innerText = totalFormateado;
+    document.getElementById('listaCarrito').innerHTML = listaHtml || '<p style="color:#555; font-size:0.85rem; font-style:italic; letter-spacing:0.5px;">Su selección está vacía.</p>';
+
+    // --- MAGIA: Mostrar/Ocultar el selector de fecha ---
+    var grupoFecha = document.getElementById('grupoFechaHalloween');
+    if (grupoFecha) {
+        if (contieneHalloween) {
+            grupoFecha.style.display = 'flex';
+            document.getElementById('fecha_preventa').required = true;
+        } else {
+            grupoFecha.style.display = 'none';
+            document.getElementById('fecha_preventa').required = false;
+        }
+    }
+
+    evaluarHorariosDisponibles((contienePan || contieneHalloween), articulosTotales);
+
+    // Ajuste de bloqueos para que ignore el pan de Halloween (porque es preventa)
+    const horaActualLocal = new Date().getHours();
     let panBloqueado = contienePan && (horaActualLocal >= 16 || horaActualLocal < 1);
     let tiendaBloqueada = contieneTienda && (horaActualLocal < 10 || horaActualLocal >= 20);
 
@@ -1258,16 +1263,11 @@ const horaActualLocal = new Date().getHours();
         document.getElementById('btnProcesar').disabled = false;
         document.getElementById('btnProcesar').innerText = 'Procesar Pedido';
     }
-            var btnTop = document.getElementById('btnCarritoTop');
-            if (articulosTotales > 0) {
-                btnTop.classList.add('visible');
-            } else {
-                btnTop.classList.remove('visible');
-                if (articulosTotales === 0 && document.getElementById('sidebarCarrito').classList.contains('abierto')) {
-                    cerrarCarrito();
-                }
-            }
-        }
+
+    var btnTop = document.getElementById('btnCarritoTop');
+    if (articulosTotales > 0) btnTop.classList.add('visible');
+    else btnTop.classList.remove('visible');
+}
 
         function cambiarCantidad(inputId, delta) {
     var input = document.getElementById(inputId);
@@ -1397,13 +1397,19 @@ const horaActualLocal = new Date().getHours();
                     `;
                 }
             });
-            var horario = document.getElementById('horario').value;
-            var metodo = document.getElementById('metodo_pago').value;
+          
+var horario = document.getElementById('horario').value;
+var metodo = document.getElementById('metodo_pago').value;
+var fechaHalloween = document.getElementById('fecha_preventa') ? document.getElementById('fecha_preventa').value : null;
 
-            detalleHtml += `
-                <div class="ticket-linea" style="margin-top: 15px; color: var(--luxury-gold);">
-                    <span>Recepción:</span>
-                    <span>${horario}</span>
+var horarioFinal = horario;
+if (fechaHalloween && document.getElementById('grupoFechaHalloween').style.display !== 'none') {
+    horarioFinal = fechaHalloween + " | " + horario;
+}
+
+
+<span>Recepción:</span>
+<span>${horarioFinal}</span>
                 </div>
                 <div class="ticket-linea" style="color: var(--luxury-gold);">
                     <span>Formato de Pago:</span>

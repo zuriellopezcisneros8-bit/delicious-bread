@@ -636,7 +636,7 @@ def index():
     todos_los_productos = Producto.query.all()
     
     productos_pan = [p for p in todos_los_productos if p.categoria.lower() == 'pan']
-    productos_tienda = [p for p in todos_los_productos if p.categoria.lower() == 'abarrotes'] # o la categoría que uses para tienda
+    productos_tienda = [p for p in todos_los_productos if p.categoria.lower() == 'pan', 'halloween'] 
     
     # Solo cargar la colección si la temporada está activa
     productos_halloween = []
@@ -1151,6 +1151,7 @@ def procesar_pedido():
     usuario = db.session.get(Usuario, session['usuario_id'])
     horario = request.form.get('horario')
     metodo_pago = request.form.get('metodo_pago')
+    fecha_preventa = request.form.get('fecha_preventa') # <--- NUEVO: Captura la fecha de Halloween
     
     # === OBTENER HORA LOCAL (UTC - 6) ===
     hora_actual_local = (datetime.utcnow() - timedelta(hours=6)).hour
@@ -1158,6 +1159,7 @@ def procesar_pedido():
     productos = Producto.query.all()
     monto_total = 0
     detalles_a_crear = []
+    tiene_halloween = False # <--- NUEVO: Bandera para saber si anexar la fecha
     
     # 3. Procesamiento y validación estricta por categoría
     for prod in productos:
@@ -1166,17 +1168,23 @@ def procesar_pedido():
             cantidad = int(cant)
 
             categoria_segura = prod.categoria.lower() if prod.categoria else 'pan'
-            es_tienda = categoria_segura != 'pan'
+            es_pan = (categoria_segura == 'pan')
+            es_halloween = (categoria_segura == 'halloween')
+            es_tienda = not (es_pan or es_halloween)
+            
+            if es_halloween:
+                tiene_halloween = True
             
             # === REGLA 1: BLOQUEO EXCLUSIVO PARA PAN DESPUÉS DE LAS 4 PM ===
-            if not es_tienda and (hora_actual_local >= 16 or hora_actual_local < 1):
+            # (La categoría Halloween es preventa, por lo que salta esta restricción)
+            if es_pan and (hora_actual_local >= 16 or hora_actual_local < 1):
                 return jsonify({
                     'success': False, 
                     'message': f'La recepción de {prod.nombre} ha cerrado por hoy. Solo artículos de tienda están disponibles.'
                 }), 400
 
-            # === REGLA 2: CONTROL DE STOCK EXCLUSIVO PARA TIENDA ===
-            if es_tienda and prod.stock_tienda is not None:
+            # === REGLA 2: CONTROL DE STOCK EXCLUSIVO PARA TIENDA Y HALLOWEEN ===
+            if (es_tienda or es_halloween) and prod.stock_tienda is not None:
                 # Validar que no pidan más de lo que hay
                 if cantidad > prod.stock_tienda:
                     return jsonify({
@@ -1198,6 +1206,10 @@ def procesar_pedido():
             
     # 4. Creación del pedido
     if detalles_a_crear:
+        # === ANEXAR FECHA SI HAY PRODUCTOS DE HALLOWEEN ===
+        if tiene_halloween and fecha_preventa:
+            horario = f"{fecha_preventa} | {horario}"
+            
         nuevo_pedido = Pedido(
             usuario_id=usuario.id,
             horario_recogida=horario,
