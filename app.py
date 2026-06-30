@@ -636,7 +636,7 @@ def index():
     todos_los_productos = Producto.query.all()
     
     productos_pan = [p for p in todos_los_productos if p.categoria.lower() == 'pan']
-    productos_tienda = [p for p in todos_los_productos if p.categoria.lower() not in 'pan', 'halloween'] 
+    productos_tienda = [p for p in todos_los_productos if p.categoria.lower() not in ['pan', 'halloween']]
     
     # Solo cargar la colección si la temporada está activa
     productos_halloween = []
