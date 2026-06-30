@@ -723,10 +723,10 @@
 {% endif %}
 
 <div class="store-tabs">
-    <button type="button" class="store-tab-btn active" onclick="filtrarCategoria('pan')">Delicious Bread</button>
-    <button type="button" class="store-tab-btn" onclick="filtrarCategoria('tienda')">Productos de Tienda</button>
+    <button type="button" class="store-tab-btn active" onclick="filtrarCategoria(event, 'pan')">Delicious Bread</button>
+    <button type="button" class="store-tab-btn" onclick="filtrarCategoria(event, 'tienda')">Productos de Tienda</button>
     {% if estado_halloween %}
-    <button type="button" class="store-tab-btn" onclick="filtrarCategoria('halloween')" style="border-color: #ff8c00; color: #ff8c00;">Halloween Collection</button>
+    <button type="button" class="store-tab-btn" onclick="filtrarCategoria(event, 'halloween')" style="border-color: #ff8c00; color: #ff8c00;">Halloween Collection</button>
     {% endif %}
 </div>
 
@@ -854,6 +854,7 @@
 
 </div>
 
+    <form id="pedidoForm">
         <div id="sidebarCarrito" class="sidebar-carrito">
             <div class="sidebar-header">
                 <h2 id="tituloPersonalizado">Cargando Atelier...</h2>
@@ -1054,8 +1055,8 @@
             }
         });
 
-        // NUEVA LÓGICA DE FILTRADO POR CATEGORÍA (PAN vs TIENDA)
-        function filtrarCategoria(categoria) {
+        /// NUEVA LÓGICA DE FILTRADO POR CATEGORÍA (PAN vs TIENDA)
+        function filtrarCategoria(event, categoria) {
     document.querySelectorAll('.store-tab-btn').forEach(btn => btn.classList.remove('active'));
     event.currentTarget.classList.add('active');
 
@@ -1407,20 +1408,21 @@ if (fechaHalloween && document.getElementById('grupoFechaHalloween').style.displ
     horarioFinal = fechaHalloween + " | " + horario;
 }
 
-
-<span>Recepción:</span>
-<span>${horarioFinal}</span>
-                </div>
-                <div class="ticket-linea" style="color: var(--luxury-gold);">
-                    <span>Formato de Pago:</span>
-                    <span>${metodo}</span>
-                </div>
-                <div class="ticket-total">
-                    <span>TOTAL DB</span>
-                    <span>$${totalAcumulado.toFixed(2)} MXN</span>
-                </div>
-            `;
-            document.getElementById('ticketDetalleItems').innerHTML = detalleHtml;
+detalleHtml += `
+    <div class="ticket-linea">
+        <span>Recepción:</span>
+        <span>${horarioFinal}</span>
+    </div>
+    <div class="ticket-linea" style="color: var(--luxury-gold);">
+        <span>Formato de Pago:</span>
+        <span>${metodo}</span>
+    </div>
+    <div class="ticket-total">
+        <span>TOTAL DB</span>
+        <span>$${totalAcumulado.toFixed(2)} MXN</span>
+    </div>
+`;
+document.getElementById('ticketDetalleItems').innerHTML = detalleHtml;
         }
 
         function cerrarTicket() {
