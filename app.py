@@ -668,17 +668,14 @@ def index():
 @app.route('/pedido_halloween', methods=['POST'])
 def hacer_pedido_halloween():
     if 'usuario_id' not in session:
-        flash('Por favor inicie sesión para acceder a la preventa.', 'error')
-        return redirect(url_for('login'))
+        return jsonify({'success': False, 'message': 'Por favor inicie sesión para acceder a la preventa.'}), 401
         
     usuario = db.session.get(Usuario, session['usuario_id'])
     fecha_preventa = request.form.get('fecha_preventa')
     
     if not fecha_preventa:
-        flash('Debe seleccionar un día de recogida para su preventa.', 'error')
-        return redirect(url_for('index'))
+        return jsonify({'success': False, 'message': 'Debe seleccionar un día de recogida para su preventa.'}), 400
 
-    # Solo filtramos los productos de Halloween de la base de datos
     productos_halloween = Producto.query.filter_by(categoria='halloween').all()
     monto_total = 0
     detalles_a_crear = []
@@ -692,11 +689,10 @@ def hacer_pedido_halloween():
             detalles_a_crear.append(detalle)
             
     if detalles_a_crear:
-        # Guardamos la fecha de preventa en el campo de horario_recogida
         nuevo_pedido = Pedido(
             usuario_id=usuario.id,
             horario_recogida=f"Preventa: {fecha_preventa}", 
-            metodo_pago="Pago al Recoger", # O el que definas por defecto para preventas
+            metodo_pago="Pago al Recoger", 
             monto_total=monto_total,
             estado='Preventa Confirmada',
             codigo_recogida=generar_codigo()
@@ -709,14 +705,15 @@ def hacer_pedido_halloween():
             db.session.add(d)
         db.session.commit()
         
-        # Sincronización en tiempo real
         socketio.emit('actualizacion_global')
         
-        flash(f'¡Preventa confirmada exitosamente! Su código es {nuevo_pedido.codigo_recogida}', 'success')
-        return redirect(url_for('index'))
+        # EL CAMBIO CLAVE: Responder con JSON
+        return jsonify({
+            'success': True,
+            'codigo': nuevo_pedido.codigo_recogida
+        })
 
-    flash('No seleccionó ningún producto de la colección.', 'error')
-    return redirect(url_for('index'))
+    return jsonify({'success': False, 'message': 'No seleccionó ningún producto de la colección.'}), 400
 
 
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify

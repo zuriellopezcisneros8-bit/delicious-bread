@@ -497,6 +497,33 @@
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(197, 168, 128, 0); }
         }
 
+
+.lightbox-content {
+    background: var(--card-black);
+    border: 1px solid var(--luxury-gold);
+    border-radius: 8px;
+    padding: 25px;
+    width: 90%;
+    max-width: 500px; /* Límite para pantallas grandes */
+    max-height: 90vh; /* Nunca será más alto que la pantalla */
+    overflow-y: auto; /* Agrega scroll si el texto es muy largo */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.lightbox-img {
+    max-width: 100%;
+    height: auto;
+    max-height: 40vh; /* La imagen no ocupará más del 40% de la pantalla */
+    object-fit: contain;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
         /* Modal del Chat ajustado para que baje desde el botón */
         .zedith-modal {
             display: none;
@@ -672,7 +699,7 @@
     <h2>Halloween Collection | Preventa Exclusiva</h2>
     <p>Asegure sus piezas de Pan de Muerto para nuestra temporada especial.</p>
     
-    <form action="{{ url_for('hacer_pedido_halloween') }}" method="POST">
+    <form id="form-halloween" action="{{ url_for('hacer_pedido_halloween') }}" method="POST" onsubmit="procesarPreventaHalloween(event)">
         
         <div class="selector-fecha-estricto">
             <label for="fecha_preventa">Seleccione el día de recogida (Oct - Nov 2026):</label>
@@ -713,6 +740,11 @@
     </form>
 </div>
 {% endif %}
+
+<div class="store-tabs">
+    <button type="button" class="store-tab-btn active" onclick="filtrarCategoria('pan')">Delicious Bread</button>
+    <button type="button" class="store-tab-btn" onclick="filtrarCategoria('tienda')">Productos de Tienda</button>
+</div>
 
 <div id="seccion-pan" class="grid-productos" style="display: grid;">
     {% for producto in productos_pan %}
@@ -1477,6 +1509,69 @@ const horaActualLocal = new Date().getHours();
             btn.style.opacity = "1";
             btn.disabled = false;
         }
+
+
+// ================= FLUJO CORPORATIVO 3D: HALLOWEEN =================
+async function procesarPreventaHalloween(event) {
+    event.preventDefault(); // Evita que la página parpadee o recargue
+
+    const form = document.getElementById('form-halloween');
+    const formData = new FormData(form);
+
+    // 1. Validar que no envíen el formulario vacío
+    let totalCantidad = 0;
+    for (let [key, value] of formData.entries()) {
+        if (key.startsWith('cantidad_')) {
+            totalCantidad += parseInt(value) || 0;
+        }
+    }
+
+    if (totalCantidad === 0) {
+        alert("Por favor, seleccione al menos un producto de la colección.");
+        return;
+    }
+
+    const btn = form.querySelector('.btn-dorado-premium');
+    const textoOriginal = btn.innerText;
+    btn.innerText = "Procesando...";
+    btn.disabled = true;
+
+    // 2. Activar tu animación 3D de The Zmarth Organization
+    document.getElementById('modal-3d').style.display = 'flex';
+
+    try {
+        // 3. Enviar datos silenciosamente al backend
+        const fetchPromise = fetch('/pedido_halloween', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' }, // Exigimos JSON
+            body: formData
+        }).then(res => res.json());
+
+        // Forzar 3.5 segundos de animación visual
+        const animPromise = new Promise(resolve => setTimeout(resolve, 3500));
+        
+        // Esperar a que ambas terminen
+        const [data] = await Promise.all([fetchPromise, animPromise]);
+
+        // 4. Apagar 3D
+        document.getElementById('modal-3d').style.display = 'none';
+
+        // 5. Entregar Ticket o Mostrar Error
+        if (data.success) {
+            mostrarModalCodigo(data.codigo); // Usa tu misma función de éxito
+            form.reset(); // Limpia los inputs para la próxima vez
+        } else {
+            alert(data.message || "Hubo un error en la bóveda de datos.");
+        }
+    } catch (error) {
+        console.error("Error ZmarthNet:", error);
+        document.getElementById('modal-3d').style.display = 'none';
+        alert("Fallo de red. Verifique su conexión con el Atelier.");
+    } finally {
+        btn.innerText = textoOriginal;
+        btn.disabled = false;
+    }
+}
 
         async function procesarCompraRelampago() {
             const btn = document.querySelector('#modalPagoRelampago .btn-enviar-ticket');
