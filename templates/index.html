@@ -679,6 +679,14 @@
         </div>
         {% endif %}
 
+
+{% if not tienda_abierta %}
+        <div class="alerta-horario">
+            <span style="font-weight: 600;">BOUTIQUE INHABILITADA EL DÍA DE HOY</span><br>
+            <span style="font-size: 0.8rem; color: #a38c6d; font-style: normal;">{{ motivo_cierre }}</span>
+        </div>
+        {% endif %}
+
         <div class="store-tabs">
             <button type="button" class="store-tab-btn active" onclick="filtrarCategoria(event, 'pan')">Delicious Bread</button>
             <button type="button" class="store-tab-btn" onclick="filtrarCategoria(event, 'tienda')">Productos de Tienda</button>
@@ -1266,12 +1274,6 @@
 }
 
 
-{% if not tienda_abierta %}
-        <div class="alerta-horario">
-            <span style="font-weight: 600;">BOUTIQUE INHABILITADA EL DÍA DE HOY</span><br>
-            <span style="font-size: 0.8rem; color: #a38c6d; font-style: normal;">{{ motivo_cierre }}</span>
-        </div>
-        {% endif %}
 
         function cambiarCantidad(inputId, delta) {
     var input = document.getElementById(inputId);
