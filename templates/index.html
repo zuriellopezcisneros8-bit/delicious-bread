@@ -722,20 +722,7 @@
         </div>
         {% endif %}
 
-<div class="store-tabs">
-    <button type="button" class="store-tab-btn active" onclick="filtrarCategoria(event, 'pan')">Delicious Bread</button>
-    <button type="button" class="store-tab-btn" onclick="filtrarCategoria(event, 'tienda')">Productos de Tienda</button>
-    {% if estado_halloween %}
-    <button type="button" class="store-tab-btn" onclick="filtrarCategoria(event, 'halloween')" style="border-color: #ff8c00; color: #ff8c00;">Halloween Collection</button>
-    {% endif %}
-</div>
 
-{% if estado_halloween %}
-<div id="seccion-halloween" class="grid-productos" style="display: none;">
-    {% for producto in productos_halloween %}
-        {% endfor %}
-</div>
-{% endif %}
 
 
 <div id="seccion-pan" class="grid-productos" style="display: grid;">
