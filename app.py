@@ -93,6 +93,17 @@ class Usuario(db.Model):
     contrasena = db.Column(db.String(255), nullable=False)
     pedidos = db.relationship('Pedido', backref='cliente', lazy=True)
 
+class SuscripcionPush(db.Model):
+    __tablename__ = 'suscripcion_push'
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    endpoint = db.Column(db.String(500), unique=True, nullable=False)
+    p256dh = db.Column(db.String(100), nullable=False)
+    auth = db.Column(db.String(100), nullable=False)
+    
+    # Relación inversa opcional si no la definiste en Usuario
+    usuario = db.relationship('Usuario', backref=db.backref('suscripciones_push', lazy=True))
+
 class Producto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
@@ -1305,6 +1316,60 @@ def marcar_pagar_pedido(pedido_id):
 
     return redirect(url_for('admin'))
 
+
+@app.route('/admin/api/anuncio-global', methods=['POST'])
+def enviar_anuncio_global():
+    if not session.get('admin_logged_in'): return jsonify({"error": "No autorizado"}), 403
+    
+    data = request.json
+    titulo = data.get('titulo')
+    mensaje = data.get('mensaje')
+    
+    # Esto envía la notificación a TODOS los suscritos
+    enviar_notificacion_push(None, titulo, mensaje)
+    
+    return jsonify({"success": True})
+
+@app.route('/api/vapid-public-key', methods=['GET'])
+def vapid_public_key():
+    # Devuelve la llave pública almacenada en tus variables de entorno
+    return jsonify({
+        'publicKey': os.environ.get('VAPID_PUBLIC_KEY')
+    })
+
+@app.route('/api/guardar-suscripcion', methods=['POST'])
+def guardar_suscripcion():
+    if 'usuario_id' not in session:
+        return jsonify({'error': 'No autorizado'}), 401
+        
+    datos_suscripcion = request.get_json()
+    usuario = db.session.get(Usuario, session['usuario_id'])
+    
+    if not usuario or not datos_suscripcion:
+        return jsonify({'error': 'Datos inválidos'}), 400
+
+    # Extraemos los datos del objeto que enviará el navegador
+    endpoint = datos_suscripcion.get('endpoint')
+    keys = datos_suscripcion.get('keys', {})
+    p256dh = keys.get('p256dh')
+    auth = keys.get('auth')
+
+    # Verificamos si este dispositivo ya está registrado
+    suscripcion_existente = SuscripcionPush.query.filter_by(endpoint=endpoint).first()
+    
+    if not suscripcion_existente:
+        nueva_suscripcion = SuscripcionPush(
+            usuario_id=usuario.id,
+            endpoint=endpoint,
+            p256dh=p256dh,
+            auth=auth
+        )
+        db.session.add(nueva_suscripcion)
+        db.session.commit()
+        return jsonify({'success': True, 'mensaje': 'Dispositivo enlazado para notificaciones.'})
+        
+    return jsonify({'success': True, 'mensaje': 'Dispositivo ya registrado.'})
+
 # ================= CIBERSEGURIDAD BÓVEDA DE USUARIOS =================
 @app.route('/admin/api/usuarios', methods=['POST'])
 def obtener_usuarios_seguros():
@@ -1320,6 +1385,30 @@ def obtener_usuarios_seguros():
     usuarios = Usuario.query.all()
     lista_usuarios = [{"id": u.id, "nombre": u.nombre, "correo": u.correo, "telefono": u.telefono, "hash": u.contrasena[:15]+"..."} for u in usuarios]
     return jsonify({"usuarios": lista_usuarios})
+
+
+def enviar_notificacion_push(usuario_id, titulo, mensaje):
+    # Si usuario_id es None, se envía a TODOS (Broadcast)
+    if usuario_id:
+        subs = SuscripcionPush.query.filter_by(usuario_id=usuario_id).all()
+    else:
+        subs = SuscripcionPush.query.all()
+
+    payload = json.dumps({"title": titulo, "body": mensaje})
+    
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": sub.endpoint,
+                    "keys": {"p256dh": sub.p256dh, "auth": sub.auth}
+                },
+                data=payload,
+                vapid_private_key=VAPID_PRIVATE_KEY,
+                vapid_claims={"sub": "mailto:tu_email@ejemplo.com"}
+            )
+        except Exception as e:
+            print(f"Error enviando push a {sub.endpoint}: {e}")
 
 # ================= DIAGNÓSTICO E INICIALIZACIÓN DE CONTEXTO =================
 with app.app_context():

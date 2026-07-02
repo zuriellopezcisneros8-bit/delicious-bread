@@ -1618,6 +1618,51 @@ async function procesarPreventaHalloween(event) {
     }
 }
 
+
+
+
+async function suscribirPush() {
+    // 1. Registrar el Service Worker
+    const register = await navigator.serviceWorker.register('/static/sw.js');
+    
+    // 2. Obtener la llave pública del servidor
+    const response = await fetch('/api/vapid-public-key');
+    const { publicKey } = await response.json();
+    
+    // 3. Suscribirse al Push Manager
+    const subscription = await register.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+    });
+    
+    // 4. Enviar suscripción al backend
+    await fetch('/api/guardar-suscripcion', {
+        method: 'POST',
+        body: JSON.stringify(subscription),
+        headers: { 'Content-Type': 'application/json' }
+    });
+    console.log("¡Suscrito a notificaciones!");
+}
+
+// Utilidad para convertir la llave VAPID a formato binario
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+// Ejecutar cuando el usuario inicie sesión
+if ('serviceWorker' in navigator && 'PushManager' in window) {
+    // Puedes llamar a suscribirPush() al loguearse o al hacer un pedido
+    // Ejemplo: suscribirPush().catch(console.error);
+}
+
+
         async function procesarCompraRelampago() {
             const btn = document.querySelector('#modalPagoRelampago .btn-enviar-ticket');
             btn.innerText = "Procesando...";

@@ -9,3 +9,4 @@ google-generativeai
 Flask-SocketIO
 python-socketio
 eventlet
+pywebpush==x.x.x
