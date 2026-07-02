@@ -1125,45 +1125,61 @@ def procesar_sobrante():
         producto_id = data.get('producto_id')
         cantidad_solicitada = int(data.get('cantidad', 1))
         horario = data.get('horario', 'Inmediato')
-        metodo_pago = data.get('metodo_pago', 'Efectivo') # Máximo de seguridad de 20 caracteres
+        metodo_pago = data.get('metodo_pago', 'Efectivo') 
     else:
         producto_id = request.form.get('producto_id')
         cantidad_solicitada = int(request.form.get('canvas_cantidad', 1))
         horario = request.form.get('horario', 'Inmediato')
         metodo_pago = request.form.get('metodo_pago', 'Efectivo')
     
-    producto = db.session.get(Producto, producto_id)
-    
-    if not producto or producto.stock_sobrante < cantidad_solicitada:
-        return jsonify({'success': False, 'error': 'Lo sentimos, las piezas solicitadas ya han sido adquiridas por otro cliente.'})
-    
-    producto.stock_sobrante -= cantidad_solicitada
-    monto_total = producto.precio * cantidad_solicitada
-    
-    nuevo_pedido = Pedido(
-        usuario_id=usuario.id,
-        horario_recogida=horario,
-        metodo_pago=metodo_pago,
-        monto_total=monto_total,
-        codigo_recogida=generar_codigo(),
-        estado='Venta Flash Excedente',
-        es_relampago=True
-    )
-    db.session.add(nuevo_pedido)
-    db.session.commit()
-    
-    detalle = DetallePedido(pedido_id=nuevo_pedido.id, producto_id=producto.id, cantidad=cantidad_solicitada)
-    db.session.add(detalle)
-    db.session.commit()
-    
-    # Sincronización global inmediata del stock remanente mediante WebSockets
-    socketio.emit('actualizacion_global')
-    
-    return jsonify({
-        'success': True,
-        'codigo': nuevo_pedido.codigo_recogida,
-        'mensaje': 'Adquisición Relámpago completada de forma exitosa. Puede pasar a la boutique a retirar su orden.'
-    })
+    try:
+        producto = db.session.get(Producto, producto_id)
+        
+        if not producto or producto.stock_sobrante < cantidad_solicitada:
+            return jsonify({'success': False, 'error': 'Lo sentimos, las piezas solicitadas ya han sido adquiridas por otro cliente.'})
+        
+        producto.stock_sobrante -= cantidad_solicitada
+        monto_total = producto.precio * cantidad_solicitada
+        
+        nuevo_pedido = Pedido(
+            usuario_id=usuario.id,
+            horario_recogida=horario,
+            metodo_pago=metodo_pago,
+            monto_total=monto_total,
+            codigo_recogida=generar_codigo(),
+            estado='Venta Flash Excedente',
+            es_relampago=True
+        )
+        db.session.add(nuevo_pedido)
+        db.session.flush() # Mantiene la transacción abierta, pero asigna el ID para el detalle
+        
+        detalle = DetallePedido(pedido_id=nuevo_pedido.id, producto_id=producto.id, cantidad=cantidad_solicitada)
+        db.session.add(detalle)
+        db.session.commit()
+        
+        # Sincronización global inmediata
+        socketio.emit('actualizacion_global')
+        
+        # --- INTEGRACIÓN DE NOTIFICACIÓN PUSH AISLADA ---
+        try:
+            titulo = "¡Venta Relámpago Asegurada! ⚡"
+            mensaje = f"Tu pedido ha sido confirmado. Presenta el código {nuevo_pedido.codigo_recogida} en la boutique."
+            enviar_notificacion_push(usuario.id, titulo, mensaje)
+        except Exception as e:
+            # Registramos el error en logs pero dejamos que el cliente reciba un status 200 OK
+            print(f"[Notificaciones] Error enviando push (Relámpago) a user {usuario.id}: {str(e)}")
+        # ------------------------------------------------
+        
+        return jsonify({
+            'success': True,
+            'codigo': nuevo_pedido.codigo_recogida,
+            'mensaje': 'Adquisición Relámpago completada de forma exitosa. Puede pasar a la boutique a retirar su orden.'
+        })
+        
+    except Exception as e:
+        db.session.rollback() # Previene que la base de datos se quede bloqueada si algo falla arriba
+        print(f"Error procesando sobrante: {str(e)}")
+        return jsonify({'success': False, 'error': 'Hubo un error interno procesando su compra. Intente nuevamente.'}), 500
 
 
 @app.route('/procesar_pedido', methods=['POST'])
@@ -1177,7 +1193,7 @@ def procesar_pedido():
     # 2. Atrapar datos
     horario = request.form.get('horario')
     metodo_pago = request.form.get('metodo_pago')
-    fecha_preventa = request.form.get('fecha_preventa') # Por si llevan colecciones de temporada
+    fecha_preventa = request.form.get('fecha_preventa') 
     
     if not horario or not metodo_pago:
         return jsonify({'success': False, 'error': 'Seleccione su horario y método de pago.'}), 400
@@ -1190,7 +1206,7 @@ def procesar_pedido():
     monto_total = 0
     detalles_a_crear = []
     
-    # 3. Leer carrito (Ahora sí llegarán los datos desde JS)
+    # 3. Leer carrito 
     for prod in productos:
         cant = request.form.get(f'cantidad_{prod.id}')
         if cant and int(cant) > 0:
@@ -1222,6 +1238,16 @@ def procesar_pedido():
             
         db.session.commit()
         socketio.emit('actualizacion_global')
+        
+        # --- INTEGRACIÓN DE NOTIFICACIÓN PUSH AISLADA ---
+        try:
+            titulo = "¡Pedido Confirmado! 🛍️"
+            mensaje = f"Hemos recibido tu orden correctamente. Tu código de recogida es: {nuevo_pedido.codigo_recogida}."
+            enviar_notificacion_push(usuario.id, titulo, mensaje)
+        except Exception as e:
+            # Protegemos el flujo de compra principal
+            print(f"[Notificaciones] Error enviando push (Pedido) a user {usuario.id}: {str(e)}")
+        # ------------------------------------------------
         
         return jsonify({
             'success': True,
