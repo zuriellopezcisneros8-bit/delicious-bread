@@ -628,7 +628,7 @@ def index():
         session.pop('usuario_id', None)
         return redirect(url_for('login'))
         
-    # Consultar el estado de la temporada (el switch que ya tienes en el admin)
+    # Consultar el estado de la temporada (el switch del admin)
     conf_halloween = ConfiguracionTienda.query.filter_by(clave='temporada_halloween').first()
     estado_halloween = conf_halloween.valor_booleano if conf_halloween else False
 
@@ -654,15 +654,14 @@ def index():
     return render_template('index.html', 
                            productos_pan=productos_pan, 
                            productos_tienda=productos_tienda,
-                           productos_halloween=productos_halloween, # <--- Nueva lista de preventa
-                           estado_halloween=estado_halloween,       # <--- Señal de activación
+                           productos_halloween=productos_halloween, 
+                           estado_halloween=estado_halloween,       
                            productos_sobrantes=productos_sobrantes,
                            anuncios=anuncios,
                            usuario=usuario, 
                            nombre_usuario=usuario.nombre,
                            tienda_abierta=tienda_abierta,
                            motivo_cierre=motivo_cierre)
-
 
 
 @app.route('/pedido_halloween', methods=['POST'])
@@ -1139,102 +1138,81 @@ def procesar_sobrante():
 
 @app.route('/procesar_pedido', methods=['POST'])
 def procesar_pedido():
-    # 1. Validación de sesión
-    if 'usuario_id' not in session:
-        return jsonify({'success': False, 'message': 'No autorizado'}), 401
-        
-    # 2. Validación de día inhábil
-    hoy = datetime.utcnow().date()
-    if DiaInhabil.query.filter_by(fecha=hoy).first():
-        return jsonify({'success': False, 'message': 'La boutique está cerrada hoy.'}), 403
-        
-    usuario = db.session.get(Usuario, session['usuario_id'])
-    horario = request.form.get('horario')
-    metodo_pago = request.form.get('metodo_pago')
-    fecha_preventa = request.form.get('fecha_preventa') # <--- NUEVO: Captura la fecha de Halloween
-    
-    # === OBTENER HORA LOCAL (UTC - 6) ===
-    hora_actual_local = (datetime.utcnow() - timedelta(hours=6)).hour
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "No se recibieron datos válidos."}), 400
 
-    productos = Producto.query.all()
-    monto_total = 0
-    detalles_a_crear = []
-    tiene_halloween = False # <--- NUEVO: Bandera para saber si anexar la fecha
-    
-    # 3. Procesamiento y validación estricta por categoría
-    for prod in productos:
-        cant = request.form.get(f'cantidad_{prod.id}', 0)
-        if cant and int(cant) > 0:
-            cantidad = int(cant)
+    nombre = data.get('nombre')
+    telefono = data.get('telefono')
+    direccion = data.get('direccion', 'Recoge en tienda')
+    items_carrito = data.get('carrito', [])
 
-            categoria_segura = prod.categoria.lower() if prod.categoria else 'pan'
-            es_pan = (categoria_segura == 'pan')
-            es_halloween = (categoria_segura == 'halloween')
-            es_tienda = not (es_pan or es_halloween)
-            
-            if es_halloween:
-                tiene_halloween = True
-            
-            # === REGLA 1: BLOQUEO EXCLUSIVO PARA PAN DESPUÉS DE LAS 4 PM ===
-            # (La categoría Halloween es preventa, por lo que salta esta restricción)
-            if es_pan and (hora_actual_local >= 16 or hora_actual_local < 1):
-                return jsonify({
-                    'success': False, 
-                    'message': f'La recepción de {prod.nombre} ha cerrado por hoy. Solo artículos de tienda están disponibles.'
-                }), 400
+    if not nombre or not telefono:
+        return jsonify({"success": False, "error": "Nombre y teléfono son obligatorios."}), 400
 
-            # === REGLA 2: CONTROL DE STOCK EXCLUSIVO PARA TIENDA Y HALLOWEEN ===
-            if (es_tienda or es_halloween) and prod.stock_tienda is not None:
-                # Validar que no pidan más de lo que hay
-                if cantidad > prod.stock_tienda:
-                    return jsonify({
-                        'success': False, 
-                        'message': f'Inventario insuficiente para {prod.nombre}. Solo quedan {prod.stock_tienda} unidades en Atelier.'
-                    }), 400
-                
-                # Restar el stock provisionalmente
-                prod.stock_tienda -= cantidad
-                
-                # Si el stock llega a 0, inhabilitar automáticamente
-                if prod.stock_tienda <= 0:
-                    prod.stock_tienda = 0
-                    prod.disponible = False
+    if not items_carrito:
+        return jsonify({"success": False, "error": "El carrito está vacío."}), 400
 
-            monto_total += prod.precio * float(cantidad)
-            detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)
-            detalles_a_crear.append(detalle)
-            
-    # 4. Creación del pedido
-    if detalles_a_crear:
-        # === ANEXAR FECHA SI HAY PRODUCTOS DE HALLOWEEN ===
-        if tiene_halloween and fecha_preventa:
-            horario = f"{fecha_preventa} | {horario}"
-            
-        nuevo_pedido = Pedido(
-            usuario_id=usuario.id,
-            horario_recogida=horario,
-            metodo_pago=metodo_pago,
-            monto_total=monto_total,
-            codigo_recogida=generar_codigo()
-        )
-        db.session.add(nuevo_pedido)
-        db.session.commit()
-        
-        # 5. Asignación de detalles
-        for d in detalles_a_crear:
-            d.pedido_id = nuevo_pedido.id
-            db.session.add(d)
-        db.session.commit()
-        
-        # ---> SINCRONIZACIÓN EN TIEMPO REAL ZMARTHNET <---
-        socketio.emit('actualizacion_global')
-        
-        return jsonify({
-            'success': True,
-            'codigo': nuevo_pedido.codigo_recogida
+    # 1. Generar el código único del pedido de manera segura
+    caracteres = string.ascii_uppercase + string.digits
+    codigo_pedido = ''.join(random.choices(caracteres, k=6))
+
+    total_pedido = 0
+    detalles_pedido_db = []
+
+    # 2. Procesar y validar cada artículo del carrito de compras
+    for item in items_carrito:
+        producto_id = item.get('id')
+        cantidad = int(item.get('cantidad', 1))
+
+        # Buscar el producto de forma segura usando la sesión de SQLAlchemy
+        producto = db.session.get(Producto, producto_id)
+        if not producto:
+            return jsonify({"success": False, "error": f"El producto con ID {producto_id} ya no está disponible."}), 404
+
+        subtotal = producto.precio * cantidad
+        total_pedido += subtotal
+
+        # Guardar temporalmente los datos para la tabla de relaciones de detalles si cuentas con ella
+        detalles_pedido_db.append({
+            "producto_id": producto.id,
+            "cantidad": cantidad,
+            "precio_unitario": producto.precio
         })
 
-    return jsonify({'success': False, 'message': 'Pedido vacío'}), 400
+    try:
+        # 3. Crear la instancia principal del Pedido resguardando restricciones de nulidad
+        nuevo_pedido = Pedido(
+            codigo=codigo_pedido,
+            cliente=nombre,
+            telefono=telefono,
+            direccion=direccion,
+            total=total_pedido,
+            pagado=False,
+            fecha=datetime.now() - timedelta(hours=6)
+        )
+        
+        db.session.add(nuevo_pedido)
+        db.session.flush() # Obtiene el ID asignado por PostgreSQL sin cerrar la transacción
+
+        # Aquí puedes agregar el bucle para guardar en tu modelo DetallePedido si lo manejas,
+        # asociándolo con el `nuevo_pedido.id` recién generado.
+
+        db.session.commit() # Confirmar de forma definitiva todos los cambios
+
+        # Sincronización en tiempo real mediante WebSockets
+        socketio.emit('actualizacion_global')
+
+        return jsonify({
+            "success": True,
+            "codigo": codigo_pedido,
+            "total": float(total_pedido)
+        })
+
+    except Exception as e:
+        db.session.rollback() # Revierte cambios en caso de fallos de integridad
+        print(f"Error crítico guardando el pedido: {str(e)}")
+        return jsonify({"success": False, "error": "No se pudo registrar el pedido en la base de datos."}), 500
 
 
 @app.route('/pedido_especial', methods=['GET', 'POST'])
