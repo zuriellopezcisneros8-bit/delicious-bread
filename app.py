@@ -120,7 +120,7 @@ class Producto(db.Model):
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
-    horario_recogida = db.Column(db.String(20), nullable=False)
+    horario_recogida = db.Column(db.String(100), nullable=False)
     metodo_pago = db.Column(db.String(20), nullable=False)
     monto_total = db.Column(db.Float, nullable=False)
     estado = db.Column(db.String(30), default='Pendiente')
@@ -130,6 +130,7 @@ class Pedido(db.Model):
     comprobante_url = db.Column(db.String(500), nullable=True)
     es_relampago = db.Column(db.Boolean, default=False)
     pagado = db.Column(db.Boolean, default=False)
+
 # === DENTRO DE CLASS PEDIDO ===
     @property
     def tipo_pedido(self):
@@ -688,7 +689,9 @@ def hacer_pedido_halloween():
     if not fecha_preventa:
         return jsonify({'success': False, 'message': 'Debe seleccionar un día de recogida para su preventa.'}), 400
 
-    productos_halloween = Producto.query.filter_by(categoria='halloween').all()
+    
+    todos_los_productos = Producto.query.all()
+    productos_halloween = [p for p in todos_los_productos if p.categoria and p.categoria.lower() == 'halloween']
     monto_total = 0
     detalles_a_crear = []
     
