@@ -1404,9 +1404,6 @@ def obtener_usuarios_seguros():
     return jsonify({"usuarios": lista_usuarios})
 
 
-import os
-import json
-# Asegúrate de tener importado webpush y el modelo SuscripcionPush
 
 def enviar_notificacion_push(usuario_id, titulo, mensaje):
     # 1. Jalamos la llave privada directamente desde las variables de Render
@@ -1430,7 +1427,7 @@ def enviar_notificacion_push(usuario_id, titulo, mensaje):
                 data=payload,
                 # 2. Aquí se la pasamos a la función webpush
                 vapid_private_key=VAPID_PRIVATE_KEY, 
-                vapid_claims={"sub": "deliciousbread8@gmail.com"} # <-- Pon tu correo aquí
+                vapid_claims={"sub": "mailto:deliciousbread8@gmail.com"} 
             )
         except Exception as e:
             print(f"Error enviando push a {sub.endpoint}: {e}")
