@@ -1018,10 +1018,16 @@ def editar_producto(producto_id):
     if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
     producto = Producto.query.get_or_404(producto_id)
     
+    # Guardamos el stock anterior para compararlo
+    stock_sobrante_anterior = producto.stock_sobrante
+    
     producto.nombre = request.form.get('nombre')
     producto.descripcion = request.form.get('descripcion')
     producto.precio = float(request.form.get('precio'))
-    producto.stock_sobrante = int(request.form.get('stock_sobrante', 0))
+    
+    # Leemos el nuevo stock sobrante
+    nuevo_stock_sobrante = int(request.form.get('stock_sobrante', 0))
+    producto.stock_sobrante = nuevo_stock_sobrante
     
     # === ACTUALIZACIÓN DE STOCK DE TIENDA ===
     stock_tienda_form = request.form.get('stock_tienda')
@@ -1038,6 +1044,17 @@ def editar_producto(producto_id):
             producto.imagen_url = nueva_imagen_url
         
     db.session.commit()
+
+    # --- LÓGICA DE NOTIFICACIÓN PUSH RELÁMPAGO ---
+    # Si antes no había stock (o era 0) y ahora el admin puso un número mayor a 0:
+    if stock_sobrante_anterior <= 0 and nuevo_stock_sobrante > 0:
+        titulo = "⚡ Adquisición Relámpago Activada"
+        mensaje = f"¡Tenemos {nuevo_stock_sobrante} unidades de {producto.nombre} listas para retiro inmediato! Entra a la app antes de que se agoten."
+        
+        # Le pasamos "None" como usuario_id para que haga un broadcast a TODOS
+        enviar_notificacion_push(None, titulo, mensaje)
+    # ----------------------------------------------
+
     socketio.emit('actualizacion_global')
     return redirect(url_for('admin'))
 

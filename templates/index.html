@@ -706,6 +706,37 @@
                     <div class="overlay-pausado">AGOTADO</div>
                     {% endif %}
                 </div>
+
+
+{% if productos_sobrantes %}
+        <div class="seccion-flash" id="seccionSobrantes">
+            <h2 style="color: var(--luxury-gold); font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase;">Adquisición Relámpago</h2>
+            <p style="color: #a0a0a0; font-size: 0.8rem; letter-spacing: 1px; font-weight: 300; margin-top: 5px;">Inventario excedente de calidad premium. Retiro inmediato.</p>
+            
+            <div class="grid-flash">
+                {% for prod in productos_sobrantes %}
+                <div class="card-flash">
+                    <img src="{{ prod.imagen_url if prod.imagen_url else 'https://via.placeholder.com/300' }}" alt="{{ prod.nombre }}">
+                    <h4>{{ prod.nombre }}</h4>
+                    <p style="color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 10px;">${{ "%.2f"|format(prod.precio) }}</p>
+                    
+                    <div style="background: #111; border: 1px solid #333; padding: 10px; border-radius: 4px; margin-bottom: 15px;">
+                        <span style="display: block; font-size: 0.7rem; color: #777; text-transform: uppercase; letter-spacing: 1px;">Disponibles:</span>
+                        <span style="font-size: 1.3rem; color: var(--skin-beige); font-weight: 600;">{{ prod.stock_sobrante }} unidades</span>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <button type="button" onclick="document.getElementById('flash_cant_{{ prod.id }}').stepDown()" style="background: #222; border: none; color: var(--skin-beige); width: 35px; cursor: pointer;">-</button>
+                        <input type="number" id="flash_cant_{{ prod.id }}" value="1" min="1" max="{{ prod.stock_sobrante }}" style="width: 100%; text-align: center; background: #0A0A0A; border: 1px solid #333; color: var(--skin-beige); font-family: 'Montserrat', sans-serif;">
+                        <button type="button" onclick="document.getElementById('flash_cant_{{ prod.id }}').stepUp()" style="background: #222; border: none; color: var(--skin-beige); width: 35px; cursor: pointer;">+</button>
+                    </div>
+
+                    <button class="btn-flash" onclick="abrirModalPagoRelampago({{ prod.id }})">Adquirir Ahora</button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
                 
                 <div class="info-producto">
                     <h3>{{ producto.nombre }}</h3>
