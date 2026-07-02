@@ -1297,20 +1297,36 @@ def actualizar_estado(pedido_id):
     pedido.estado = nuevo_estado
     db.session.commit()
 
-    # --- NUEVA LÓGICA DE NOTIFICACIÓN PUSH ---
-    # Solo notificamos si el pedido pasa a 'Listo'
-    if nuevo_estado == 'Listo':
+    # --- LÓGICA MULTI-ESTADO DE NOTIFICACIÓN PUSH ---
+    if nuevo_estado == 'Horneando':
+        enviar_notificacion_push(
+            pedido.usuario_id, 
+            "En el horno... 🥐", 
+            f"¡Huele delicioso! Tu pedido {pedido.codigo_recogida} ya se está horneando."
+        )
+    elif nuevo_estado == 'Listo':
         enviar_notificacion_push(
             pedido.usuario_id, 
             "¡Tu pedido está listo! 🥖", 
             f"Hola, tu pedido {pedido.codigo_recogida} ya está preparado y te espera en Delicious Bread."
+        )
+    elif nuevo_estado == 'Entregado':
+        enviar_notificacion_push(
+            pedido.usuario_id, 
+            "¡Pedido Entregado! 🎉", 
+            f"Tu pedido {pedido.codigo_recogida} ha sido entregado. ¡Gracias por tu preferencia!"
+        )
+    elif nuevo_estado == 'Cancelado':
+        enviar_notificacion_push(
+            pedido.usuario_id, 
+            "Pedido Cancelado ❌", 
+            f"Tu pedido {pedido.codigo_recogida} ha sido cancelado. Si tienes dudas, estamos a tus órdenes."
         )
     # ----------------------------------------
 
     # Sincronización en tiempo real
     socketio.emit('actualizacion_global')
     return redirect(url_for('admin'))
-
 
 @app.route('/admin/pedido/<int:pedido_id>/pagar', methods=['POST'])
 def marcar_pagar_pedido(pedido_id):
