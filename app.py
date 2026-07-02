@@ -1138,81 +1138,67 @@ def procesar_sobrante():
 
 @app.route('/procesar_pedido', methods=['POST'])
 def procesar_pedido():
-    data = request.get_json()
-    if not data:
-        return jsonify({"success": False, "error": "No se recibieron datos válidos."}), 400
-
-    nombre = data.get('nombre')
-    telefono = data.get('telefono')
-    direccion = data.get('direccion', 'Recoge en tienda')
-    items_carrito = data.get('carrito', [])
-
-    if not nombre or not telefono:
-        return jsonify({"success": False, "error": "Nombre y teléfono son obligatorios."}), 400
-
-    if not items_carrito:
-        return jsonify({"success": False, "error": "El carrito está vacío."}), 400
-
-    # 1. Generar el código único del pedido de manera segura
-    caracteres = string.ascii_uppercase + string.digits
-    codigo_pedido = ''.join(random.choices(caracteres, k=6))
-
-    total_pedido = 0
-    detalles_pedido_db = []
-
-    # 2. Procesar y validar cada artículo del carrito de compras
-    for item in items_carrito:
-        producto_id = item.get('id')
-        cantidad = int(item.get('cantidad', 1))
-
-        # Buscar el producto de forma segura usando la sesión de SQLAlchemy
-        producto = db.session.get(Producto, producto_id)
-        if not producto:
-            return jsonify({"success": False, "error": f"El producto con ID {producto_id} ya no está disponible."}), 404
-
-        subtotal = producto.precio * cantidad
-        total_pedido += subtotal
-
-        # Guardar temporalmente los datos para la tabla de relaciones de detalles si cuentas con ella
-        detalles_pedido_db.append({
-            "producto_id": producto.id,
-            "cantidad": cantidad,
-            "precio_unitario": producto.precio
-        })
-
-    try:
-        # 3. Crear la instancia principal del Pedido resguardando restricciones de nulidad
-        nuevo_pedido = Pedido(
-            codigo=codigo_pedido,
-            cliente=nombre,
-            telefono=telefono,
-            direccion=direccion,
-            total=total_pedido,
-            pagado=False,
-            fecha=datetime.now() - timedelta(hours=6)
-        )
+    # 1. Validar sesión
+    if 'usuario_id' not in session:
+        return jsonify({'success': False, 'error': 'Inicie sesión para continuar.'}), 401
         
+    usuario = db.session.get(Usuario, session['usuario_id'])
+    
+    # 2. Atrapar datos del FormData
+    horario = request.form.get('horario')
+    metodo_pago = request.form.get('metodo_pago')
+    
+    if not horario or not metodo_pago:
+        return jsonify({'success': False, 'error': 'Seleccione su horario y método de pago.'}), 400
+        
+    productos = Producto.query.all()
+    monto_total = 0
+    detalles_a_crear = []
+    
+    # 3. Leer carrito desde los inputs del formulario
+    for prod in productos:
+        cant = request.form.get(f'cantidad_{prod.id}')
+        if cant and int(cant) > 0:
+            cantidad = int(cant)
+            monto_total += prod.precio * float(cantidad)
+            detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)
+            detalles_a_crear.append(detalle)
+            
+    if not detalles_a_crear:
+        return jsonify({'success': False, 'error': 'Su carrito está vacío.'}), 400
+        
+    try:
+        # 4. Crear el Pedido usando las variables correctas de tu Modelo
+        nuevo_pedido = Pedido(
+            usuario_id=usuario.id,
+            horario_recogida=horario,
+            metodo_pago=metodo_pago,
+            monto_total=monto_total,
+            estado='Pendiente',
+            codigo_recogida=generar_codigo()
+        )
         db.session.add(nuevo_pedido)
-        db.session.flush() # Obtiene el ID asignado por PostgreSQL sin cerrar la transacción
-
-        # Aquí puedes agregar el bucle para guardar en tu modelo DetallePedido si lo manejas,
-        # asociándolo con el `nuevo_pedido.id` recién generado.
-
-        db.session.commit() # Confirmar de forma definitiva todos los cambios
-
-        # Sincronización en tiempo real mediante WebSockets
+        db.session.flush() # Empuja a la DB para obtener el ID sin cerrar la transacción
+        
+        # 5. Asociar detalles al pedido
+        for d in detalles_a_crear:
+            d.pedido_id = nuevo_pedido.id
+            db.session.add(d)
+            
+        db.session.commit()
+        
+        # 6. Sincronizar websockets
         socketio.emit('actualizacion_global')
-
+        
         return jsonify({
-            "success": True,
-            "codigo": codigo_pedido,
-            "total": float(total_pedido)
+            'success': True,
+            'codigo': nuevo_pedido.codigo_recogida
         })
-
+        
     except Exception as e:
-        db.session.rollback() # Revierte cambios en caso de fallos de integridad
-        print(f"Error crítico guardando el pedido: {str(e)}")
-        return jsonify({"success": False, "error": "No se pudo registrar el pedido en la base de datos."}), 500
+        db.session.rollback()
+        print(f"Error procesando pedido: {str(e)}")
+        return jsonify({'success': False, 'error': 'Hubo un error al guardar su orden.'}), 500
 
 
 @app.route('/pedido_especial', methods=['GET', 'POST'])
