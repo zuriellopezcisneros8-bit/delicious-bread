@@ -1656,10 +1656,8 @@ function urlBase64ToUint8Array(base64String) {
     return outputArray;
 }
 
-// Ejecutar cuando el usuario inicie sesión
 if ('serviceWorker' in navigator && 'PushManager' in window) {
-    // Puedes llamar a suscribirPush() al loguearse o al hacer un pedido
-    // Ejemplo: suscribirPush().catch(console.error);
+    suscribirPush().catch(console.error);
 }
 
 
