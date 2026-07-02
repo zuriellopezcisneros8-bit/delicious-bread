@@ -1451,39 +1451,54 @@ document.getElementById('ticketDetalleItems').innerHTML = detalleHtml;
         }
 
         async function enviarAlBackend() {
-            const btn = document.querySelector('#modalTicket .btn-enviar-ticket');
-            btn.innerText = "Procesando...";
-            btn.style.opacity = "0.6";
-            btn.disabled = true;
+    const btn = document.querySelector('#modalTicket .btn-enviar-ticket');
+    btn.innerText = "Procesando...";
+    btn.style.opacity = "0.6";
+    btn.disabled = true;
 
-            const form = document.getElementById('pedidoForm');
-            const formData = new FormData(form);
-            document.getElementById('modalTicket').style.display = 'none';
-            document.getElementById('modal-3d').style.display = 'flex';
+    const form = document.getElementById('pedidoForm');
+    const formData = new FormData(form);
 
-            try {
-                const fetchPromise = fetch('/procesar_pedido', {
-                    method: 'POST',
-                    headers: { 'Accept': 'application/json' },
-                    body: formData
-                }).then(res => res.json());
-
-                const animPromise = new Promise(resolve => setTimeout(resolve, 3500));
-                const [data] = await Promise.all([fetchPromise, animPromise]);
-
-                document.getElementById('modal-3d').style.display = 'none';
-
-                if (data.success) {
-                    mostrarModalCodigo(data.codigo);
-                } else {
-                    alert("Hubo un problema al procesar la orden.");
-                    window.location.reload();
-                }
-            } catch (error) {
-                console.error("Error en transmisión:", error);
-                form.submit(); 
-            }
+    // === EL FIX ESTÁ AQUÍ ===
+    // Capturamos manualmente todos los inputs de cantidad de la tienda/panadería
+    // y los inyectamos en la petición para que no viajen vacíos.
+    const inputsCantidad = document.querySelectorAll('.input-cantidad');
+    inputsCantidad.forEach(input => {
+        const cantidad = parseInt(input.value) || 0;
+        if (cantidad > 0) {
+            // Esto envía 'cantidad_1': 2, 'cantidad_5': 1, etc.
+            formData.append(input.name, cantidad);
         }
+    });
+    // ========================
+
+    document.getElementById('modalTicket').style.display = 'none';
+    document.getElementById('modal-3d').style.display = 'flex';
+
+    try {
+        const fetchPromise = fetch('/procesar_pedido', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' },
+            body: formData
+        }).then(res => res.json());
+
+        const animPromise = new Promise(resolve => setTimeout(resolve, 3500));
+        const [data] = await Promise.all([fetchPromise, animPromise]);
+
+        document.getElementById('modal-3d').style.display = 'none';
+
+        if (data.success) {
+            mostrarModalCodigo(data.codigo);
+        } else {
+            // Ahora si el backend se queja, te dirá el motivo exacto
+            alert(data.error || "Hubo un problema al procesar la orden.");
+            window.location.reload();
+        }
+    } catch (error) {
+        console.error("Error en transmisión:", error);
+        form.submit(); 
+    }
+}
 
         function mostrarTicketRelampago(codigo, mensaje) {
             mostrarModalCodigo(codigo);

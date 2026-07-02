@@ -1144,18 +1144,23 @@ def procesar_pedido():
         
     usuario = db.session.get(Usuario, session['usuario_id'])
     
-    # 2. Atrapar datos del FormData
+    # 2. Atrapar datos
     horario = request.form.get('horario')
     metodo_pago = request.form.get('metodo_pago')
+    fecha_preventa = request.form.get('fecha_preventa') # Por si llevan colecciones de temporada
     
     if not horario or not metodo_pago:
         return jsonify({'success': False, 'error': 'Seleccione su horario y método de pago.'}), 400
+        
+    # Unificamos horario si es que viene de una preventa
+    if fecha_preventa:
+        horario = f"{fecha_preventa} | {horario}"
         
     productos = Producto.query.all()
     monto_total = 0
     detalles_a_crear = []
     
-    # 3. Leer carrito desde los inputs del formulario
+    # 3. Leer carrito (Ahora sí llegarán los datos desde JS)
     for prod in productos:
         cant = request.form.get(f'cantidad_{prod.id}')
         if cant and int(cant) > 0:
@@ -1165,10 +1170,10 @@ def procesar_pedido():
             detalles_a_crear.append(detalle)
             
     if not detalles_a_crear:
-        return jsonify({'success': False, 'error': 'Su carrito está vacío.'}), 400
+        return jsonify({'success': False, 'error': 'Su carrito está vacío o no se enviaron los artículos.'}), 400
         
     try:
-        # 4. Crear el Pedido usando las variables correctas de tu Modelo
+        # 4. Crear el Pedido
         nuevo_pedido = Pedido(
             usuario_id=usuario.id,
             horario_recogida=horario,
@@ -1178,7 +1183,7 @@ def procesar_pedido():
             codigo_recogida=generar_codigo()
         )
         db.session.add(nuevo_pedido)
-        db.session.flush() # Empuja a la DB para obtener el ID sin cerrar la transacción
+        db.session.flush() 
         
         # 5. Asociar detalles al pedido
         for d in detalles_a_crear:
@@ -1186,8 +1191,6 @@ def procesar_pedido():
             db.session.add(d)
             
         db.session.commit()
-        
-        # 6. Sincronizar websockets
         socketio.emit('actualizacion_global')
         
         return jsonify({
@@ -1198,7 +1201,7 @@ def procesar_pedido():
     except Exception as e:
         db.session.rollback()
         print(f"Error procesando pedido: {str(e)}")
-        return jsonify({'success': False, 'error': 'Hubo un error al guardar su orden.'}), 500
+        return jsonify({'success': False, 'error': 'Hubo un error interno al guardar su orden.'}), 500
 
 
 @app.route('/pedido_especial', methods=['GET', 'POST'])
