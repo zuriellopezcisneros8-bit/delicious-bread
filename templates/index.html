@@ -687,27 +687,6 @@
         </div>
         {% endif %}
 
-        <div class="store-tabs">
-            <button type="button" class="store-tab-btn active" onclick="filtrarCategoria(event, 'pan')">Delicious Bread</button>
-            <button type="button" class="store-tab-btn" onclick="filtrarCategoria(event, 'tienda')">Productos de Tienda</button>
-            {% if estado_halloween %}
-            <button type="button" class="store-tab-btn" onclick="filtrarCategoria(event, 'halloween')" style="border-color: #ff8c00; color: #ff8c00;">Halloween Collection</button>
-            {% endif %}
-        </div>
-
-        {% if estado_halloween %}
-        <div id="seccion-halloween" class="grid-productos" style="display: none;">
-            {% for producto in productos_halloween %}
-            <div class="card-producto {% if not producto.disponible %}pausado{% endif %}">
-                
-                <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
-                    <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/600x450/121212/C5A059?text=Halloween' }}" alt="{{ producto.nombre }}">
-                    {% if not producto.disponible %}
-                    <div class="overlay-pausado">AGOTADO</div>
-                    {% endif %}
-                </div>
-
-
 {% if productos_sobrantes %}
         <div class="seccion-flash" id="seccionSobrantes">
             <h2 style="color: var(--luxury-gold); font-size: 1.4rem; letter-spacing: 2px; text-transform: uppercase;">Adquisición Relámpago</h2>
@@ -737,6 +716,29 @@
             </div>
         </div>
         {% endif %}
+
+        <div class="store-tabs">
+            <button type="button" class="store-tab-btn active" onclick="filtrarCategoria(event, 'pan')">Delicious Bread</button>
+            <button type="button" class="store-tab-btn" onclick="filtrarCategoria(event, 'tienda')">Productos de Tienda</button>
+            {% if estado_halloween %}
+            <button type="button" class="store-tab-btn" onclick="filtrarCategoria(event, 'halloween')" style="border-color: #ff8c00; color: #ff8c00;">Halloween Collection</button>
+            {% endif %}
+        </div>
+
+        {% if estado_halloween %}
+        <div id="seccion-halloween" class="grid-productos" style="display: none;">
+            {% for producto in productos_halloween %}
+            <div class="card-producto {% if not producto.disponible %}pausado{% endif %}">
+                
+                <div class="img-contenedor" {% if producto.disponible %}onclick='abrirLightbox({{ producto.nombre|tojson }}, {{ producto.precio|tojson }}, {{ producto.descripcion|tojson }}, {{ producto.imagen_url|tojson }})'{% endif %}>
+                    <img src="{{ producto.imagen_url if producto.imagen_url else 'https://via.placeholder.com/600x450/121212/C5A059?text=Halloween' }}" alt="{{ producto.nombre }}">
+                    {% if not producto.disponible %}
+                    <div class="overlay-pausado">AGOTADO</div>
+                    {% endif %}
+                </div>
+
+
+
                 
                 <div class="info-producto">
                     <h3>{{ producto.nombre }}</h3>
