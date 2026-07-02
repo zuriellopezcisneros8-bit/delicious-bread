@@ -1287,17 +1287,26 @@ def pedido_especial():
 
 @app.route('/admin/pedido/<int:pedido_id>/estado', methods=['POST'])
 def actualizar_estado(pedido_id):
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('admin_login'))
     
     pedido = Pedido.query.get_or_404(pedido_id)
-    if pedido:
-        nuevo_estado = request.form.get('estado')
-        pedido.estado = nuevo_estado
-        db.session.commit()
+    nuevo_estado = request.form.get('estado')
+    pedido.estado = nuevo_estado
+    db.session.commit()
 
-        # ---> SINCRONIZACIÓN EN TIEMPO REAL ZMARTHNET <---
-        socketio.emit('actualizacion_global')
+    # --- NUEVA LÓGICA DE NOTIFICACIÓN PUSH ---
+    # Solo notificamos si el pedido pasa a 'Listo'
+    if nuevo_estado == 'Listo':
+        enviar_notificacion_push(
+            pedido.usuario_id, 
+            "¡Tu pedido está listo! 🥖", 
+            f"Hola, tu pedido {pedido.codigo_recogida} ya está preparado y te espera en Delicious Bread."
+        )
+    # ----------------------------------------
 
+    # Sincronización en tiempo real
+    socketio.emit('actualizacion_global')
     return redirect(url_for('admin'))
 
 
@@ -1307,13 +1316,19 @@ def marcar_pagar_pedido(pedido_id):
         return redirect(url_for('admin_login'))
     
     pedido = Pedido.query.get_or_404(pedido_id)
-    # Cambiamos el estado a pagado
     pedido.pagado = True
     db.session.commit()
 
-    # Sincronización inmediata con ZMARTHNET
-    socketio.emit('actualizacion_global')
+    # --- NUEVA LÓGICA DE NOTIFICACIÓN PUSH ---
+    enviar_notificacion_push(
+        pedido.usuario_id, 
+        "Pago Confirmado ✅", 
+        f"Hemos recibido el pago de tu pedido {pedido.codigo_recogida}. Gracias por tu compra."
+    )
+    # ----------------------------------------
 
+    # Sincronización inmediata
+    socketio.emit('actualizacion_global')
     return redirect(url_for('admin'))
 
 
