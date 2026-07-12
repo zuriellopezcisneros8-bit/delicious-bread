@@ -451,11 +451,9 @@
                                                 </form>
                                             </div>
                                         </div>
-                                    {% endif %}
-                                {% endfor %}
-                                {% if not ns_normal.hay_pedidos %}
-                                    <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay órdenes anticipadas en curso.</td></tr>
-                                {% endif %}
+                                    {% endif %} {% endfor %} {% endif %} {% endfor %} {% if not ns_normal.hay_pedidos %}
+                            <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay órdenes anticipadas en curso.</td></tr>
+                        {% endif %}
                             </tbody>
                         </table>
                     </div>
@@ -574,11 +572,9 @@
 </form>
                                             </div>
                                         </div>
-                                    {% endif %}
-                                {% endfor %}
-                                {% if not ns_flash.hay_pedidos %}
-                                    <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay adquisiciones relámpago activas.</td></tr>
-                                {% endif %}
+                                    {% endif %} {% endfor %} {% endif %} {% endfor %} {% if not ns_normal.hay_pedidos %}
+                            <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay órdenes anticipadas en curso.</td></tr>
+                        {% endif %}
                             </tbody>
                         </table>
                     </div>

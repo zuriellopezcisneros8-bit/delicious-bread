@@ -806,9 +806,16 @@ def cancelar_pedidos_vencidos():
     for p in pedidos_activos:
         try:
             horario_str = p.horario_recogida.strip()
-            if horario_str == 'Inmediato':
+            
+            # 1. Ignorar pedidos inmediatos y Preventas puras (no tienen hora de expiración diaria)
+            if horario_str == 'Inmediato' or horario_str.startswith('Preventa:'):
                 continue
             
+            # 2. Si es un pedido combinado (ej. '29 Octubre | 05:00 PM'), extraer solo la hora
+            if '|' in horario_str:
+                horario_str = horario_str.split('|')[1].strip()
+            
+            # 3. Intentar convertir la hora limpia
             try:
                 hora_dt = datetime.strptime(horario_str, "%I:%M %p").time()
             except ValueError:
