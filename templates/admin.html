@@ -341,55 +341,78 @@
                             </thead>
                             <tbody>
                                 {% set ns_normal = namespace(hay_pedidos=false) %}
-                                {% for pedido in pedidos_activos %}
-                                    {% if not pedido.es_relampago %}
+                                
+                                <!-- NUEVO: Agrupamos los pedidos por su horario_recogida -->
+                                {% for hora, grupo_pedidos in pedidos_activos | groupby('horario_recogida') %}
+                                    
+                                    <!-- Verificamos si en esta hora hay pedidos normales (no relámpago) -->
+                                    {% set ns_hora = namespace(tiene_normales=false) %}
+                                    {% for p in grupo_pedidos %}
+                                        {% if not p.es_relampago %}
+                                            {% set ns_hora.tiene_normales = true %}
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    <!-- Si hay pedidos en esta hora, imprimimos la sesión separadora -->
+                                    {% if ns_hora.tiene_normales %}
                                         {% set ns_normal.hay_pedidos = true %}
+                                        
+                                        <!-- FILA SEPARADORA POR HORA / DÍA -->
                                         <tr>
-                                            <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
-                                            <td>
-                                                <div style="font-weight: bold;">{{ pedido.cliente.nombre }}</div>
-                                                {% if pedido.pagado %}
-                                                    <span style="font-size: 0.65rem; color: #6BD968; border: 1px solid #365C2B; background: #1F2E1A; padding: 2px 5px; border-radius: 4px;">PAGADO</span>
-                                                {% endif %}
+                                            <td colspan="4" style="background: var(--card-black); color: var(--accent-gold); font-weight: 900; text-align: center; font-size: 0.85rem; border: 1px dashed var(--accent-gold); letter-spacing: 2px;">
+                                                🕒 PEDIDOS PARA: {{ hora | upper }}
                                             </td>
-                                            <td>
-                                                <div class="timer-badge timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}">
-                                                    Calculando...
-                                                </div>
-                                            </td>
-                                            <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem;" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket</button></td>
                                         </tr>
                                         
-                                        <div id="modal-{{ pedido.id }}" class="modal-overlay">
-                                            <div class="modal-content">
-                                                <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
-                                                <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">TICKET: {{ pedido.codigo_recogida }}</h2>
-                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
-                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
-                                                
-                                                <div style="background:var(--input-bg); padding:15px; border-radius:12px; margin:15px 0; border:1px solid var(--border-dark);">
-                                                    <h4 style="margin:0 0 10px 0; color:var(--text-white); font-size:0.75rem; text-transform:uppercase;">Artículos:</h4>
-                                                    <div class="list-scroll">
-                                                        {% for d in pedido.detalles %}
-                                                        <div class="modal-list-item">
-                                                            <span style="color:var(--text-gray);">{{ d.producto.nombre }}</span>
-                                                            <strong style="color:var(--accent-gold);">x{{ d.cantidad }}</strong>
+                                        <!-- Ahora listamos los pedidos de esa hora -->
+                                        {% for pedido in grupo_pedidos %}
+                                            {% if not pedido.es_relampago %}
+                                                <tr>
+                                                    <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
+                                                    <td>
+                                                        <div style="font-weight: bold;">{{ pedido.cliente.nombre }}</div>
+                                                        {% if pedido.pagado %}
+                                                            <span style="font-size: 0.65rem; color: #6BD968; border: 1px solid #365C2B; background: #1F2E1A; padding: 2px 5px; border-radius: 4px;">PAGADO</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>
+                                                        <div class="timer-badge timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}">
+                                                            Calculando...
                                                         </div>
-                                                        {% endfor %}
-                                                    </div>
-                                                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:1rem; font-weight:bold; border-top: 1px solid var(--border-dark); padding-top: 10px;">
-                                                        <span>Monto Total</span>
-                                                        <strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong>
-                                                    </div>
-                                                </div>
+                                                    </td>
+                                                    <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem;" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket</button></td>
+                                                </tr>
                                                 
-                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
-                                                    <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
-                                                        <span>⏱️ Recogida: <strong style="color:var(--text-white);">{{ pedido.horario_recogida }}</strong></span>
-                                                        <span>💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong></span>
-                                                    </div>
-                                                    <div class="timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}" style="font-size: 0.75rem; font-weight: bold;"></div>
-                                                </div>
+                                                <div id="modal-{{ pedido.id }}" class="modal-overlay">
+                                                    <div class="modal-content">
+                                                        <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
+                                                        <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">TICKET: {{ pedido.codigo_recogida }}</h2>
+                                                        <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
+                                                        <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
+                                                        
+                                                        <div style="background:var(--input-bg); padding:15px; border-radius:12px; margin:15px 0; border:1px solid var(--border-dark);">
+                                                            <h4 style="margin:0 0 10px 0; color:var(--text-white); font-size:0.75rem; text-transform:uppercase;">Artículos:</h4>
+                                                            <div class="list-scroll">
+                                                                {% for d in pedido.detalles %}
+                                                                <div class="modal-list-item">
+                                                                    <span style="color:var(--text-gray);">{{ d.producto.nombre }}</span>
+                                                                    <strong style="color:var(--accent-gold);">x{{ d.cantidad }}</strong>
+                                                                </div>
+                                                                {% endfor %}
+                                                            </div>
+                                                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:1rem; font-weight:bold; border-top: 1px solid var(--border-dark); padding-top: 10px;">
+                                                                <span>Monto Total</span>
+                                                                <strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
+                                                            <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
+                                                                <span>⏱️ Recogida: <strong style="color:var(--text-white);">{{ pedido.horario_recogida }}</strong></span>
+                                                                <span>💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong></span>
+                                                            </div>
+                                                            <div class="timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}" style="font-size: 0.75rem; font-weight: bold;"></div>
+                                                        </div>
 
                                                 <div style="margin-bottom: 20px; text-align: center;">
                                                     <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST">
