@@ -1133,11 +1133,17 @@
     const inputsCantidad = document.querySelectorAll('.input-cantidad');
 
     const fecha = new Date();
-    const horaActual = fecha.getHours();
-    
-    let cierreAdmin = !tiendaAbierta;
-    let cierrePan = (horaActual >= 16 || horaActual < 1); // Cierre de pan (después de 4 PM)
-    let cierreTienda = (horaActual < 10 || horaActual >= 20); // Cierre de tienda (antes de 10 AM o después de 8 PM)
+        const horaActual = fecha.getHours();
+        const minutosActuales = fecha.getMinutes();
+        const tiempoEnMinutos = (horaActual * 60) + minutosActuales;
+        
+        let cierreAdmin = !tiendaAbierta;
+        
+        // Panadería: Funciona SOLO de 5 PM (17:00) a 7 PM (19:00)
+        let cierrePan = (horaActual < 17 || horaActual >= 19); 
+        
+        // Tienda: Funciona de 10:00 AM a 9:30 PM (Bloqueo a las 21:30 hrs = 1290 minutos)
+        let cierreTienda = (tiempoEnMinutos < 600 || tiempoEnMinutos >= 1290);
 
     if (cierreAdmin) {
         btnProcesar.disabled = true;
@@ -1167,13 +1173,13 @@
 
         // Mensajes dinámicos
         if (cierrePan && cierreTienda) {
-            mensajeCierre.innerHTML = `BOUTIQUE Y PANADERÍA CERRADAS.<br>Horario de tienda: 10:00 AM a 8:00 PM.`;
+            mensajeCierre.innerHTML = `BOUTIQUE Y PANADERÍA CERRADAS.<br>Horario de tienda: 10:00 AM a 9:30 PM.`;
             mensajeCierre.style.display = 'block';
         } else if (cierrePan) {
-            mensajeCierre.innerHTML = `RECEPCIÓN DE PAN CERRADA.<br>Los artículos de la tienda continúan disponibles.`;
+            mensajeCierre.innerHTML = `RECEPCIÓN DE PAN CERRADA.<br>Los artículos de la tienda continúan disponibles hasta las 9:30 PM.`;
             mensajeCierre.style.display = 'block';
         } else if (cierreTienda) {
-            mensajeCierre.innerHTML = `ARTÍCULOS DE TIENDA CERRADOS.<br>Horario: 10:00 AM a 8:00 PM. La panadería continúa disponible.`;
+            mensajeCierre.innerHTML = `ARTÍCULOS DE TIENDA CERRADOS.<br>Horario: 10:00 AM a 9:30 PM. La panadería continúa disponible.`;
             mensajeCierre.style.display = 'block';
         }
     }
@@ -1294,9 +1300,13 @@
     evaluarHorariosDisponibles((contienePan || contieneHalloween), articulosTotales);
 
     // Ajuste de bloqueos para que ignore el pan de Halloween (porque es preventa)
-    const horaActualLocal = new Date().getHours();
-    let panBloqueado = contienePan && (horaActualLocal >= 16 || horaActualLocal < 1);
-    let tiendaBloqueada = contieneTienda && (horaActualLocal < 10 || horaActualLocal >= 20);
+    const fechaLocal = new Date();
+    const horaActualLocal = fechaLocal.getHours();
+    const minutosLocal = fechaLocal.getMinutes();
+    const tiempoLocalMinutos = (horaActualLocal * 60) + minutosLocal;
+
+    let panBloqueado = contienePan && (horaActualLocal < 17 || horaActualLocal >= 19);
+    let tiendaBloqueada = contieneTienda && (tiempoLocalMinutos < 600 || tiempoLocalMinutos >= 1290);
 
     if (panBloqueado && tiendaBloqueada) {
         document.getElementById('btnProcesar').disabled = true;
