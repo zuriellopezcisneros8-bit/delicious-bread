@@ -1089,7 +1089,7 @@
         const motivoCierre = {{ motivo_cierre|default('')|tojson }};
 
         // LÓGICA DE CARRUSEL DE BANNERS AUTOMÁTICO
-        // LÓGICA DE CARRUSEL DE NOVEDADES
+        
         document.addEventListener("DOMContentLoaded", function() {
             let currentSlide = 0;
             const slides = document.querySelectorAll('.item-novedad');
@@ -1102,7 +1102,7 @@
             }
         });
 
-        /// NUEVA LÓGICA DE FILTRADO POR CATEGORÍA (PAN vs TIENDA)
+        
         function filtrarCategoria(event, categoria) {
     document.querySelectorAll('.store-tab-btn').forEach(btn => btn.classList.remove('active'));
     event.currentTarget.classList.add('active');
@@ -1111,12 +1111,12 @@
     const seccionTienda = document.getElementById('seccion-tienda');
     const seccionHalloween = document.getElementById('seccion-halloween');
 
-    // Primero ocultamos todas las secciones
+    
     if(seccionPan) seccionPan.style.display = 'none';
     if(seccionTienda) seccionTienda.style.display = 'none';
     if(seccionHalloween) seccionHalloween.style.display = 'none';
 
-    // Mostramos solo la categoría seleccionada
+    
     if (categoria === 'pan' && seccionPan) {
         seccionPan.style.display = 'grid';
     } else if (categoria === 'tienda' && seccionTienda) {
@@ -1126,7 +1126,7 @@
     }
 }
 
-        // LÓGICA DE BLOQUEO MAESTRO (HORARIO Y ADMIN)
+        
        function validarHorarioOperativo() {
     const btnProcesar = document.getElementById('btnProcesar');
     const mensajeCierre = document.getElementById('mensajeCierre');
@@ -1139,10 +1139,10 @@
         
         let cierreAdmin = !tiendaAbierta;
         
-        // Panadería: Funciona SOLO de 5 PM (17:00) a 7 PM (19:00)
-        let cierrePan = (horaActual < 17 || horaActual >= 19); 
+       
+        let cierrePan = (horaActual >= 16);
         
-        // Tienda: Funciona de 10:00 AM a 9:30 PM (Bloqueo a las 21:30 hrs = 1290 minutos)
+        
         let cierreTienda = (tiempoEnMinutos < 600 || tiempoEnMinutos >= 1290);
 
     if (cierreAdmin) {
@@ -1300,12 +1300,13 @@
     evaluarHorariosDisponibles((contienePan || contieneHalloween), articulosTotales);
 
     // Ajuste de bloqueos para que ignore el pan de Halloween (porque es preventa)
-    const fechaLocal = new Date();
-    const horaActualLocal = fechaLocal.getHours();
-    const minutosLocal = fechaLocal.getMinutes();
-    const tiempoLocalMinutos = (horaActualLocal * 60) + minutosLocal;
+const fechaLocal = new Date();
+const horaActualLocal = fechaLocal.getHours();
+const minutosLocal = fechaLocal.getMinutes();
+const tiempoLocalMinutos = (horaActualLocal * 60) + minutosLocal;
 
-    let panBloqueado = contienePan && (horaActualLocal < 17 || horaActualLocal >= 19);
+// Se bloquea el procesamiento del pan a partir de las 16:00 hrs (4 PM)
+let panBloqueado = contienePan && (horaActualLocal >= 16);
     let tiendaBloqueada = contieneTienda && (tiempoLocalMinutos < 600 || tiempoLocalMinutos >= 1290);
 
     if (panBloqueado && tiendaBloqueada) {
