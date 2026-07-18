@@ -8,7 +8,7 @@ self.addEventListener('push', function(event) {
     const options = {
         body: data.body || 'Tienes una actualización sobre tu pedido.',
         icon: '/static/icon2.png', // Asegúrate de tener este icono en tu carpeta static
-        badge: '/static/icon2.png',
+        badge: '/static/icon.png',
         vibrate: [200, 100, 200, 100],
         data: {
             url: '/' // A donde irá el usuario al hacer clic
