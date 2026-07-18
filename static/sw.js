@@ -7,7 +7,7 @@ self.addEventListener('push', function(event) {
     const title = data.title || 'Delicious Bread';
     const options = {
         body: data.body || 'Tienes una actualización sobre tu pedido.',
-        icon: '/static/icon2.png', // Asegúrate de tener este icono en tu carpeta static
+        icon: '/static/icon.png', // Asegúrate de tener este icono en tu carpeta static
         badge: '/static/icon.png',
         vibrate: [200, 100, 200, 100],
         data: {
