@@ -1365,12 +1365,24 @@ def actualizar_estado(pedido_id):
     pedido.estado = nuevo_estado
     db.session.commit()
 
-    # --- LÓGICA MULTI-ESTADO DE NOTIFICACIÓN PUSH ---
+    # --- LÓGICA MULTI-ESTADO DE NOTIFICACIÓN PUSH SINCRONIZADA ---
     if nuevo_estado == 'Horneando':
         enviar_notificacion_push(
             pedido.usuario_id, 
             "En el horno... 🥐", 
             f"¡Huele delicioso! Tu pedido {pedido.codigo_recogida} ya se está horneando."
+        )
+    elif nuevo_estado == 'Preparando':
+        enviar_notificacion_push(
+            pedido.usuario_id, 
+            "Preparando tu orden 📦", 
+            f"Estamos empacando tus artículos de tienda. Tu orden {pedido.codigo_recogida} estará lista pronto."
+        )
+    elif nuevo_estado == 'Sincronizando':
+        enviar_notificacion_push(
+            pedido.usuario_id, 
+            "Armando tu pedido completo ⚡", 
+            f"Estamos horneando tu pan y empacando tus artículos para la orden {pedido.codigo_recogida}."
         )
     elif nuevo_estado == 'Listo':
         enviar_notificacion_push(
