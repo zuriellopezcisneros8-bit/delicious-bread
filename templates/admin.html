@@ -353,10 +353,7 @@
                             <tbody>
                                 {% set ns_normal = namespace(hay_pedidos=false) %}
                                 
-                                <!-- NUEVO: Agrupamos los pedidos por su horario_recogida -->
                                 {% for hora, grupo_pedidos in pedidos_activos | groupby('horario_recogida') %}
-                                    
-                                    <!-- Verificamos si en esta hora hay pedidos normales (no relámpago) -->
                                     {% set ns_hora = namespace(tiene_normales=false) %}
                                     {% for p in grupo_pedidos %}
                                         {% if not p.es_relampago %}
@@ -364,18 +361,15 @@
                                         {% endif %}
                                     {% endfor %}
                                     
-                                    <!-- Si hay pedidos en esta hora, imprimimos la sesión separadora -->
                                     {% if ns_hora.tiene_normales %}
                                         {% set ns_normal.hay_pedidos = true %}
                                         
-                                        <!-- FILA SEPARADORA POR HORA / DÍA -->
                                         <tr>
                                             <td colspan="4" style="background: var(--card-black); color: var(--accent-gold); font-weight: 900; text-align: center; font-size: 0.85rem; border: 1px dashed var(--accent-gold); letter-spacing: 2px;">
                                                 🕒 PEDIDOS PARA: {{ hora | upper }}
                                             </td>
                                         </tr>
                                         
-                                        <!-- Ahora listamos los pedidos de esa hora -->
                                         {% for pedido in grupo_pedidos %}
                                             {% if not pedido.es_relampago %}
                                                 <tr>
@@ -401,50 +395,30 @@
                                                         <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
                                                         <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
                                                         
-                                                        <div style="background:var(--input-bg); padding:15px; border-radius:12px; margin:15px 0; border:1px solid var(--border-dark);">
-                                                            <h4 style="margin:0 0 10px 0; color:var(--text-white); font-size:0.75rem; text-transform:uppercase;">Artículos:</h4>
-                                                            <div style="background: #F5EFE6; padding:20px; border-radius:12px; margin:15px 0; border: 2px dashed var(--accent-gold); box-shadow: inset 0 5px 15px rgba(0,0,0,0.05); color: #111;">
-    <h4 style="margin:0 0 15px 0; color:#111; font-size:0.85rem; text-transform:uppercase; border-bottom: 1px solid #d4c5b3; padding-bottom: 10px;">📋 Check-list de Empaque:</h4>
-    
-    <div class="list-scroll" style="max-height: 40vh; padding-right: 5px;">
-        {% for d in pedido.detalles %}
-        <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e3d5c5; font-size: 0.95rem; cursor: pointer; transition: 0.3s;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <input type="checkbox" class="check-empaque-{{ pedido.id }}" onchange="verificarEmpaque('{{ pedido.id }}')" style="width: 20px; height: 20px; accent-color: #365C2B; cursor: pointer;">
-                <span style="color:#111; font-weight: 700;">{{ d.producto.nombre }}</span>
-            </div>
-            <strong style="color:var(--card-black); font-size: 1.1rem; background: #fff; padding: 2px 8px; border-radius: 6px; border: 1px solid #d4c5b3;">x{{ d.cantidad }}</strong>
-        </label>
-        {% endfor %}
-    </div>
+                                                        <div style="background: #F5EFE6; padding:20px; border-radius:12px; margin:15px 0; border: 2px dashed var(--accent-gold); box-shadow: inset 0 5px 15px rgba(0,0,0,0.05); color: #111;">
+                                                            <h4 style="margin:0 0 15px 0; color:#111; font-size:0.85rem; text-transform:uppercase; border-bottom: 1px solid #d4c5b3; padding-bottom: 10px;">📋 Check-list de Empaque:</h4>
+                                                            <div class="list-scroll" style="max-height: 40vh; padding-right: 5px;">
+                                                                {% for d in pedido.detalles %}
+                                                                <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e3d5c5; font-size: 0.95rem; cursor: pointer; transition: 0.3s;">
+                                                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                                                        <input type="checkbox" class="check-empaque-{{ pedido.id }}" onchange="verificarEmpaque('{{ pedido.id }}')" style="width: 20px; height: 20px; accent-color: #365C2B; cursor: pointer;">
+                                                                        <span style="color:#111; font-weight: 700;">{{ d.producto.nombre }}</span>
+                                                                    </div>
+                                                                    <strong style="color:var(--card-black); font-size: 1.1rem; background: #fff; padding: 2px 8px; border-radius: 6px; border: 1px solid #d4c5b3;">x{{ d.cantidad }}</strong>
+                                                                </label>
+                                                                {% endfor %}
+                                                            </div>
+                                                            <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:1.1rem; font-weight:900; border-top: 2px solid #d4c5b3; padding-top: 15px; color: #111;">
+                                                                <span>MONTO TOTAL</span>
+                                                                <strong style="color:#8b7355;">${{ "%.2f"|format(pedido.monto_total) }}</strong>
+                                                            </div>
+                                                            <div id="btn-listo-{{ pedido.id }}" style="display: none; margin-top: 20px;">
+                                                                <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border: 2px solid #365C2B; width: 100%; padding: 15px; font-size: 0.85rem; border-radius: 12px; text-transform: uppercase; font-weight: 900; box-shadow: 0 5px 15px rgba(107,217,104,0.2);" onclick="marcarPedidoListo('{{ pedido.id }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+                                                                    ✅ ¡Todo Empaquetado! (Marcar como Listo)
+                                                                </button>
+                                                            </div>
+                                                        </div>
 
-    <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:1.1rem; font-weight:900; border-top: 2px solid #d4c5b3; padding-top: 15px; color: #111;">
-        <span>MONTO TOTAL</span>
-        <strong style="color:#8b7355;">${{ "%.2f"|format(pedido.monto_total) }}</strong>
-    </div>
-
-    <div id="btn-listo-{{ pedido.id }}" style="display: none; margin-top: 20px;">
-        <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border: 2px solid #365C2B; width: 100%; padding: 15px; font-size: 0.85rem; border-radius: 12px; text-transform: uppercase; font-weight: 900; box-shadow: 0 5px 15px rgba(107,217,104,0.2);" onclick="marcarPedidoListo('{{ pedido.id }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
-            ✅ ¡Todo Empaquetado! (Marcar como Listo)
-        </button>
-    </div>
-</div>
-
-<form id="form-estado-{{ pedido.id }}" action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
-    <div id="contenedor-selector-{{ pedido.id }}">
-        <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo Manual:</label>
-        <select name="estado" id="select-estado-{{ pedido.id }}" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
-            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-            <option value="Preparando" {% if pedido.estado == 'Preparando' %}selected{% endif %}>Preparando Pedido 📦</option>
-            <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>En Horno 🥖</option>
-            <option value="Sincronizando" {% if pedido.estado == 'Sincronizando' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
-            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
-            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
-            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
-        </select>
-    </div>
-</form>
-                                                        
                                                         <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
                                                             <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
                                                                 <span>⏱️ Recogida: <strong style="color:var(--text-white);">{{ pedido.horario_recogida }}</strong></span>
@@ -453,69 +427,55 @@
                                                             <div class="timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}" style="font-size: 0.75rem; font-weight: bold;"></div>
                                                         </div>
 
-                                                <div style="margin-bottom: 20px; text-align: center;">
-                                                    <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST">
-                                                        {% if pedido.pagado %}
-                                                            <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border-color: #365C2B; cursor: default; width: 100%;">✅ Confirmado - Total Pagado</button>
-                                                        {% else %}
-                                                            <button type="submit" class="btn-action" style="border-color: #6BE0FF; color: #6BE0FF; width: 100%;">💰 Validar y Marcar como Pagado</button>
-                                                        {% endif %}
-                                                    </form>
-                                                </div>
+                                                        <div style="margin-bottom: 20px; text-align: center;">
+                                                            <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST">
+                                                                {% if pedido.pagado %}
+                                                                    <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border-color: #365C2B; cursor: default; width: 100%;">✅ Confirmado - Total Pagado</button>
+                                                                {% else %}
+                                                                    <button type="submit" class="btn-action" style="border-color: #6BE0FF; color: #6BE0FF; width: 100%;">💰 Validar y Marcar como Pagado</button>
+                                                                {% endif %}
+                                                            </form>
+                                                        </div>
 
-                                                {% if pedido.metodo_pago == 'Transferencia' %}
-                                                    {% if pedido.comprobante_url %}
-                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px solid var(--accent-gold); padding: 10px; border-radius: 12px; background: #0A0A0A;">
-                                                            <span style="display: block; font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 10px; text-transform: uppercase;">Evidencia de Transferencia</span>
-                                                            <a href="{{ pedido.comprobante_url }}" target="_blank">
-                                                                <img src="{{ pedido.comprobante_url }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;">
-                                                            </a>
-                                                        </div>
-                                                    {% else %}
-                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px dashed #FF5A5A; padding: 15px; border-radius: 12px; background: rgba(255, 90, 90, 0.05);">
-                                                            <span style="font-size: 0.75rem; color: #FF5A5A; font-weight: bold; text-transform: uppercase;">Pendiente de Comprobante</span>
-                                                        </div>
-                                                    {% endif %}
-                                                {% endif %}
-                                                
-                                                <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
-    <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo:</label>
-    <select name="estado" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
-        
-        {% if pedido.tipo_pedido == 'puro_pan' %}
-            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-            <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>En Horno 🥖</option>
-            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
-            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
-            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
-            
-        {% elif pedido.tipo_pedido == 'puros_abarrotes' %}
-            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-            <option value="Preparando" {% if pedido.estado == 'Preparando' %}selected{% endif %}>Preparando Pedido 📦</option>
-            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
-            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
-            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
-            
-        {% elif pedido.tipo_pedido == 'combinado' %}
-            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-            <option value="Sincronizando" {% if pedido.estado == 'Sincronizando' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
-            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
-            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
-            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
-        {% endif %}
-        
-    </select>
-</form>
-                                           </div>
-                                        </div>
+                                                        {% if pedido.metodo_pago == 'Transferencia' %}
+                                                            {% if pedido.comprobante_url %}
+                                                                <div style="margin-bottom: 20px; text-align: center; border: 1px solid var(--accent-gold); padding: 10px; border-radius: 12px; background: #0A0A0A;">
+                                                                    <span style="display: block; font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 10px; text-transform: uppercase;">Evidencia de Transferencia</span>
+                                                                    <a href="{{ pedido.comprobante_url }}" target="_blank">
+                                                                        <img src="{{ pedido.comprobante_url }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;">
+                                                                    </a>
+                                                                </div>
+                                                            {% else %}
+                                                                <div style="margin-bottom: 20px; text-align: center; border: 1px dashed #FF5A5A; padding: 15px; border-radius: 12px; background: rgba(255, 90, 90, 0.05);">
+                                                                    <span style="font-size: 0.75rem; color: #FF5A5A; font-weight: bold; text-transform: uppercase;">Pendiente de Comprobante</span>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endif %}
+                                                        
+                                                        <form id="form-estado-{{ pedido.id }}" action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
+                                                            <div id="contenedor-selector-{{ pedido.id }}">
+                                                                <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo Manual:</label>
+                                                                <select name="estado" id="select-estado-{{ pedido.id }}" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+                                                                    <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                                                    <option value="Preparando" {% if pedido.estado == 'Preparando' %}selected{% endif %}>Preparando Pedido 📦</option>
+                                                                    <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>En Horno 🥖</option>
+                                                                    <option value="Sincronizando" {% if pedido.estado == 'Sincronizando' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
+                                                                    <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
+                                                                    <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
+                                                                    <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                                                                </select>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            {% endif %} 
+                                        {% endfor %} 
                                     {% endif %} 
                                 {% endfor %} 
-                            {% endif %} 
-                        {% endfor %} 
-                        
-                        {% if not ns_normal.hay_pedidos %}
-                            <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay órdenes anticipadas en curso.</td></tr>
-                        {% endif %}
+                                
+                                {% if not ns_normal.hay_pedidos %}
+                                    <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay órdenes anticipadas en curso.</td></tr>
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
@@ -557,50 +517,30 @@
                                                 <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
                                                 <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
                                                 
-                                                <div style="background:var(--input-bg); padding:15px; border-radius:12px; margin:15px 0; border:1px solid var(--accent-gold);">
-                                                    <h4 style="margin:0 0 10px 0; color:var(--accent-gold); font-size:0.75rem; text-transform:uppercase;">Artículos Relámpago:</h4>
-                                                    <div style="background: #F5EFE6; padding:20px; border-radius:12px; margin:15px 0; border: 2px dashed var(--accent-gold); box-shadow: inset 0 5px 15px rgba(0,0,0,0.05); color: #111;">
-    <h4 style="margin:0 0 15px 0; color:#111; font-size:0.85rem; text-transform:uppercase; border-bottom: 1px solid #d4c5b3; padding-bottom: 10px;">📋 Check-list de Empaque:</h4>
-    
-    <div class="list-scroll" style="max-height: 40vh; padding-right: 5px;">
-        {% for d in pedido.detalles %}
-        <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e3d5c5; font-size: 0.95rem; cursor: pointer; transition: 0.3s;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <input type="checkbox" class="check-empaque-{{ pedido.id }}" onchange="verificarEmpaque('{{ pedido.id }}')" style="width: 20px; height: 20px; accent-color: #365C2B; cursor: pointer;">
-                <span style="color:#111; font-weight: 700;">{{ d.producto.nombre }}</span>
-            </div>
-            <strong style="color:var(--card-black); font-size: 1.1rem; background: #fff; padding: 2px 8px; border-radius: 6px; border: 1px solid #d4c5b3;">x{{ d.cantidad }}</strong>
-        </label>
-        {% endfor %}
-    </div>
+                                                <div style="background: #F5EFE6; padding:20px; border-radius:12px; margin:15px 0; border: 2px dashed var(--accent-gold); box-shadow: inset 0 5px 15px rgba(0,0,0,0.05); color: #111;">
+                                                    <h4 style="margin:0 0 15px 0; color:#111; font-size:0.85rem; text-transform:uppercase; border-bottom: 1px solid #d4c5b3; padding-bottom: 10px;">⚡ Check-list Relámpago:</h4>
+                                                    <div class="list-scroll" style="max-height: 40vh; padding-right: 5px;">
+                                                        {% for d in pedido.detalles %}
+                                                        <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e3d5c5; font-size: 0.95rem; cursor: pointer; transition: 0.3s;">
+                                                            <div style="display: flex; align-items: center; gap: 12px;">
+                                                                <input type="checkbox" class="check-empaque-{{ pedido.id }}" onchange="verificarEmpaque('{{ pedido.id }}')" style="width: 20px; height: 20px; accent-color: #365C2B; cursor: pointer;">
+                                                                <span style="color:#111; font-weight: 700;">{{ d.producto.nombre }}</span>
+                                                            </div>
+                                                            <strong style="color:var(--card-black); font-size: 1.1rem; background: #fff; padding: 2px 8px; border-radius: 6px; border: 1px solid #d4c5b3;">x{{ d.cantidad }}</strong>
+                                                        </label>
+                                                        {% endfor %}
+                                                    </div>
+                                                    <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:1.1rem; font-weight:900; border-top: 2px solid #d4c5b3; padding-top: 15px; color: #111;">
+                                                        <span>MONTO TOTAL</span>
+                                                        <strong style="color:#8b7355;">${{ "%.2f"|format(pedido.monto_total) }}</strong>
+                                                    </div>
+                                                    <div id="btn-listo-{{ pedido.id }}" style="display: none; margin-top: 20px;">
+                                                        <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border: 2px solid #365C2B; width: 100%; padding: 15px; font-size: 0.85rem; border-radius: 12px; text-transform: uppercase; font-weight: 900; box-shadow: 0 5px 15px rgba(107,217,104,0.2);" onclick="marcarPedidoListo('{{ pedido.id }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+                                                            ✅ ¡Todo Empaquetado! (Marcar como Listo)
+                                                        </button>
+                                                    </div>
+                                                </div>
 
-    <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:1.1rem; font-weight:900; border-top: 2px solid #d4c5b3; padding-top: 15px; color: #111;">
-        <span>MONTO TOTAL</span>
-        <strong style="color:#8b7355;">${{ "%.2f"|format(pedido.monto_total) }}</strong>
-    </div>
-
-    <div id="btn-listo-{{ pedido.id }}" style="display: none; margin-top: 20px;">
-        <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border: 2px solid #365C2B; width: 100%; padding: 15px; font-size: 0.85rem; border-radius: 12px; text-transform: uppercase; font-weight: 900; box-shadow: 0 5px 15px rgba(107,217,104,0.2);" onclick="marcarPedidoListo('{{ pedido.id }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
-            ✅ ¡Todo Empaquetado! (Marcar como Listo)
-        </button>
-    </div>
-</div>
-
-<form id="form-estado-{{ pedido.id }}" action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
-    <div id="contenedor-selector-{{ pedido.id }}">
-        <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo Manual:</label>
-        <select name="estado" id="select-estado-{{ pedido.id }}" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
-            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-            <option value="Preparando" {% if pedido.estado == 'Preparando' %}selected{% endif %}>Preparando Pedido 📦</option>
-            <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>En Horno 🥖</option>
-            <option value="Sincronizando" {% if pedido.estado == 'Sincronizando' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
-            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
-            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
-            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
-        </select>
-    </div>
-</form>
-                                                
                                                 <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
                                                     <div style="display: flex; justify-content: space-around;">
                                                         <span>⏱️ Recogida: <strong style="color:var(--accent-gold);">Inmediata / {{ pedido.horario_recogida }}</strong></span>
@@ -633,33 +573,20 @@
                                                     {% endif %}
                                                 {% endif %}
                                                 
-                                                <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST" style="display:inline;">
-    <select name="estado" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre }}', '{{ pedido.codigo_recogida }}')" class="form-control" style="margin-bottom:0; padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; background: var(--input-bg); color: var(--accent-gold); border: 1px solid var(--accent-gold); font-weight: bold;">
-        
-        {% if pedido.tipo_pedido == 'puro_pan' %}
-            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-            <option value="En Horno" {% if pedido.estado == 'En Horno' %}selected{% endif %}>En Horno 🥖</option>
-            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
-            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
-            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
-            
-        {% elif pedido.tipo_pedido == 'puros_abarrotes' %}
-            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-            <option value="Preparando" {% if pedido.estado == 'Preparando' %}selected{% endif %}>Preparando Pedido 📦</option>
-            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
-            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
-            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
-            
-        {% elif pedido.tipo_pedido == 'combinado' %}
-            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-            <option value="Pan en Horno / Armando Pedido" {% if pedido.estado == 'Pan en Horno / Armando Pedido' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
-            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
-            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
-            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
-        {% endif %}
-        
-    </select>
-</form>
+                                                <form id="form-estado-{{ pedido.id }}" action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
+                                                    <div id="contenedor-selector-{{ pedido.id }}">
+                                                        <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo Manual:</label>
+                                                        <select name="estado" id="select-estado-{{ pedido.id }}" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+                                                            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                                            <option value="Preparando" {% if pedido.estado == 'Preparando' %}selected{% endif %}>Preparando Pedido 📦</option>
+                                                            <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>En Horno 🥖</option>
+                                                            <option value="Sincronizando" {% if pedido.estado == 'Sincronizando' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
+                                                            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
+                                                            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
+                                                            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                                                        </select>
+                                                    </div>
+                                                </form>
                                             </div>
                                         </div>
                                     {% endif %} 
@@ -863,19 +790,19 @@
                                 </div>
                             </div>
 
-
-<div style="margin-top: 10px;">
-    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Categoría del Producto:</label>
-    <select name="categoria" class="form-control">
-        <option value="pan" {% if prod.categoria == 'pan' %}selected{% endif %}>🥖 Panadería</option>
-        <option value="halloween" {% if prod.categoria == 'halloween' %}selected{% endif %} style="color: #FF7A00; font-weight: bold;">🎃 Colección Halloween</option>
-        <option value="bebidas" {% if prod.categoria == 'bebidas' %}selected{% endif %}>🥤 Bebidas</option>
-        <option value="snacks" {% if prod.categoria == 'snacks' %}selected{% endif %}>🍫 Snacks y Frituras</option>
-        <option value="abarrotes" {% if prod.categoria == 'abarrotes' %}selected{% endif %}>🥫 Abarrotes Generales</option>
-        <option value="cremeria" {% if prod.categoria == 'cremeria' %}selected{% endif %}>🧀 Cremería y Lácteos</option>
-        <option value="verduras" {% if prod.categoria == 'verduras' %}selected{% endif %}>🥬 Verduras y Frescos</option>
-    </select>
-</div>
+                            <div style="margin-top: 10px;">
+                                <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Categoría del Producto:</label>
+                                <select name="categoria" class="form-control">
+                                    <option value="pan" {% if prod.categoria == 'pan' %}selected{% endif %}>🥖 Panadería</option>
+                                    <option value="halloween" {% if prod.categoria == 'halloween' %}selected{% endif %} style="color: #FF7A00; font-weight: bold;">🎃 Colección Halloween</option>
+                                    <option value="bebidas" {% if prod.categoria == 'bebidas' %}selected{% endif %}>🥤 Bebidas</option>
+                                    <option value="snacks" {% if prod.categoria == 'snacks' %}selected{% endif %}>🍫 Snacks y Frituras</option>
+                                    <option value="abarrotes" {% if prod.categoria == 'abarrotes' %}selected{% endif %}>🥫 Abarrotes Generales</option>
+                                    <option value="cremeria" {% if prod.categoria == 'cremeria' %}selected{% endif %}>🧀 Cremería y Lácteos</option>
+                                    <option value="verduras" {% if prod.categoria == 'verduras' %}selected{% endif %}>🥬 Verduras y Frescos</option>
+                                </select>
+                            </div>
+                            
                             <div style="display: flex; align-items: center; padding-top: 5px; margin-bottom: 10px;">
                                 <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--accent-gold); width: 16px; height: 16px; margin-right: 8px;">
                                 <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Mayoreo</label>
@@ -903,48 +830,49 @@
     <div id="configuracion" class="tab-content">
         <div class="admin-grid">
 
+            <div class="panel-anuncios" style="background: #1A1815; padding: 20px; border-radius: 15px; margin-top: 20px;">
+                <h3 style="color: var(--accent-gold);">Centro de Difusión (Push)</h3>
+                <input type="text" id="tituloPush" placeholder="Título (Ej: Halloween Collection)" style="width: 100%; margin-bottom: 10px;">
+                <textarea id="mensajePush" placeholder="Escribe el anuncio aquí..." style="width: 100%; height: 80px;"></textarea>
+                <button onclick="enviarAnuncio()" style="background: var(--accent-gold); color: black; border: none; padding: 10px 20px; cursor: pointer;">Enviar a Todos</button>
+            </div>
 
-<div class="panel-anuncios" style="background: #1A1815; padding: 20px; border-radius: 15px; margin-top: 20px;">
-    <h3 style="color: var(--accent-gold);">Centro de Difusión (Push)</h3>
-    <input type="text" id="tituloPush" placeholder="Título (Ej: Halloween Collection)" style="width: 100%; margin-bottom: 10px;">
-    <textarea id="mensajePush" placeholder="Escribe el anuncio aquí..." style="width: 100%; height: 80px;"></textarea>
-    <button onclick="enviarAnuncio()" style="background: var(--accent-gold); color: black; border: none; padding: 10px 20px; cursor: pointer;">Enviar a Todos</button>
-</div>
-
-<script>
-async function enviarAnuncio() {
-    const titulo = document.getElementById('tituloPush').value;
-    const mensaje = document.getElementById('mensajePush').value;
-    
-    const res = await fetch('/admin/api/anuncio-global', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({titulo, mensaje})
-    });
-    
-    if(res.ok) alert("Anuncio enviado a todos los clientes exitosamente.");
-}
-</script>
-<div class="card" style="border: 1px solid #FF7A00;">
-    <h3 style="color: #FF7A00;">🎃 Modo Temporada: Halloween Collection</h3>
-    <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Activa o desactiva la inyección del carrusel y los productos exclusivos de Halloween en la tienda principal.</p>
-    
-    <form action="{{ url_for('toggle_temporada') }}" method="POST" style="background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-    <div>
-        <strong style="color: var(--text-white); display: block; font-size: 0.9rem;">Estado del Sistema:</strong>
-        
-        {% if estado_halloween %}
-            <span style="color: #6BD968; font-size: 0.75rem; font-weight: bold;">🟢 ACTIVADO (Visible en Tienda)</span>
-        {% else %}
-            <span style="color: var(--text-gray); font-size: 0.75rem; font-weight: bold;">⚫ DESACTIVADO (Oculto)</span>
-        {% endif %}
-    </div>
-    
-    <button type="submit" class="btn-action" style="max-width: 200px; border-color: {% if estado_halloween %}#5C2B2B{% else %}#FF7A00{% endif %}; color: {% if estado_halloween %}#D96868{% else %}#FF7A00{% endif %};">
-        {% if estado_halloween %}Apagar Colección{% else %}Encender Halloween{% endif %}
-    </button>
-</form>
-</div>
+            <script>
+            async function enviarAnuncio() {
+                const titulo = document.getElementById('tituloPush').value;
+                const mensaje = document.getElementById('mensajePush').value;
+                
+                const res = await fetch('/admin/api/anuncio-global', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({titulo, mensaje})
+                });
+                
+                if(res.ok) alert("Anuncio enviado a todos los clientes exitosamente.");
+            }
+            </script>
+            
+            <div class="card" style="border: 1px solid #FF7A00;">
+                <h3 style="color: #FF7A00;">🎃 Modo Temporada: Halloween Collection</h3>
+                <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Activa o desactiva la inyección del carrusel y los productos exclusivos de Halloween en la tienda principal.</p>
+                
+                <form action="{{ url_for('toggle_temporada') }}" method="POST" style="background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <strong style="color: var(--text-white); display: block; font-size: 0.9rem;">Estado del Sistema:</strong>
+                        
+                        {% if estado_halloween %}
+                            <span style="color: #6BD968; font-size: 0.75rem; font-weight: bold;">🟢 ACTIVADO (Visible en Tienda)</span>
+                        {% else %}
+                            <span style="color: var(--text-gray); font-size: 0.75rem; font-weight: bold;">⚫ DESACTIVADO (Oculto)</span>
+                        {% endif %}
+                    </div>
+                    
+                    <button type="submit" class="btn-action" style="max-width: 200px; border-color: {% if estado_halloween %}#5C2B2B{% else %}#FF7A00{% endif %}; color: {% if estado_halloween %}#D96868{% else %}#FF7A00{% endif %};">
+                        {% if estado_halloween %}Apagar Colección{% else %}Encender Halloween{% endif %}
+                    </button>
+                </form>
+            </div>
+            
             <div class="card">
                 <h3>📢 Banner de Anuncios Corporativos</h3>
                 <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Publica banners con imágenes de alta definición y vínculos de redirección del ecosistema.</p>
@@ -1005,7 +933,6 @@ async function enviarAnuncio() {
                                 <input type="date" name="fecha_fin" class="form-control" required style="padding: 10px; margin-bottom: 10px;">
                             </div>
                         </div>
-
 
                         <input type="text" name="motivo" class="form-control" placeholder="Motivo (Ej. Mantenimiento del Atelier)">
                         <button type="submit" class="btn-action">Ejecutar Bloqueo</button>
@@ -1081,57 +1008,57 @@ async function enviarAnuncio() {
     </div>
 
 
-<div id="estadisticas" class="tab-content">
-    <div class="admin-grid">
-        <div class="card">
-            <h3 style="color: #6BD968;">🏆 Top 5 Productos Más Vendidos</h3>
-            <div class="table-wrapper">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Producto</th>
-                            <th>Unidades Entregadas</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for prod_nombre, cantidad in top_productos %}
-                        <tr>
-                            <td style="color: var(--text-white); font-weight: bold; font-size: 0.9rem;">{{ prod_nombre }}</td>
-                            <td style="color: var(--accent-gold); font-size: 1.1rem; font-weight: 900;">{{ cantidad }} pzs</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="2" style="text-align: center; color: var(--text-gray);">Acumulando datos del sistema...</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <div id="estadisticas" class="tab-content">
+        <div class="admin-grid">
+            <div class="card">
+                <h3 style="color: #6BD968;">🏆 Top 5 Productos Más Vendidos</h3>
+                <div class="table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Unidades Entregadas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prod_nombre, cantidad in top_productos %}
+                            <tr>
+                                <td style="color: var(--text-white); font-weight: bold; font-size: 0.9rem;">{{ prod_nombre }}</td>
+                                <td style="color: var(--accent-gold); font-size: 1.1rem; font-weight: 900;">{{ cantidad }} pzs</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="2" style="text-align: center; color: var(--text-gray);">Acumulando datos del sistema...</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
-        <div class="card">
-            <h3 style="color: var(--accent-gold);">📈 Mejores Días de Ingresos</h3>
-            <div class="table-wrapper">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th>Fecha Operativa</th>
-                            <th>Ingresos Registrados</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for fecha, total in mejores_dias %}
-                        <tr>
-                            <td style="color: var(--text-white); font-weight: bold; font-size: 0.9rem;">{{ fecha }}</td>
-                            <td style="color: #6BD968; font-weight: 900; font-size: 1.1rem;">${{ "%.2f"|format(total) }}</td>
-                        </tr>
-                        {% else %}
-                        <tr><td colspan="2" style="text-align: center; color: var(--text-gray);">Acumulando datos del sistema...</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="card">
+                <h3 style="color: var(--accent-gold);">📈 Mejores Días de Ingresos</h3>
+                <div class="table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Fecha Operativa</th>
+                                <th>Ingresos Registrados</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for fecha, total in mejores_dias %}
+                            <tr>
+                                <td style="color: var(--text-white); font-weight: bold; font-size: 0.9rem;">{{ fecha }}</td>
+                                <td style="color: #6BD968; font-weight: 900; font-size: 1.1rem;">${{ "%.2f"|format(total) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="2" style="text-align: center; color: var(--text-gray);">Acumulando datos del sistema...</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 
     <div id="usuarios_seguridad" class="tab-content">
@@ -1261,19 +1188,17 @@ async function enviarAnuncio() {
             }, 1000);
         }
 
-
-function verificarEmpaque(pedidoId) {
+        // 3. LÓGICA DE EMPAQUE (NUEVO)
+        function verificarEmpaque(pedidoId) {
             const checks = document.querySelectorAll('.check-empaque-' + pedidoId);
             const allChecked = Array.from(checks).every(c => c.checked);
             const btnBox = document.getElementById('btn-listo-' + pedidoId);
             const selectorContenedor = document.getElementById('contenedor-selector-' + pedidoId);
 
             if (allChecked && checks.length > 0) {
-                // Si todo está marcado, oculta el selector normal y muestra el botón verde gigante
                 btnBox.style.display = 'block';
                 selectorContenedor.style.display = 'none';
             } else {
-                // Si desmarcan algo, regresa a la normalidad
                 btnBox.style.display = 'none';
                 selectorContenedor.style.display = 'block';
             }
@@ -1282,11 +1207,10 @@ function verificarEmpaque(pedidoId) {
         function marcarPedidoListo(pedidoId, telefono, nombre, codigo) {
             const select = document.getElementById('select-estado-' + pedidoId);
             select.value = 'Listo';
-            // Ejecuta el mensaje de WhatsApp nativo y envía la petición
             notificarWhatsApp(select, telefono, nombre, codigo);
         }
 
-        // CONTROL DE PESTAÑAS (Corregido y optimizado)
+        // CONTROL DE PESTAÑAS
         function openTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1307,7 +1231,7 @@ function verificarEmpaque(pedidoId) {
             location.reload(); 
         });
 
-        // LÓGICA DE DESBLOQUEO DE USUARIOS (Corregida la fuga de datos del hash)
+        // LÓGICA DE DESBLOQUEO DE USUARIOS
         async function desbloquearDirectorio() {
             const pin = document.getElementById('pin_maestro').value;
             const errorMsg = document.getElementById('error-pin');
