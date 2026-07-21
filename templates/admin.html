@@ -9,70 +9,84 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE ZMARTH ORG — OPERACIONES</title>
+    <title>THE ZMARTH ORG — OPERACIONES PREMIUM</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+
     <style>
-        :root { 
-            /* Paleta Ecosistema Zmarth */
-            --bg-beige: #F3EBE0;
-            --card-black: #100F0D; 
-            --input-bg: #1A1815;
-            --accent-gold: #CBA573; 
-            --text-white: #F0F0F0;
-            --text-gray: #8A8A8A;
-            --border-dark: #2A2520;
-            --radius: 20px;
-            --shadow: 0 10px 25px rgba(0,0,0,0.1);
+        :root {
+            /* Paleta Premium Ecosistema Zmarth */
+            --bg-beige: #EADBC8;
+            --card-black: #000000;
+            --skin-beige: #dfd0c0;
+            --light-brown: #8b7355;        
+            --luxury-gold: #c5a880;
+            --deep-espresso: #1a120b;
+            --border-fino: #222222;        
+            --text-dark: #1A1A1A;
+            --transition-smooth: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            --radius: 4px;
+            --shadow: 0 15px 35px rgba(0,0,0,0.15);
         }
         
         body { 
             background-color: var(--bg-beige);
-            font-family: 'Arial', sans-serif; 
-            color: var(--card-black); 
+            font-family: 'Montserrat', sans-serif; 
+            color: var(--text-dark); 
+            font-weight: 300;
             margin: 0; 
             padding: 0; 
             -webkit-font-smoothing: antialiased;
         }
         
+        h1, h2, h3, h4 { font-family: 'Playfair Display', serif; font-weight: 400; }
+        
         /* HEADER & NAVBAR */
         .top-bar { 
             text-align: center;
-            padding: 20px 15px 15px; 
+            padding: 40px 15px 20px; 
         }
         .top-bar h1 { 
             margin: 0;
-            font-size: 1.2rem; 
-            color: #1A1A1A; 
-            letter-spacing: 2px; 
+            font-size: clamp(1.5rem, 3vw, 2.5rem); 
+            letter-spacing: 6px; 
+            color: var(--text-dark); 
             text-transform: uppercase; 
-            font-weight: 900;
+            font-weight: 600;
         }
         .auth-links {
             display: flex;
             justify-content: center;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
+            gap: 15px;
+            margin-top: 25px;
         }
         .auth-links a { 
             background: var(--card-black);
-            border: 1px solid var(--accent-gold); 
-            border-radius: 30px; 
-            padding: 10px 20px; 
-            color: var(--text-white); 
+            border: 1px solid var(--luxury-gold); 
+            border-radius: var(--radius); 
+            padding: 12px 25px; 
+            color: var(--luxury-gold); 
             text-decoration: none; 
-            font-size: 0.8rem; 
+            font-size: 0.75rem; 
             text-transform: uppercase; 
-            font-weight: bold;
-            letter-spacing: 1px; 
-            transition: 0.3s; 
+            font-weight: 600;
+            letter-spacing: 2px; 
+            transition: var(--transition-smooth); 
             flex: 1 1 auto;
             max-width: 200px;
+        }
+        .auth-links a:hover {
+            background: var(--luxury-gold);
+            color: var(--card-black);
         }
         
         /* CONTROLES SUPERIORES */
         .controls-container { 
             max-width: 1200px;
-            margin: 10px auto; 
+            margin: 20px auto; 
             padding: 0 15px; 
             display: flex; 
             flex-direction: column; 
@@ -84,245 +98,245 @@
 
         .tabs { 
             display: flex;
-            gap: 5px; 
-            background: var(--card-black);
-            padding: 6px;
-            border-radius: 30px;
-            border: 1px solid var(--border-dark);
+            gap: 10px; 
             overflow-x: auto; 
             white-space: nowrap;
             -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
         }
         .tabs::-webkit-scrollbar { display: none; }
         
         .tab-btn { 
             background: transparent;
-            border: none; 
-            color: var(--text-gray); 
-            padding: 10px 15px; 
-            border-radius: 25px;
+            border: 1px solid var(--border-fino);
+            color: var(--text-dark); 
+            padding: 12px 25px; 
+            border-radius: var(--radius);
             cursor: pointer; 
-            font-size: 0.8rem; 
+            font-size: 0.75rem; 
             text-transform: uppercase; 
-            font-weight: bold; 
-            transition: 0.3s;
+            font-weight: 600; 
+            letter-spacing: 2px;
+            transition: var(--transition-smooth);
             flex: 0 0 auto;
         }
-        .tab-btn.active { background: var(--accent-gold); color: var(--card-black); }
+        .tab-btn.active { background: var(--text-dark); color: var(--bg-beige); border-color: var(--text-dark); }
+        .tab-btn:hover:not(.active) { background: #d4c5b3; }
         
         .filter-form { width: 100%; }
         .filter-form select { 
             background: var(--card-black);
-            border: 1px solid var(--accent-gold); 
-            color: var(--accent-gold); 
+            border: 1px solid var(--luxury-gold); 
+            color: var(--luxury-gold); 
             padding: 12px 20px; 
-            border-radius: 30px; 
+            border-radius: var(--radius); 
             outline: none; 
             width: 100%;
-            font-size: 0.85rem; 
-            font-weight: bold;
+            font-size: 0.75rem; 
+            font-weight: 600;
             text-transform: uppercase;
+            font-family: 'Montserrat', sans-serif;
+            letter-spacing: 1px;
+            cursor: pointer;
         }
         @media (min-width: 768px) { .filter-form { width: auto; } }
 
         /* VISTAS Y GRID */
-        .tab-content { display: none; max-width: 1200px; margin: 0 auto 40px; padding: 0 15px; }
+        .tab-content { display: none; max-width: 1200px; margin: 0 auto 60px; padding: 0 15px; }
         @media (min-width: 768px) { .tab-content { padding: 0 40px; } }
-        .tab-content.active { display: block; animation: slideUp 0.4s ease; }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-content.active { display: block; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .admin-grid { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
-        @media (min-width: 900px) { .admin-grid { grid-template-columns: 1fr 2.5fr; gap: 25px; } }
+        .admin-grid { display: grid; grid-template-columns: 1fr; gap: 30px; align-items: start; }
+        @media (min-width: 900px) { .admin-grid { grid-template-columns: 1fr 2.5fr; gap: 40px; } }
         
         .card { 
             background: var(--card-black);
-            padding: 20px; 
+            padding: 30px; 
             border-radius: var(--radius); 
-            border: 1px solid var(--border-dark); 
+            border: 1px solid var(--border-fino); 
             box-shadow: var(--shadow); 
             width: 100%;
             box-sizing: border-box;
+            color: var(--skin-beige);
         }
-        @media (min-width: 768px) { .card { padding: 30px; } }
         
         .card h3 { 
             margin-top: 0;
-            color: var(--accent-gold); 
+            color: var(--luxury-gold); 
             text-transform: uppercase; 
-            letter-spacing: 1px; 
-            margin-bottom: 20px; 
-            font-size: 1rem; 
+            letter-spacing: 2px; 
+            margin-bottom: 25px; 
+            font-size: 1.2rem; 
             display: flex;
             align-items: center;
             gap: 10px;
-            border-bottom: 1px solid var(--border-dark);
+            border-bottom: 1px solid var(--border-fino);
             padding-bottom: 15px;
         }
         
         /* TABLAS RESPONSIVAS */
         .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
-        .admin-table { width: 100%; min-width: 600px; border-collapse: separate; border-spacing: 0 8px; }
-        .admin-table th { color: var(--text-gray); padding: 0 15px 10px; text-align: left; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid var(--border-dark); white-space: nowrap; }
-        .admin-table td { padding: 15px; background: var(--input-bg); font-size: 0.85rem; color: var(--text-white); border-top: 1px solid var(--border-dark); border-bottom: 1px solid var(--border-dark); }
-        .admin-table td:first-child { border-radius: 12px 0 0 12px; border-left: 1px solid var(--border-dark); }
-        .admin-table td:last-child { border-radius: 0 12px 12px 0; border-right: 1px solid var(--border-dark); }
+        .admin-table { width: 100%; min-width: 600px; border-collapse: collapse; }
+        .admin-table th { color: var(--light-brown); padding: 15px; text-align: left; font-size: 0.7rem; text-transform: uppercase; border-bottom: 1px solid var(--border-fino); letter-spacing: 2px; white-space: nowrap; font-weight: 500; }
+        .admin-table td { padding: 18px 15px; font-size: 0.85rem; color: var(--skin-beige); border-bottom: 1px solid #111; }
         
-        /* INVENTARIO Y LISTAS (CORRECCIÓN UI: Imágenes de Esquina a Esquina) */
+        /* INVENTARIO Y LISTAS */
         .inv-item { 
             display: flex;
             flex-direction: column; 
-            background: var(--input-bg); 
-            margin-bottom: 15px; 
-            border-radius: 16px; 
-            border: 1px solid var(--border-dark); 
+            background: #0A0A0A; 
+            margin-bottom: 20px; 
+            border-radius: var(--radius); 
+            border: 1px solid var(--border-fino); 
             overflow: hidden;
+            transition: var(--transition-smooth);
         }
+        .inv-item:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); border-color: #333; }
         .inv-item.agotado { opacity: 0.5; filter: grayscale(80%); }
         
-        /* INVENTARIO Y LISTAS (Imágenes Minimizadas y Centradas) */
         .inv-image-container {
             width: 100%;
-            height: 120px; /* Tamaño reducido para no ocupar tanto espacio */
-            background: #0A0A0A; /* Fondo oscuro elegante */
-            border-bottom: 1px solid var(--border-dark);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 10px;
-            box-sizing: border-box;
+            height: 140px; 
+            background: #050505; 
+            border-bottom: 1px solid var(--border-fino);
+            position: relative;
+            overflow: hidden;
         }
         .inv-image-container img {
-            max-width: 100%;
-            max-height: 100%;
-            width: auto;
-            height: auto;
-            object-fit: contain; /* Acopla la imagen sin recortarla ni estirarla */
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
             display: block;
-            border-radius: 6px;
         }
         .img-placeholder-full {
             width: 100%;
             height: 100%;
-            background: var(--card-black);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.8rem;
-            color: var(--text-gray);
+            font-size: 0.75rem;
+            color: var(--light-brown);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
         }
 
-        .inv-content {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
+        .inv-content { padding: 25px; display: flex; flex-direction: column; gap: 20px; }
         .inv-actions { display: flex; gap: 10px; width: 100%; justify-content: space-between; flex-wrap: wrap; }
        
         /* FORMULARIOS */
         .form-control { 
             width: 100%;
-            padding: 12px 15px; background: var(--input-bg); 
-            border: 1px solid var(--border-dark); color: var(--text-white); 
-            border-radius: 12px; box-sizing: border-box; margin-bottom: 15px; 
-            font-size: 0.9rem;
-            -webkit-appearance: none;
+            padding: 14px 18px; 
+            background: #0A0A0A; 
+            border: 1px solid var(--border-fino); 
+            color: var(--skin-beige); 
+            border-radius: var(--radius); 
+            box-sizing: border-box; 
+            margin-bottom: 15px; 
+            font-size: 0.85rem;
+            font-family: 'Montserrat', sans-serif;
+            outline: none;
+            transition: var(--transition-smooth);
         }
-        .form-control:focus { border-color: var(--accent-gold); outline: none; }
-        .edit-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        .form-control:focus { border-color: var(--luxury-gold); }
+        .edit-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
         @media (min-width: 768px) { .edit-grid { grid-template-columns: 1fr 1fr; } }
         
         .btn-action { 
             width: 100%;
-            padding: 15px; background: transparent; 
-            color: var(--accent-gold); border: 1px solid var(--accent-gold); 
-            font-weight: bold; border-radius: 12px; cursor: pointer; 
-            text-transform: uppercase; font-size: 0.85rem;
-            transition: 0.3s; 
+            padding: 16px; background: var(--luxury-gold); 
+            color: var(--card-black); border: none; 
+            font-weight: 600; border-radius: var(--radius); cursor: pointer; 
+            text-transform: uppercase; font-size: 0.75rem; letter-spacing: 2px;
+            transition: var(--transition-smooth); 
+            font-family: 'Montserrat', sans-serif;
         }
-        .btn-action:hover { background: var(--accent-gold); color: var(--card-black); }
+        .btn-action:hover { background: var(--skin-beige); }
+        .btn-action.outline { background: transparent; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); }
+        .btn-action.outline:hover { background: var(--luxury-gold); color: var(--card-black); }
         
         .btn-small { 
             background: transparent;
-            border: 1px solid var(--border-dark); 
-            color: var(--text-gray); padding: 10px 15px; cursor: pointer; 
-            font-size: 0.75rem; border-radius: 12px; text-transform: uppercase; font-weight: bold;
-            flex: 1; text-align: center;
+            border: 1px solid var(--border-fino); 
+            color: #888; padding: 12px 18px; cursor: pointer; 
+            font-size: 0.7rem; border-radius: var(--radius); text-transform: uppercase; font-weight: 600; letter-spacing: 1px;
+            flex: 1; text-align: center; transition: var(--transition-smooth);
         }
-        .btn-small:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+        .btn-small:hover { border-color: var(--luxury-gold); color: var(--skin-beige); }
 
-        /* MODALES OPTIMIZADOS PARA MÓVIL */
+        /* MODALES TIPO TICKET DE LUJO */
         .modal-overlay { 
             display: none;
             position: fixed; top: 0; left: 0; 
-            width: 100%; height: 100%; background: rgba(0, 0, 0, 0.85); 
-            backdrop-filter: blur(5px); z-index: 9999;
+            width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); 
+            backdrop-filter: blur(8px); z-index: 9999;
             justify-content: center; align-items: flex-end; 
         }
         @media (min-width: 768px) { .modal-overlay { align-items: center; } }
         
         .modal-content { 
             background: var(--card-black);
-            border: 1px solid var(--accent-gold); 
-            border-radius: 25px 25px 0 0; width: 100%; max-height: 90vh; 
-            padding: 30px 20px; position: relative; color: var(--text-white);
-            overflow-y: auto; box-sizing: border-box; animation: modalSlideUp 0.3s ease;
+            border: 1px solid var(--luxury-gold); 
+            border-radius: var(--radius); width: 100%; max-height: 90vh; 
+            padding: 40px 30px; position: relative; color: var(--skin-beige);
+            overflow-y: auto; box-sizing: border-box; animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.9);
         }
-        @media (min-width: 768px) { .modal-content { border-radius: var(--radius); width: 90%; max-width: 550px; padding: 35px; } }
+        @media (min-width: 768px) { .modal-content { width: 90%; max-width: 500px; padding: 45px 40px; } }
         
-        @keyframes modalSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes modalSlideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         
-        .btn-close-modal { position: absolute; top: 15px; right: 15px; background: var(--input-bg); border: 1px solid var(--border-dark); color: var(--text-white); width: 35px; height: 35px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        
-        .list-scroll { max-height: 25vh; overflow-y: auto; padding-right: 10px; margin-bottom: 15px; }
-        .modal-list-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--border-dark); font-size: 0.9rem; }
+        .btn-close-modal { position: absolute; top: 15px; right: 20px; background: transparent; border: none; color: var(--skin-beige); font-size: 2.2rem; font-weight: 200; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .btn-close-modal:hover { color: var(--luxury-gold); }
 
-        /* Temporizador Estilos */
-        .timer-badge { display: inline-block; padding: 3px 8px; border-radius: 8px; font-size: 0.7rem; margin-top: 5px; font-weight: bold; background: rgba(0,0,0,0.5); }
+        /* TEMPORIZADOR Y ETIQUETAS */
+        .timer-badge { display: inline-block; padding: 5px 10px; border-radius: 4px; font-size: 0.7rem; margin-top: 5px; font-weight: 600; letter-spacing: 1px; background: #0A0A0A; border: 1px solid #222; }
+        .tag-status { font-size: 0.65rem; padding: 4px 8px; border-radius: 4px; border: 1px solid; font-weight: 600; letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
     <header class="top-bar">
-        <h1>DELICIOUS BREAD — OPERACIONES</h1>
-        <div style="font-size: 0.75rem; color: #8A8A8A; margin-top: 5px; font-weight: bold; letter-spacing: 1px;">Ecosistema Delicious Bread</div>
+        <h1>OPERACIONES</h1>
+        <p style="font-size: 0.75rem; color: var(--light-brown); margin-top: 5px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase;">Ecosistema The Zmarth Organization</p>
         <div class="auth-links">
-            <a href="{{ url_for('index') }}">🛒 Ver Tienda</a>
-            <a href="{{ url_for('admin_logout') }}" style="border-color: #5C2B2B; color: #D96868;">🚪 Salir</a>
+            <a href="{{ url_for('index') }}">Tienda Premium</a>
+            <a href="{{ url_for('admin_logout') }}" style="border-color: #4a1d1d; color: #ff6b6b;">Cerrar Sesión</a>
         </div>
     </header>
 
     <div class="controls-container">
         <div class="tabs">
-            <button class="tab-btn active" onclick="openTab('activos')">📦 Órdenes Live</button>
-            <button class="tab-btn" onclick="openTab('inventario')">🥖 Menú & Productos</button>
-            <button class="tab-btn" onclick="openTab('configuracion')">⚙️ Alertas & Ajustes</button>
-            <button class="tab-btn" onclick="openTab('historial')">🗄️ Historial</button>
-            <button class="tab-btn" onclick="openTab('estadisticas')">📊 Estadísticas y Top</button>
-            <button class="tab-btn" onclick="openTab('usuarios_seguridad')">🔐 Bóveda de Usuarios</button>
+            <button class="tab-btn active" onclick="openTab('activos')">Órdenes Live</button>
+            <button class="tab-btn" onclick="openTab('inventario')">Catálogo Premium</button>
+            <button class="tab-btn" onclick="openTab('configuracion')">Sistemas y Alertas</button>
+            <button class="tab-btn" onclick="openTab('historial')">Bóveda Histórica</button>
+            <button class="tab-btn" onclick="openTab('estadisticas')">Analíticas</button>
+            <button class="tab-btn" onclick="openTab('usuarios_seguridad')">Seguridad</button>
         </div>
         
         <form class="filter-form" method="GET" action="{{ url_for('admin') }}">
             <select name="filtro" onchange="this.form.submit()">
-                <option value="hoy" {% if filtro_actual == 'hoy' %}selected{% endif %}>Filtro: Hoy</option>
-                <option value="semana" {% if filtro_actual == 'semana' %}selected{% endif %}>Filtro: Esta Semana</option>
-                <option value="todos" {% if filtro_actual == 'todos' %}selected{% endif %}>Filtro: Todo</option>
+                <option value="hoy" {% if filtro_actual == 'hoy' %}selected{% endif %}>Rendimiento: Hoy</option>
+                <option value="semana" {% if filtro_actual == 'semana' %}selected{% endif %}>Rendimiento: Esta Semana</option>
+                <option value="todos" {% if filtro_actual == 'todos' %}selected{% endif %}>Rendimiento: Histórico Total</option>
             </select>
         </form>
     </div>
 
+    <!-- SECCIÓN: ÓRDENES LIVE -->
     <div id="activos" class="tab-content active">
         <div class="admin-grid">
-            <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- LISTA DE PRODUCCIÓN -->
+            <div style="display: flex; flex-direction: column; gap: 30px;">
                 <div class="card" id="card-produccion-requerida">
-                    <h3>🔥 Producción Requerida</h3>
-                    <p style="color: var(--text-gray); font-size: 0.75rem; margin-top: -15px;">Filtro IA: Excluye Adquisición Relámpago.</p>
+                    <h3>Atelier: Requerimientos</h3>
+                    <p style="color: #777; font-size: 0.7rem; margin-top: -20px; text-transform: uppercase; letter-spacing: 1px;">Excluye Venta Relámpago.</p>
                     
-                    <div id="lista-produccion-anticipada">
-                        <p style="color:var(--text-gray); font-size:0.85rem; text-align: center;">Procesando datos del Atelier...</p>
+                    <div id="lista-produccion-anticipada" style="margin-top: 15px;">
+                        <p style="color:var(--light-brown); font-size:0.8rem; text-align: center; font-style: italic;">Calculando métricas del sistema...</p>
                     </div>
 
                     <div id="datos-produccion-crudos" style="display: none;">
@@ -337,16 +351,18 @@
                 </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                
+                <!-- RADAR NORMAL -->
                 <div class="card">
-                    <h3>🛰️ Radar: Órdenes Anticipadas</h3>
+                    <h3>Radar Operativo</h3>
                     <div class="table-wrapper">
-                        <table class="admin-table table-rastreable">
+                        <table class="admin-table">
                             <thead>
                                 <tr>
                                     <th>Ticket</th>
                                     <th>Cliente</th>
-                                    <th>Tiempo Restante</th>
+                                    <th>Expiración</th>
                                     <th>Acción</th>
                                 </tr>
                             </thead>
@@ -365,104 +381,119 @@
                                         {% set ns_normal.hay_pedidos = true %}
                                         
                                         <tr>
-                                            <td colspan="4" style="background: var(--card-black); color: var(--accent-gold); font-weight: 900; text-align: center; font-size: 0.85rem; border: 1px dashed var(--accent-gold); letter-spacing: 2px;">
-                                                🕒 PEDIDOS PARA: {{ hora | upper }}
+                                            <td colspan="4" style="background: #050505; color: var(--skin-beige); font-weight: 400; text-align: center; font-size: 0.75rem; border: 1px solid var(--border-fino); letter-spacing: 3px; font-family: 'Playfair Display', serif;">
+                                                RECEPCIÓN: {{ hora | upper }}
                                             </td>
                                         </tr>
                                         
                                         {% for pedido in grupo_pedidos %}
                                             {% if not pedido.es_relampago %}
                                                 <tr>
-                                                    <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
+                                                    <td style="color:var(--luxury-gold); font-weight:600; font-size: 0.8rem; letter-spacing: 1px;">{{ pedido.codigo_recogida }}</td>
                                                     <td>
-                                                        <div style="font-weight: bold;">{{ pedido.cliente.nombre }}</div>
+                                                        <div style="font-weight: 500;">{{ pedido.cliente.nombre }}</div>
                                                         {% if pedido.pagado %}
-                                                            <span style="font-size: 0.65rem; color: #6BD968; border: 1px solid #365C2B; background: #1F2E1A; padding: 2px 5px; border-radius: 4px;">PAGADO</span>
+                                                            <span class="tag-status" style="color: #c5a880; border-color: #c5a880; background: rgba(197,168,128,0.1);">PAGADO</span>
                                                         {% endif %}
                                                     </td>
                                                     <td>
-                                                        <div class="timer-badge timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}">
-                                                            Calculando...
-                                                        </div>
+                                                        <div class="timer-badge timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}">Calculando...</div>
                                                     </td>
-                                                    <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem;" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket</button></td>
+                                                    <td><button class="btn-action outline" style="padding: 8px 15px; font-size:0.65rem;" onclick="abrirModalPedido('{{ pedido.id }}')">Inspeccionar</button></td>
                                                 </tr>
                                                 
+                                                <!-- MODAL DEL TICKET -->
                                                 <div id="modal-{{ pedido.id }}" class="modal-overlay">
                                                     <div class="modal-content">
                                                         <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
-                                                        <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">TICKET: {{ pedido.codigo_recogida }}</h2>
-                                                        <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
-                                                        <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
+                                                        <h2 style="color:var(--luxury-gold); margin:0 0 5px 0; letter-spacing:2px; font-size:1.4rem;">TICKET DB</h2>
+                                                        <p style="color:var(--light-brown); font-size:0.75rem; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 2px;">{{ pedido.codigo_recogida }}</p>
+                                                        <p style="font-size:0.85rem; margin-top:15px; font-weight: 500;">Titular: <span style="color:var(--skin-beige);">{{ pedido.cliente.nombre }}</span></p>
+                                                        <p style="color:#888; font-size:0.75rem; margin-top:0;">Tel: {{ pedido.cliente.telefono }}</p>
                                                         
-                                                        <div style="background: #F5EFE6; padding:20px; border-radius:12px; margin:15px 0; border: 2px dashed var(--accent-gold); box-shadow: inset 0 5px 15px rgba(0,0,0,0.05); color: #111;">
-                                                            <h4 style="margin:0 0 15px 0; color:#111; font-size:0.85rem; text-transform:uppercase; border-bottom: 1px solid #d4c5b3; padding-bottom: 10px;">📋 Check-list de Empaque:</h4>
-                                                            <div class="list-scroll" style="max-height: 40vh; padding-right: 5px;">
+                                                        <!-- CHECK-LIST DE EMPAQUE (LUXURY UI & PERSISTENCE) -->
+                                                        <div style="background: var(--card-black); padding:25px 20px; border-radius:var(--radius); margin:20px 0; border: 1px solid var(--luxury-gold); box-shadow: inset 0 10px 30px rgba(0,0,0,0.8);">
+                                                            <h4 style="margin:0 0 15px 0; color:var(--skin-beige); font-size:1rem; text-transform:uppercase; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; letter-spacing: 2px;">📋 Lista de Empaque</h4>
+                                                            <div class="list-scroll" style="max-height: 35vh; padding-right: 5px; overflow-y: auto;">
                                                                 {% for d in pedido.detalles %}
-                                                                <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e3d5c5; font-size: 0.95rem; cursor: pointer; transition: 0.3s;">
+                                                                <label style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #111; cursor: pointer; transition: 0.3s;">
                                                                     <div style="display: flex; align-items: center; gap: 12px;">
-                                                                        <input type="checkbox" class="check-empaque-{{ pedido.id }}" onchange="verificarEmpaque('{{ pedido.id }}')" style="width: 20px; height: 20px; accent-color: #365C2B; cursor: pointer;">
-                                                                        <span style="color:#111; font-weight: 700;">{{ d.producto.nombre }}</span>
+                                                                        <input type="checkbox" class="check-empaque-{{ pedido.id }}" id="chk-{{ pedido.id }}-{{ loop.index }}" onchange="guardarEmpaque('{{ pedido.id }}', '{{ loop.index }}', this.checked); verificarEmpaque('{{ pedido.id }}')" style="width: 18px; height: 18px; accent-color: var(--luxury-gold); cursor: pointer;" {% if pedido.estado in ['Listo', 'Entregado'] %}checked disabled{% endif %}>
+                                                                        <span style="color:var(--skin-beige); font-weight: 400; font-size: 0.85rem;">{{ d.producto.nombre }}</span>
                                                                     </div>
-                                                                    <strong style="color:var(--card-black); font-size: 1.1rem; background: #fff; padding: 2px 8px; border-radius: 6px; border: 1px solid #d4c5b3;">x{{ d.cantidad }}</strong>
+                                                                    <strong style="color:var(--card-black); font-size: 0.75rem; background: var(--luxury-gold); padding: 4px 10px; border-radius: var(--radius); font-weight: 600;">x{{ d.cantidad }}</strong>
                                                                 </label>
                                                                 {% endfor %}
                                                             </div>
-                                                            <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:1.1rem; font-weight:900; border-top: 2px solid #d4c5b3; padding-top: 15px; color: #111;">
-                                                                <span>MONTO TOTAL</span>
-                                                                <strong style="color:#8b7355;">${{ "%.2f"|format(pedido.monto_total) }}</strong>
+                                                            <div style="display:flex; justify-content:space-between; margin-top:20px; font-size:1.2rem; font-weight:400; border-top: 1px dashed var(--border-fino); padding-top: 20px; font-family: 'Playfair Display', serif; color: var(--luxury-gold);">
+                                                                <span>Monto</span>
+                                                                <span>${{ "%.2f"|format(pedido.monto_total) }}</span>
                                                             </div>
-                                                            <div id="btn-listo-{{ pedido.id }}" style="display: none; margin-top: 20px;">
-                                                                <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border: 2px solid #365C2B; width: 100%; padding: 15px; font-size: 0.85rem; border-radius: 12px; text-transform: uppercase; font-weight: 900; box-shadow: 0 5px 15px rgba(107,217,104,0.2);" onclick="marcarPedidoListo('{{ pedido.id }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
-                                                                    ✅ ¡Todo Empaquetado! (Marcar como Listo)
+                                                            
+                                                            <div id="btn-listo-{{ pedido.id }}" style="display: none; margin-top: 25px;">
+                                                                <button type="button" class="btn-action" style="box-shadow: 0 10px 20px rgba(197, 168, 128, 0.2);" onclick="marcarPedidoListo('{{ pedido.id }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+                                                                    Cerrar Empaque (Marcar Listo)
                                                                 </button>
                                                             </div>
                                                         </div>
 
-                                                        <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
-                                                            <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
-                                                                <span>⏱️ Recogida: <strong style="color:var(--text-white);">{{ pedido.horario_recogida }}</strong></span>
-                                                                <span>💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong></span>
+                                                        <div style="font-size:0.75rem; color:#888; margin-bottom:20px; line-height:1.6; background: #0A0A0A; padding: 18px; border-radius: var(--radius); text-align: center; border: 1px solid var(--border-fino);">
+                                                            <div style="display: flex; justify-content: space-around; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">
+                                                                <span>Retiro: <strong style="color:var(--skin-beige);">{{ pedido.horario_recogida }}</strong></span>
+                                                                <span>Pago: <strong style="color:var(--skin-beige);">{{ pedido.metodo_pago }}</strong></span>
                                                             </div>
-                                                            <div class="timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}" style="font-size: 0.75rem; font-weight: bold;"></div>
+                                                            <div class="timer-recogida" data-horario="{{ pedido.horario_recogida }}" data-estado="{{ pedido.estado }}" style="font-family: 'Montserrat', sans-serif;"></div>
                                                         </div>
 
-                                                        <div style="margin-bottom: 20px; text-align: center;">
+                                                        <div style="margin-bottom: 25px; text-align: center;">
                                                             <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST">
                                                                 {% if pedido.pagado %}
-                                                                    <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border-color: #365C2B; cursor: default; width: 100%;">✅ Confirmado - Total Pagado</button>
+                                                                    <button type="button" class="btn-action outline" style="cursor: default; border-color: #c5a880; color: #c5a880;">Transacción Validada</button>
                                                                 {% else %}
-                                                                    <button type="submit" class="btn-action" style="border-color: #6BE0FF; color: #6BE0FF; width: 100%;">💰 Validar y Marcar como Pagado</button>
+                                                                    <button type="submit" class="btn-action outline" style="border-color: #8b7355; color: #dfd0c0;">Validar Pago Monetario</button>
                                                                 {% endif %}
                                                             </form>
                                                         </div>
 
                                                         {% if pedido.metodo_pago == 'Transferencia' %}
                                                             {% if pedido.comprobante_url %}
-                                                                <div style="margin-bottom: 20px; text-align: center; border: 1px solid var(--accent-gold); padding: 10px; border-radius: 12px; background: #0A0A0A;">
-                                                                    <span style="display: block; font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 10px; text-transform: uppercase;">Evidencia de Transferencia</span>
+                                                                <div style="margin-bottom: 25px; text-align: center; border: 1px solid var(--luxury-gold); padding: 15px; border-radius: var(--radius); background: #050505;">
+                                                                    <span style="display: block; font-size: 0.65rem; color: var(--luxury-gold); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px;">Comprobante Digital</span>
                                                                     <a href="{{ pedido.comprobante_url }}" target="_blank">
-                                                                        <img src="{{ pedido.comprobante_url }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;">
+                                                                        <img src="{{ pedido.comprobante_url }}" style="max-width: 100%; max-height: 250px; border-radius: var(--radius); object-fit: contain;">
                                                                     </a>
                                                                 </div>
                                                             {% else %}
-                                                                <div style="margin-bottom: 20px; text-align: center; border: 1px dashed #FF5A5A; padding: 15px; border-radius: 12px; background: rgba(255, 90, 90, 0.05);">
-                                                                    <span style="font-size: 0.75rem; color: #FF5A5A; font-weight: bold; text-transform: uppercase;">Pendiente de Comprobante</span>
+                                                                <div style="margin-bottom: 25px; text-align: center; border: 1px dashed #4a1d1d; padding: 20px; border-radius: var(--radius); background: #1a0f0f;">
+                                                                    <span style="font-size: 0.7rem; color: #ff6b6b; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;">Aguardando Comprobante</span>
                                                                 </div>
                                                             {% endif %}
                                                         {% endif %}
                                                         
+                                                        <!-- SISTEMA INTELIGENTE DE ESTADOS OPERATIVOS -->
                                                         <form id="form-estado-{{ pedido.id }}" action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
                                                             <div id="contenedor-selector-{{ pedido.id }}">
-                                                                <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo Manual:</label>
+                                                                <label style="font-size:0.7rem; color:var(--luxury-gold); font-weight:600; text-transform:uppercase; display:block; margin-bottom:10px; letter-spacing: 2px;">Control Operativo:</label>
                                                                 <select name="estado" id="select-estado-{{ pedido.id }}" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
-                                                                    <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                                                                    <option value="Preparando" {% if pedido.estado == 'Preparando' %}selected{% endif %}>Preparando Pedido 📦</option>
-                                                                    <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>En Horno 🥖</option>
-                                                                    <option value="Sincronizando" {% if pedido.estado == 'Sincronizando' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
-                                                                    <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
-                                                                    <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
-                                                                    <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                                                                    {% if pedido.tipo_pedido == 'puro_pan' %}
+                                                                        <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                                                        <option value="Horneando" {% if pedido.estado in ['Horneando', 'Preparando'] or pedido.estado == 'Pendiente' %}selected{% endif %}>En Horno 🥖</option>
+                                                                        <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
+                                                                        <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
+                                                                        <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                                                                    {% elif pedido.tipo_pedido == 'puros_abarrotes' %}
+                                                                        <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                                                        <option value="Preparando" {% if pedido.estado in ['Preparando', 'Horneando'] or pedido.estado == 'Pendiente' %}selected{% endif %}>Preparando Pedido 📦</option>
+                                                                        <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
+                                                                        <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
+                                                                        <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                                                                    {% else %}
+                                                                        <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                                                        <option value="Sincronizando" {% if pedido.estado in ['Sincronizando', 'Preparando', 'Horneando'] or pedido.estado == 'Pendiente' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
+                                                                        <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
+                                                                        <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
+                                                                        <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+                                                                    {% endif %}
                                                                 </select>
                                                             </div>
                                                         </form>
@@ -474,23 +505,24 @@
                                 {% endfor %} 
                                 
                                 {% if not ns_normal.hay_pedidos %}
-                                    <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay órdenes anticipadas en curso.</td></tr>
+                                    <tr><td colspan="4" style="text-align:center; color:#777; padding: 40px; font-style: italic; font-size: 0.8rem;">Sin líneas de operación activas.</td></tr>
                                 {% endif %}
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="card" style="border: 1px solid var(--accent-gold);">
-                    <h3 style="color: var(--accent-gold);">⚡ Radar: Adquisición Relámpago</h3>
+                <!-- RADAR RELÁMPAGO -->
+                <div class="card" style="border-color: var(--luxury-gold);">
+                    <h3 style="color: var(--luxury-gold);">Adquisición Relámpago</h3>
                     <div class="table-wrapper">
-                        <table class="admin-table table-rastreable">
+                        <table class="admin-table">
                             <thead>
                                 <tr>
-                                    <th>Ticket</th>
-                                    <th>Cliente</th>
-                                    <th>Total</th>
-                                    <th>Acción</th>
+                                    <th>Llave</th>
+                                    <th>Titular</th>
+                                    <th>Monto</th>
+                                    <th>Atelier</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -499,88 +531,89 @@
                                     {% if pedido.es_relampago %}
                                         {% set ns_flash.hay_pedidos = true %}
                                         <tr>
-                                            <td class="codigo-ticket" style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
+                                            <td style="color:var(--skin-beige); font-weight:600; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
                                             <td>
-                                                <div style="font-weight: bold; color: var(--text-white);">{{ pedido.cliente.nombre }}</div>
+                                                <div style="font-weight: 500;">{{ pedido.cliente.nombre }}</div>
                                                 {% if pedido.pagado %}
-                                                    <span style="font-size: 0.65rem; color: #6BD968; border: 1px solid #365C2B; background: #1F2E1A; padding: 2px 5px; border-radius: 4px;">PAGADO</span>
+                                                    <span class="tag-status" style="color: #c5a880; border-color: #c5a880; background: rgba(197,168,128,0.1);">PAGADO</span>
                                                 {% endif %}
                                             </td>
-                                            <td><strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong></td>
-                                            <td><button class="btn-action" style="padding: 8px 12px; font-size:0.7rem; border-color: var(--accent-gold); color: var(--accent-gold);" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket ⚡</button></td>
+                                            <td><strong style="color:var(--luxury-gold); font-family: 'Playfair Display', serif;">${{ "%.2f"|format(pedido.monto_total) }}</strong></td>
+                                            <td><button class="btn-action" style="padding: 8px 15px; font-size:0.65rem;" onclick="abrirModalPedido('{{ pedido.id }}')">Procesar</button></td>
                                         </tr>
                                         
+                                        <!-- MODAL DEL TICKET RELÁMPAGO -->
                                         <div id="modal-{{ pedido.id }}" class="modal-overlay">
-                                            <div class="modal-content" style="border: 1px solid var(--accent-gold);">
+                                            <div class="modal-content" style="border-color: var(--luxury-gold);">
                                                 <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
-                                                <h2 style="color:var(--accent-gold); margin:0 0 5px 0; letter-spacing:1px; font-size:1.1rem;">⚡ TICKET: {{ pedido.codigo_recogida }}</h2>
-                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-bottom: 2px;">Cliente: <strong style="color:var(--text-white);">{{ pedido.cliente.nombre }}</strong></p>
-                                                <p style="color:var(--text-gray); font-size:0.85rem; margin-top:0;">📞 Tel: <strong style="color:var(--text-white);">{{ pedido.cliente.telefono }}</strong></p>
+                                                <h2 style="color:var(--luxury-gold); margin:0 0 5px 0; letter-spacing:2px; font-size:1.4rem;">TICKET FLASH</h2>
+                                                <p style="color:var(--light-brown); font-size:0.75rem; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 2px;">{{ pedido.codigo_recogida }}</p>
+                                                <p style="font-size:0.85rem; margin-top:15px; font-weight: 500;">Titular: <span style="color:var(--skin-beige);">{{ pedido.cliente.nombre }}</span></p>
+                                                <p style="color:#888; font-size:0.75rem; margin-top:0;">Tel: {{ pedido.cliente.telefono }}</p>
                                                 
-                                                <div style="background: #F5EFE6; padding:20px; border-radius:12px; margin:15px 0; border: 2px dashed var(--accent-gold); box-shadow: inset 0 5px 15px rgba(0,0,0,0.05); color: #111;">
-                                                    <h4 style="margin:0 0 15px 0; color:#111; font-size:0.85rem; text-transform:uppercase; border-bottom: 1px solid #d4c5b3; padding-bottom: 10px;">⚡ Check-list Relámpago:</h4>
-                                                    <div class="list-scroll" style="max-height: 40vh; padding-right: 5px;">
+                                                <div style="background: var(--card-black); padding:25px 20px; border-radius:var(--radius); margin:20px 0; border: 1px solid var(--luxury-gold); box-shadow: inset 0 10px 30px rgba(0,0,0,0.8);">
+                                                    <h4 style="margin:0 0 15px 0; color:var(--skin-beige); font-size:1rem; text-transform:uppercase; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; letter-spacing: 2px;">⚡ Lista de Retiro</h4>
+                                                    <div class="list-scroll" style="max-height: 35vh; padding-right: 5px; overflow-y: auto;">
                                                         {% for d in pedido.detalles %}
-                                                        <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e3d5c5; font-size: 0.95rem; cursor: pointer; transition: 0.3s;">
+                                                        <label style="display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid #111; cursor: pointer; transition: 0.3s;">
                                                             <div style="display: flex; align-items: center; gap: 12px;">
-                                                                <input type="checkbox" class="check-empaque-{{ pedido.id }}" onchange="verificarEmpaque('{{ pedido.id }}')" style="width: 20px; height: 20px; accent-color: #365C2B; cursor: pointer;">
-                                                                <span style="color:#111; font-weight: 700;">{{ d.producto.nombre }}</span>
+                                                                <input type="checkbox" class="check-empaque-{{ pedido.id }}" id="chk-{{ pedido.id }}-{{ loop.index }}" onchange="guardarEmpaque('{{ pedido.id }}', '{{ loop.index }}', this.checked); verificarEmpaque('{{ pedido.id }}')" style="width: 18px; height: 18px; accent-color: var(--luxury-gold); cursor: pointer;" {% if pedido.estado in ['Listo', 'Entregado'] %}checked disabled{% endif %}>
+                                                                <span style="color:var(--skin-beige); font-weight: 400; font-size: 0.85rem;">{{ d.producto.nombre }}</span>
                                                             </div>
-                                                            <strong style="color:var(--card-black); font-size: 1.1rem; background: #fff; padding: 2px 8px; border-radius: 6px; border: 1px solid #d4c5b3;">x{{ d.cantidad }}</strong>
+                                                            <strong style="color:var(--card-black); font-size: 0.75rem; background: var(--luxury-gold); padding: 4px 10px; border-radius: var(--radius); font-weight: 600;">x{{ d.cantidad }}</strong>
                                                         </label>
                                                         {% endfor %}
                                                     </div>
-                                                    <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:1.1rem; font-weight:900; border-top: 2px solid #d4c5b3; padding-top: 15px; color: #111;">
-                                                        <span>MONTO TOTAL</span>
-                                                        <strong style="color:#8b7355;">${{ "%.2f"|format(pedido.monto_total) }}</strong>
+                                                    <div style="display:flex; justify-content:space-between; margin-top:20px; font-size:1.2rem; font-weight:400; border-top: 1px dashed var(--border-fino); padding-top: 20px; font-family: 'Playfair Display', serif; color: var(--luxury-gold);">
+                                                        <span>Monto</span>
+                                                        <span>${{ "%.2f"|format(pedido.monto_total) }}</span>
                                                     </div>
-                                                    <div id="btn-listo-{{ pedido.id }}" style="display: none; margin-top: 20px;">
-                                                        <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border: 2px solid #365C2B; width: 100%; padding: 15px; font-size: 0.85rem; border-radius: 12px; text-transform: uppercase; font-weight: 900; box-shadow: 0 5px 15px rgba(107,217,104,0.2);" onclick="marcarPedidoListo('{{ pedido.id }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
-                                                            ✅ ¡Todo Empaquetado! (Marcar como Listo)
+                                                    
+                                                    <div id="btn-listo-{{ pedido.id }}" style="display: none; margin-top: 25px;">
+                                                        <button type="button" class="btn-action" style="box-shadow: 0 10px 20px rgba(197, 168, 128, 0.2);" onclick="marcarPedidoListo('{{ pedido.id }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+                                                            Cerrar Empaque (Marcar Listo)
                                                         </button>
                                                     </div>
                                                 </div>
 
-                                                <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
-                                                    <div style="display: flex; justify-content: space-around;">
-                                                        <span>⏱️ Recogida: <strong style="color:var(--accent-gold);">Inmediata / {{ pedido.horario_recogida }}</strong></span>
-                                                        <span>💳 Pago: <strong style="color:var(--text-white);">{{ pedido.metodo_pago }}</strong></span>
+                                                <div style="font-size:0.75rem; color:#888; margin-bottom:20px; line-height:1.6; background: #0A0A0A; padding: 18px; border-radius: var(--radius); text-align: center; border: 1px solid var(--border-fino);">
+                                                    <div style="display: flex; justify-content: space-around; text-transform: uppercase; letter-spacing: 1px;">
+                                                        <span>Retiro: <strong style="color:var(--luxury-gold);">INMEDIATO</strong></span>
+                                                        <span>Pago: <strong style="color:var(--skin-beige);">{{ pedido.metodo_pago }}</strong></span>
                                                     </div>
                                                 </div>
 
-                                                <div style="margin-bottom: 20px; text-align: center;">
+                                                <div style="margin-bottom: 25px; text-align: center;">
                                                     <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST">
                                                         {% if pedido.pagado %}
-                                                            <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border-color: #365C2B; cursor: default; width: 100%;">⚡ Confirmado - Total Pagado</button>
+                                                            <button type="button" class="btn-action outline" style="cursor: default; border-color: #c5a880; color: #c5a880;">Transacción Validada</button>
                                                         {% else %}
-                                                            <button type="submit" class="btn-action" style="border-color: var(--accent-gold); color: var(--accent-gold); width: 100%;">💰 Validar y Marcar como Pagado</button>
+                                                            <button type="submit" class="btn-action outline" style="border-color: #8b7355; color: #dfd0c0;">Validar Pago Monetario</button>
                                                         {% endif %}
                                                     </form>
                                                 </div>
 
                                                 {% if pedido.metodo_pago == 'Transferencia' %}
                                                     {% if pedido.comprobante_url %}
-                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px solid var(--accent-gold); padding: 10px; border-radius: 12px; background: #0A0A0A;">
-                                                            <span style="display: block; font-size: 0.7rem; color: var(--accent-gold); margin-bottom: 10px; text-transform: uppercase;">Evidencia de Transferencia</span>
+                                                        <div style="margin-bottom: 25px; text-align: center; border: 1px solid var(--luxury-gold); padding: 15px; border-radius: var(--radius); background: #050505;">
+                                                            <span style="display: block; font-size: 0.65rem; color: var(--luxury-gold); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px;">Comprobante Digital</span>
                                                             <a href="{{ pedido.comprobante_url }}" target="_blank">
-                                                                <img src="{{ pedido.comprobante_url }}" style="max-width: 100%; max-height: 250px; border-radius: 8px; object-fit: contain;">
+                                                                <img src="{{ pedido.comprobante_url }}" style="max-width: 100%; max-height: 250px; border-radius: var(--radius); object-fit: contain;">
                                                             </a>
                                                         </div>
                                                     {% else %}
-                                                        <div style="margin-bottom: 20px; text-align: center; border: 1px dashed #FF5A5A; padding: 15px; border-radius: 12px; background: rgba(255, 90, 90, 0.05);">
-                                                            <span style="font-size: 0.75rem; color: #FF5A5A; font-weight: bold; text-transform: uppercase;">Pendiente de Comprobante</span>
+                                                        <div style="margin-bottom: 25px; text-align: center; border: 1px dashed #4a1d1d; padding: 20px; border-radius: var(--radius); background: #1a0f0f;">
+                                                            <span style="font-size: 0.7rem; color: #ff6b6b; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;">Aguardando Comprobante</span>
                                                         </div>
                                                     {% endif %}
                                                 {% endif %}
                                                 
                                                 <form id="form-estado-{{ pedido.id }}" action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
                                                     <div id="contenedor-selector-{{ pedido.id }}">
-                                                        <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo Manual:</label>
+                                                        <label style="font-size:0.7rem; color:var(--luxury-gold); font-weight:600; text-transform:uppercase; display:block; margin-bottom:10px; letter-spacing: 2px;">Control Operativo:</label>
                                                         <select name="estado" id="select-estado-{{ pedido.id }}" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
                                                             <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
-                                                            <option value="Preparando" {% if pedido.estado == 'Preparando' %}selected{% endif %}>Preparando Pedido 📦</option>
-                                                            <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>En Horno 🥖</option>
-                                                            <option value="Sincronizando" {% if pedido.estado == 'Sincronizando' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
+                                                            <option value="Preparando" {% if pedido.estado in ['Preparando', 'Horneando', 'Sincronizando'] or pedido.estado == 'Pendiente' %}selected{% endif %}>Armando Paquete 📦</option>
                                                             <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
                                                             <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
                                                             <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
@@ -593,7 +626,7 @@
                                 {% endfor %} 
                                 
                                 {% if not ns_flash.hay_pedidos %}
-                                    <tr><td colspan="4" style="text-align:center; color:var(--text-gray); padding: 30px;">No hay adquisiciones relámpago activas.</td></tr>
+                                    <tr><td colspan="4" style="text-align:center; color:#777; padding: 40px; font-style: italic; font-size: 0.8rem;">Sin transacciones relámpago activas.</td></tr>
                                 {% endif %}
                             </tbody>
                         </table>
@@ -601,62 +634,65 @@
                 </div>
             </div>
         </div>
-    </div> <div id="especiales" class="tab-content">
+    </div> 
+
+    <!-- SECCIÓN: ALTA GAMA / ESPECIALES -->
+    <div id="especiales" class="tab-content">
         <div class="card">
-            <h3>💼 Alta Gama & Pedidos Especiales</h3>
-            <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 20px;">Línea de producción dedicada a catering corporativo, bodas y solicitudes personalizadas de Atelier.</p>
+            <h3>Alta Gama & Catering Especial</h3>
+            <p style="color: #777; font-size: 0.8rem; margin-top: -15px; margin-bottom: 25px; line-height: 1.6;">Línea de producción dedicada a catering corporativo, bodas y solicitudes personalizadas de alto volumen.</p>
             <div class="table-wrapper">
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th>Código Tracking</th>
-                            <th>Cliente / Contacto</th>
-                            <th>Fecha Evento</th>
-                            <th>Total Solicitado</th>
+                            <th>Identificador</th>
+                            <th>Ejecutivo / Contacto</th>
+                            <th>Agendado</th>
+                            <th>Monto</th>
                             <th>Anticipo (50%)</th>
                             <th>Estado Operativo</th>
-                            <th>Atelier Acciones</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for esp in pedidos_especiales_lista %}
                         <tr>
-                            <td style="color:var(--accent-gold); font-weight:bold; font-size: 0.8rem;">{{ esp.codigo_recogida }}</td>
+                            <td style="color:var(--luxury-gold); font-weight:600; font-size: 0.8rem;">{{ esp.codigo_recogida }}</td>
                             <td>
-                                <strong style="display:block; color:#fff;">{{ esp.nombre_contacto }}</strong>
-                                <span style="font-size: 0.75rem; color: #777;">{{ esp.telefono_contacto }} | {{ esp.correo_contacto }}</span>
+                                <strong style="display:block; color:var(--skin-beige); font-weight: 500;">{{ esp.nombre_contacto }}</strong>
+                                <span style="font-size: 0.7rem; color: #888;">{{ esp.telefono_contacto }} | {{ esp.correo_contacto }}</span>
                             </td>
-                            <td>{{ esp.fecha_evento }}</td>
-                            <td><strong style="color: var(--accent-gold);">${{ "%.2f"|format(esp.monto_total) }}</strong></td>
+                            <td style="font-size: 0.8rem;">{{ esp.fecha_evento }}</td>
+                            <td><strong style="color: var(--luxury-gold); font-family: 'Playfair Display', serif;">${{ "%.2f"|format(esp.monto_total) }}</strong></td>
                             <td>
-                                <span>${{ "%.2f"|format(esp.monto_anticipo) }}</span>
+                                <span style="font-family: 'Playfair Display', serif;">${{ "%.2f"|format(esp.monto_anticipo) }}</span>
                                 {% if esp.anticipo_validado %}
-                                    <span style="color: #6BD968; font-size: 0.75rem; display:block;">[Validado]</span>
+                                    <span style="color: #c5a880; font-size: 0.65rem; display:block; letter-spacing: 1px; margin-top: 4px;">[VERIFICADO]</span>
                                 {% else %}
-                                    <span style="color: #FF5A5A; font-size: 0.75rem; display:block;">[Pendiente]</span>
+                                    <span style="color: #ff6b6b; font-size: 0.65rem; display:block; letter-spacing: 1px; margin-top: 4px;">[PENDIENTE]</span>
                                 {% endif %}
                             </td>
-                            <td><span style="background: #111; border: 1px solid #333; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color:#ccc;">{{ esp.estado }}</span></td>
+                            <td><span style="background: #111; border: 1px solid #222; padding: 4px 8px; border-radius: var(--radius); font-size: 0.65rem; color:#aaa; text-transform: uppercase; letter-spacing: 1px;">{{ esp.estado }}</span></td>
                             <td>
                                 {% if esp.comprobante_url %}
-                                    <a href="{{ esp.comprobante_url }}" target="_blank" style="color: var(--accent-gold); font-size: 0.8rem; text-decoration: underline; margin-right: 10px; display:inline-block;">Ver Comprobante</a>
+                                    <a href="{{ esp.comprobante_url }}" target="_blank" style="color: var(--light-brown); font-size: 0.75rem; text-decoration: underline; margin-right: 15px; display:inline-block; text-transform: uppercase; letter-spacing: 1px;">Evidencia</a>
                                 {% endif %}
                                 
                                 {% if not esp.anticipo_validado %}
                                     <form action="/admin/pedido_especial/{{ esp.id }}/validar" method="POST" style="display:inline;">
                                         <input type="hidden" name="accion" value="aprobar">
-                                        <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: #365C2B; color: #6BD968;">Validar Anticipo</button>
+                                        <button type="submit" class="btn-small" style="border-color: var(--luxury-gold); color: var(--luxury-gold);">Liberar</button>
                                     </form>
                                 {% elif esp.estado != 'Entregado' %}
                                     <form action="/admin/pedido_especial/{{ esp.id }}/validar" method="POST" style="display:inline;">
                                         <input type="hidden" name="accion" value="completar">
-                                        <button type="submit" class="btn-small" style="padding: 5px 10px; border-color: var(--accent-gold); color: var(--accent-gold);">Cerrar (Entregado)</button>
+                                        <button type="submit" class="btn-small" style="border-color: var(--skin-beige); color: var(--skin-beige);">Sellar</button>
                                     </form>
                                 {% endif %}
                             </td>
                         </tr>
                         {% else %}
-                        <tr><td colspan="7" style="text-align: center; padding: 35px; color: var(--text-gray);">No existen cotizaciones o pedidos especiales en fila.</td></tr>
+                        <tr><td colspan="7" style="text-align: center; padding: 40px; color: #777; font-style: italic; font-size: 0.8rem;">Sin cotizaciones en el sistema actual.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -664,94 +700,95 @@
         </div>
     </div>
 
+    <!-- SECCIÓN: INVENTARIO Y CATÁLOGO -->
     <div id="inventario" class="tab-content">
         <div class="admin-grid">
             <div class="card" style="align-self: start;">
-                <h3>➕ Añadir Producto / Mayoreo</h3>
+                <h3>Ingreso de Nuevo Artículo</h3>
                 <form action="{{ url_for('admin') }}" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="nuevo_producto" value="1">
-                    <input type="text" name="nombre" class="form-control" required placeholder="Nombre (Ej. Charola de Empanadas)">
-<select name="categoria" class="form-control" style="margin-bottom: 15px;">
-    <option value="pan">🥖 Panadería (Entrega 5 a 7 PM)</option>
-    <option value="halloween" style="color: #FF7A00; font-weight: bold;">🎃 Colección Halloween</option>
-    <option value="bebidas">🥤 Bebidas</option>
-    <option value="snacks">🍫 Snacks y Frituras</option>
-    <option value="abarrotes">🥫 Abarrotes Generales</option>
-    <option value="cremeria">🧀 Cremería y Lácteos</option>
-    <option value="verduras">🥬 Verduras y Frescos</option>
-</select>
-                    <textarea name="descripcion" class="form-control" placeholder="Descripción" style="height:60px; resize: none;"></textarea>
+                    <input type="text" name="nombre" class="form-control" required placeholder="Nombre (Ej. Box Premium)">
+                    <select name="categoria" class="form-control" style="margin-bottom: 15px;">
+                        <option value="pan">Boutique (Panadería y Repostería)</option>
+                        <option value="halloween">Colección Halloween</option>
+                        <option value="bebidas">Cafetería y Bebidas</option>
+                        <option value="snacks">Acompañamientos y Snacks</option>
+                        <option value="abarrotes">Abarrotes y Alacena</option>
+                        <option value="cremeria">Cremería Selecta</option>
+                        <option value="verduras">Frescos y Verduras</option>
+                    </select>
+                    <textarea name="descripcion" class="form-control" placeholder="Descripción de notas de sabor..." style="height:80px; resize: none;"></textarea>
                     
-                    <div class="edit-grid" style="margin-bottom: 10px;">
-                        <input type="number" step="0.50" name="precio" class="form-control" required placeholder="Precio Base ($)" style="margin-bottom: 0;">
-                        <input type="number" name="stock_sobrante" class="form-control" min="0" value="0" placeholder="Stock Flash (Piezas)" style="margin-bottom: 0;">
+                    <div class="edit-grid" style="margin-bottom: 15px;">
+                        <input type="number" step="0.50" name="precio" class="form-control" required placeholder="Valor ($)" style="margin-bottom: 0;">
+                        <input type="number" name="stock_sobrante" class="form-control" min="0" value="0" placeholder="Flash (Pzs)" style="margin-bottom: 0;">
                     </div>
-                    <div style="margin-bottom: 15px;">
-                        <input type="number" name="stock_tienda" class="form-control" min="0" placeholder="📦 Stock Exclusivo Tienda (Dejar vacío si es pan)">
+                    <div style="margin-bottom: 20px;">
+                        <input type="number" name="stock_tienda" class="form-control" min="0" placeholder="Límite Tienda (Vacío para pan)">
                     </div>
                     
-                    <div style="margin-bottom: 15px; background: var(--input-bg); border: 1px solid var(--border-dark); border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 10px;">
-                        <input type="checkbox" name="es_pedido_grande" id="is_large" value="1" style="accent-color: var(--accent-gold); width: 16px; height: 16px;">
-                        <label for="is_large" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Pedido Grande / Mayoreo</label>
+                    <div style="margin-bottom: 20px; background: #0A0A0A; border: 1px solid var(--border-fino); border-radius: var(--radius); padding: 15px; display: flex; align-items: center; gap: 12px;">
+                        <input type="checkbox" name="es_pedido_grande" id="is_large" value="1" style="accent-color: var(--luxury-gold); width: 18px; height: 18px; cursor: pointer;">
+                        <label for="is_large" style="font-size: 0.75rem; color: #888; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Clasificar como Mayoreo</label>
                     </div>
 
-                    <div style="background: var(--input-bg); border: 1px dashed var(--border-dark); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px;">
-                        <span style="display:block; margin-bottom:8px; font-size:0.8rem; font-weight: bold; color: var(--text-gray);">Fotografía</span>
-                        <input type="file" name="imagen_file" accept="image/*" style="font-size:0.8rem; width: 100%; color: var(--text-gray);">
+                    <div style="background: #050505; border: 1px dashed var(--border-fino); padding: 25px 15px; border-radius: var(--radius); text-align: center; margin-bottom: 25px;">
+                        <span style="display:block; margin-bottom:12px; font-size:0.75rem; font-weight: 600; color: var(--light-brown); text-transform: uppercase; letter-spacing: 2px;">Captura Visual</span>
+                        <input type="file" name="imagen_file" accept="image/*" style="font-size:0.75rem; width: 100%; color: #888; font-family: 'Montserrat', sans-serif;">
                     </div>
-                    <button type="submit" class="btn-action">Publicar en Tienda</button>
+                    <button type="submit" class="btn-action">Desplegar en Colección</button>
                 </form>
             </div>
 
             <div class="card">
-                <h3>🥖 Catálogo Configurado</h3>
+                <h3>Catálogo Estructurado</h3>
                 {% for prod in productos %}
                 <div class="inv-item {% if not prod.disponible %}agotado{% endif %}">
                     <div class="inv-image-container">
                         {% if prod.imagen_url %}
                             <img src="{{ prod.imagen_url }}" alt="{{ prod.nombre }}">
                         {% else %}
-                            <div class="img-placeholder-full">Sin Fotografía</div>
+                            <div class="img-placeholder-full">Pendiente de Fotografía</div>
                         {% endif %}
                     </div>
                     
                     <div class="inv-content">
                         <div>
-                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
-                                <strong style="font-size:1.05rem; color:var(--text-white); text-transform: uppercase;">{{ prod.nombre }}</strong>
-                                <span style="color:var(--accent-gold); font-weight: bold; font-size: 1rem;">${{ "%.2f"|format(prod.precio) }}</span>
+                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+                                <strong style="font-size:1.1rem; color:var(--skin-beige); text-transform: uppercase; letter-spacing: 1px;">{{ prod.nombre }}</strong>
+                                <span style="color:var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.1rem;">${{ "%.2f"|format(prod.precio) }}</span>
                                 
                                 {% if prod.stock_sobrante and prod.stock_sobrante > 0 %}
-                                    <span style="background: #1C333B; color: #6BE0FF; font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid #2B525F;">⚡ FLASH: {{ prod.stock_sobrante }} PZS</span>
+                                    <span style="background: rgba(197,168,128,0.1); color: var(--luxury-gold); font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid var(--luxury-gold); text-transform: uppercase; letter-spacing: 1px;">⚡ FLASH: {{ prod.stock_sobrante }}</span>
                                 {% endif %}
                                 {% if prod.stock_tienda is not none %}
-                                    <span style="background: #1F1A15; color: var(--accent-gold); font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid var(--accent-gold);">📦 TIENDA: {{ prod.stock_tienda }} PZS</span>
+                                    <span style="background: #111; color: #aaa; font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid #333; text-transform: uppercase; letter-spacing: 1px;">TIENDA: {{ prod.stock_tienda }}</span>
                                 {% endif %}
                                 {% if prod.es_pedido_grande %}
-                                    <span style="background: #3b2b1a; color: var(--accent-gold); font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid var(--accent-gold);">MAYOREO</span>
+                                    <span style="background: rgba(139,115,85,0.1); color: var(--light-brown); font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid var(--light-brown); text-transform: uppercase; letter-spacing: 1px;">MAYOREO</span>
                                 {% endif %}
                                 
                                 {% if not prod.disponible %}
-                                    <span style="background: #5C2B2B; color: #FF8F8F; font-size: 0.65rem; padding: 4px 8px; border-radius: 10px; border: 1px solid #7A3A3A;">PAUSADO</span>
+                                    <span style="background: #1a0f0f; color: #ff6b6b; font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid #4a1d1d; text-transform: uppercase; letter-spacing: 1px;">PAUSADO</span>
                                 {% endif %}
                             </div>
-                            <div style="font-size:0.8rem; color:var(--text-gray); margin-top:8px;">{{ prod.descripcion }}</div>
+                            <div style="font-size:0.8rem; color:#777; margin-top:10px; line-height: 1.6;">{{ prod.descripcion }}</div>
                         </div>
 
                         <div class="inv-actions">
                             <form action="{{ url_for('toggle_producto', producto_id=prod.id) }}" method="POST" style="flex: 1;">
-                                <button type="submit" class="btn-small" style="width: 100%; border-color: var(--accent-gold); color: var(--accent-gold);">
-                                    {% if prod.disponible %}Pausar{% else %}Activar{% endif %}
+                                <button type="submit" class="btn-small" style="width: 100%; border-color: var(--light-brown); color: var(--light-brown);">
+                                    {% if prod.disponible %}Ocultar{% else %}Restaurar{% endif %}
                                 </button>
                             </form>
-                            <button class="btn-small" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='block'">Editar</button>
-                            <form action="{{ url_for('eliminar_producto', producto_id=prod.id) }}" method="POST" onsubmit="return confirm('¿Eliminar producto?');" style="flex: 1;">
-                                <button type="submit" class="btn-small" style="width: 100%; border-color: #5C2B2B; color: #D96868;">Borrar</button>
+                            <button class="btn-small" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='block'">Modificar</button>
+                            <form action="{{ url_for('eliminar_producto', producto_id=prod.id) }}" method="POST" onsubmit="return confirm('¿Retirar artículo de la matriz principal?');" style="flex: 1;">
+                                <button type="submit" class="btn-small" style="width: 100%; border-color: #4a1d1d; color: #ff6b6b;">Eliminar</button>
                             </form>
                         </div>
                         
-                        <div style="padding: 12px; background: #1A1815; border-radius: 10px; border: 1px solid #365C2B; width: 100%; box-sizing: border-box;">
-                            <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                        <div style="padding: 15px; background: #050505; border-radius: var(--radius); border: 1px solid var(--border-fino); width: 100%; box-sizing: border-box;">
+                            <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 15px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
                                 <input type="hidden" name="nombre" value="{{ prod.nombre }}">
                                 <input type="hidden" name="descripcion" value="{{ prod.descripcion }}">
                                 <input type="hidden" name="precio" value="{{ prod.precio }}">
@@ -759,65 +796,66 @@
                                     <input type="hidden" name="es_pedido_grande" value="1">
                                 {% endif %}
                                 
-                                <label style="font-size: 0.75rem; color: var(--text-gray); white-space: nowrap;">Stock Flash Rápido:</label>
-                                <input type="number" name="stock_sobrante" value="{{ prod.stock_sobrante or 0 }}" min="0" class="form-control" style="margin-bottom: 0; padding: 8px; width: 80px; flex: 1;">
-                                <button type="submit" class="btn-small" style="padding: 8px 15px; border-color: var(--accent-gold); color: var(--accent-gold); flex: none;">Actualizar</button>
+                                <label style="font-size: 0.7rem; color: var(--light-brown); white-space: nowrap; text-transform: uppercase; letter-spacing: 1px;">Suministro Flash:</label>
+                                <input type="number" name="stock_sobrante" value="{{ prod.stock_sobrante or 0 }}" min="0" class="form-control" style="margin-bottom: 0; padding: 10px; width: 90px; flex: 1;">
+                                <button type="submit" class="btn-action outline" style="padding: 10px 20px; flex: none;">Fijar</button>
                             </form>
                         </div>
                     </div>
 
-                    <div id="edit-form-{{ prod.id }}" style="display:none; background:var(--input-bg); padding:20px; border-top:1px solid var(--accent-gold);">
+                    <!-- FORMULARIO DE EDICIÓN OCULTO -->
+                    <div id="edit-form-{{ prod.id }}" style="display:none; background:#050505; padding:30px; border-top:1px solid var(--border-fino);">
                         <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data">
                             <div class="edit-grid">
                                 <div>
-                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Nombre del Producto:</label>
+                                    <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Nomenclatura:</label>
                                     <input type="text" name="nombre" class="form-control" value="{{ prod.nombre }}" required>
                                 </div>
                                 <div>
-                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Precio Base ($):</label>
+                                    <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Valor ($):</label>
                                     <input type="number" step="0.50" name="precio" class="form-control" value="{{ prod.precio }}" required>
                                 </div>
                             </div>
                             
-                            <div class="edit-grid" style="margin-top: 10px;">
+                            <div class="edit-grid" style="margin-top: 5px;">
                                 <div>
-                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Sobrante (Venta Flash):</label>
+                                    <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Inventario Relámpago:</label>
                                     <input type="number" name="stock_sobrante" class="form-control" value="{{ prod.stock_sobrante or 0 }}" min="0">
                                 </div>
                                 <div>
-                                    <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Stock Tienda (Vacío si es pan):</label>
+                                    <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Límite Estándar:</label>
                                     <input type="number" name="stock_tienda" class="form-control" value="{{ prod.stock_tienda if prod.stock_tienda is not none else '' }}" min="0">
                                 </div>
                             </div>
 
-                            <div style="margin-top: 10px;">
-                                <label style="font-size: 0.7rem; color: var(--text-gray); display: block; margin-bottom: 4px;">Categoría del Producto:</label>
+                            <div style="margin-top: 5px;">
+                                <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Segmento:</label>
                                 <select name="categoria" class="form-control">
-                                    <option value="pan" {% if prod.categoria == 'pan' %}selected{% endif %}>🥖 Panadería</option>
-                                    <option value="halloween" {% if prod.categoria == 'halloween' %}selected{% endif %} style="color: #FF7A00; font-weight: bold;">🎃 Colección Halloween</option>
-                                    <option value="bebidas" {% if prod.categoria == 'bebidas' %}selected{% endif %}>🥤 Bebidas</option>
-                                    <option value="snacks" {% if prod.categoria == 'snacks' %}selected{% endif %}>🍫 Snacks y Frituras</option>
-                                    <option value="abarrotes" {% if prod.categoria == 'abarrotes' %}selected{% endif %}>🥫 Abarrotes Generales</option>
-                                    <option value="cremeria" {% if prod.categoria == 'cremeria' %}selected{% endif %}>🧀 Cremería y Lácteos</option>
-                                    <option value="verduras" {% if prod.categoria == 'verduras' %}selected{% endif %}>🥬 Verduras y Frescos</option>
+                                    <option value="pan" {% if prod.categoria == 'pan' %}selected{% endif %}>Boutique (Panadería)</option>
+                                    <option value="halloween" {% if prod.categoria == 'halloween' %}selected{% endif %}>Colección Halloween</option>
+                                    <option value="bebidas" {% if prod.categoria == 'bebidas' %}selected{% endif %}>Cafetería y Bebidas</option>
+                                    <option value="snacks" {% if prod.categoria == 'snacks' %}selected{% endif %}>Acompañamientos y Snacks</option>
+                                    <option value="abarrotes" {% if prod.categoria == 'abarrotes' %}selected{% endif %}>Abarrotes y Alacena</option>
+                                    <option value="cremeria" {% if prod.categoria == 'cremeria' %}selected{% endif %}>Cremería Selecta</option>
+                                    <option value="verduras" {% if prod.categoria == 'verduras' %}selected{% endif %}>Frescos y Verduras</option>
                                 </select>
                             </div>
                             
-                            <div style="display: flex; align-items: center; padding-top: 5px; margin-bottom: 10px;">
-                                <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--accent-gold); width: 16px; height: 16px; margin-right: 8px;">
-                                <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--text-gray); cursor: pointer;">Es Mayoreo</label>
+                            <div style="display: flex; align-items: center; padding: 10px 0; margin-bottom: 10px;">
+                                <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--luxury-gold); width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
+                                <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--light-brown); cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Clasificar Mayoreo</label>
                             </div>
 
-                            <textarea name="descripcion" class="form-control" style="height:60px; resize:none; margin-top: 10px;">{{ prod.descripcion }}</textarea>
+                            <textarea name="descripcion" class="form-control" style="height:80px; resize:none; margin-top: 10px;">{{ prod.descripcion }}</textarea>
                             
-                            <div style="background: var(--card-black); border: 1px dashed var(--border-dark); padding: 15px; border-radius: 12px; text-align: center; margin-top: 5px;">
-                                <span style="display:block; margin-bottom:8px; font-size:0.75rem; font-weight: bold; color: var(--text-gray);">Actualizar Fotografía (Opcional)</span>
-                                <input type="file" name="imagen_file" accept="image/*" style="font-size:0.8rem; width: 100%; color: var(--text-gray);">
+                            <div style="background: var(--card-black); border: 1px dashed var(--border-fino); padding: 25px; border-radius: var(--radius); text-align: center; margin-top: 5px;">
+                                <span style="display:block; margin-bottom:12px; font-size:0.75rem; font-weight: 600; color: #777; text-transform: uppercase; letter-spacing: 2px;">Sustituir Fotografía</span>
+                                <input type="file" name="imagen_file" accept="image/*" style="font-size:0.75rem; width: 100%; color: #888; font-family: 'Montserrat', sans-serif;">
                             </div>
                             
-                            <div style="display:flex; gap:15px; margin-top: 20px;">
-                                <button type="submit" class="btn-action" style="flex: 2; background: var(--accent-gold); color: var(--card-black);">Guardar</button>
-                                <button type="button" class="btn-action" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='none'" style="flex: 1; border-color: var(--border-dark); color: var(--text-gray);">Cerrar</button>
+                            <div style="display:flex; gap:15px; margin-top: 25px;">
+                                <button type="submit" class="btn-action" style="flex: 2;">Actualizar Registro</button>
+                                <button type="button" class="btn-small" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='none'" style="flex: 1;">Cancelar</button>
                             </div>
                         </form>
                     </div>
@@ -827,14 +865,15 @@
         </div>
     </div>
 
+    <!-- SECCIÓN: CONFIGURACIÓN -->
     <div id="configuracion" class="tab-content">
         <div class="admin-grid">
 
-            <div class="panel-anuncios" style="background: #1A1815; padding: 20px; border-radius: 15px; margin-top: 20px;">
-                <h3 style="color: var(--accent-gold);">Centro de Difusión (Push)</h3>
-                <input type="text" id="tituloPush" placeholder="Título (Ej: Halloween Collection)" style="width: 100%; margin-bottom: 10px;">
-                <textarea id="mensajePush" placeholder="Escribe el anuncio aquí..." style="width: 100%; height: 80px;"></textarea>
-                <button onclick="enviarAnuncio()" style="background: var(--accent-gold); color: black; border: none; padding: 10px 20px; cursor: pointer;">Enviar a Todos</button>
+            <div class="card" style="margin-bottom: 0;">
+                <h3>Centro de Difusión ZmarthNet</h3>
+                <input type="text" id="tituloPush" class="form-control" placeholder="Encabezado del Anuncio..." style="margin-bottom: 15px;">
+                <textarea id="mensajePush" class="form-control" placeholder="Desarrolle el comunicado oficial aquí..." style="height: 100px; resize: none; margin-bottom: 15px;"></textarea>
+                <button onclick="enviarAnuncio()" class="btn-action">Emitir a Toda la Base de Clientes</button>
             </div>
 
             <script>
@@ -848,115 +887,115 @@
                     body: JSON.stringify({titulo, mensaje})
                 });
                 
-                if(res.ok) alert("Anuncio enviado a todos los clientes exitosamente.");
+                if(res.ok) alert("Transmisión global completada exitosamente.");
             }
             </script>
             
-            <div class="card" style="border: 1px solid #FF7A00;">
-                <h3 style="color: #FF7A00;">🎃 Modo Temporada: Halloween Collection</h3>
-                <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Activa o desactiva la inyección del carrusel y los productos exclusivos de Halloween en la tienda principal.</p>
+            <div class="card" style="border-color: #ff8c00;">
+                <h3 style="color: #ff8c00;">Modo Temporada: Halloween</h3>
+                <p style="color: #777; font-size: 0.8rem; margin-top: -15px; margin-bottom: 25px; line-height: 1.6;">Control de visibilidad del ecosistema temático para la interfaz de los clientes.</p>
                 
-                <form action="{{ url_for('toggle_temporada') }}" method="POST" style="background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-dark); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <form action="{{ url_for('toggle_temporada') }}" method="POST" style="background: #050505; padding: 25px; border-radius: var(--radius); border: 1px solid #222; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
                     <div>
-                        <strong style="color: var(--text-white); display: block; font-size: 0.9rem;">Estado del Sistema:</strong>
+                        <strong style="color: var(--skin-beige); display: block; font-size: 0.9rem; margin-bottom: 8px;">Estado del Módulo:</strong>
                         
                         {% if estado_halloween %}
-                            <span style="color: #6BD968; font-size: 0.75rem; font-weight: bold;">🟢 ACTIVADO (Visible en Tienda)</span>
+                            <span style="color: #c5a880; font-size: 0.75rem; font-weight: 600; letter-spacing: 2px;">ACTIVO (PÚBLICO)</span>
                         {% else %}
-                            <span style="color: var(--text-gray); font-size: 0.75rem; font-weight: bold;">⚫ DESACTIVADO (Oculto)</span>
+                            <span style="color: #555; font-size: 0.75rem; font-weight: 600; letter-spacing: 2px;">INACTIVO (OCULTO)</span>
                         {% endif %}
                     </div>
                     
-                    <button type="submit" class="btn-action" style="max-width: 200px; border-color: {% if estado_halloween %}#5C2B2B{% else %}#FF7A00{% endif %}; color: {% if estado_halloween %}#D96868{% else %}#FF7A00{% endif %};">
-                        {% if estado_halloween %}Apagar Colección{% else %}Encender Halloween{% endif %}
+                    <button type="submit" class="btn-action" style="max-width: 250px; background: transparent; border: 1px solid {% if estado_halloween %}#4a1d1d{% else %}#ff8c00{% endif %}; color: {% if estado_halloween %}#ff6b6b{% else %}#ff8c00{% endif %};">
+                        {% if estado_halloween %}Suspender Colección{% else %}Desplegar Colección{% endif %}
                     </button>
                 </form>
             </div>
             
             <div class="card">
-                <h3>📢 Banner de Anuncios Corporativos</h3>
-                <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Publica banners con imágenes de alta definición y vínculos de redirección del ecosistema.</p>
+                <h3>Banners Corporativos</h3>
+                <p style="color: #777; font-size: 0.8rem; margin-top: -15px; margin-bottom: 25px; line-height: 1.6;">Gestión de arte visual y redirecciones estratégicas dentro de la plataforma.</p>
                 <form action="{{ url_for('nuevo_anuncio') }}" method="POST" enctype="multipart/form-data">
                     <div class="edit-grid">
                         <div>
-                            <label style="font-size:0.75rem; color:var(--text-gray);">Título / Eslogan Campaña:</label>
-                            <input type="text" name="titulo" class="form-control" placeholder="Ej. Lanzamiento Línea de Bodas" value="{{ anuncio_actual_titulo or '' }}">
+                            <label style="font-size:0.65rem; color:#888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Titular Visual:</label>
+                            <input type="text" name="titulo" class="form-control" placeholder="Ej. Lanzamiento Premium" value="{{ anuncio_actual_titulo or '' }}">
                         </div>
                         <div>
-                            <label style="font-size:0.75rem; color:var(--text-gray);">Enlace de Destino (URL):</label>
-                            <input type="url" name="enlace_destino" class="form-control" placeholder="https://thezmarthorganization.com/..." value="{{ anuncio_actual_enlace or '' }}">
+                            <label style="font-size:0.65rem; color:#888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">URL de Enlace:</label>
+                            <input type="url" name="enlace_destino" class="form-control" placeholder="https://..." value="{{ anuncio_actual_enlace or '' }}">
                         </div>
                     </div>
 
-                    <div style="background: var(--input-bg); border: 1px dashed var(--border-dark); padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 15px;">
-                        <span style="display:block; margin-bottom:8px; font-size:0.8rem; font-weight: bold; color: var(--text-gray);">Arte Publicitario (Subir Archivo de Imagen)</span>
-                        <input type="file" name="anuncio_file" accept="image/*" style="font-size:0.8rem; width: 100%; color: var(--text-gray);">
+                    <div style="background: #050505; border: 1px dashed var(--border-fino); padding: 25px; border-radius: var(--radius); text-align: center; margin-bottom: 20px;">
+                        <span style="display:block; margin-bottom:12px; font-size:0.75rem; font-weight: 600; color: var(--light-brown); text-transform: uppercase; letter-spacing: 2px;">Cargar Diseño Multi-Media</span>
+                        <input type="file" name="anuncio_file" accept="image/*" style="font-size:0.75rem; width: 100%; color: #888; font-family: 'Montserrat', sans-serif;">
                     </div>
 
-                    <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 15px; background: var(--input-bg); padding: 12px; border-radius: 12px; border: 1px solid var(--border-dark);">
-                        <input type="checkbox" name="anuncio_activo" id="anuncio_activo" value="1" checked style="accent-color: var(--accent-gold); width: 18px; height: 18px;">
-                        <label for="anuncio_activo" style="color:var(--text-white); font-size: 0.85rem; cursor: pointer;">Publicar Anuncio en Tienda</label>
+                    <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 25px; background: #0A0A0A; padding: 18px; border-radius: var(--radius); border: 1px solid var(--border-fino);">
+                        <input type="checkbox" name="anuncio_activo" id="anuncio_activo" value="1" checked style="accent-color: var(--luxury-gold); width: 18px; height: 18px; cursor: pointer;">
+                        <label for="anuncio_activo" style="color:var(--skin-beige); font-size: 0.8rem; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Visibilidad Activada</label>
                     </div>
-                    <button type="submit" class="btn-action">Desplegar Banner Multi-Media</button>
+                    <button type="submit" class="btn-action">Montar Banner Operativo</button>
                 </form>
 
-                <h4 style="color: var(--accent-gold); margin-top: 35px; font-size: 0.85rem; text-transform: uppercase;">Banners Operativos</h4>
-                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 15px;">
+                <h4 style="color: var(--light-brown); margin-top: 40px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; border-bottom: 1px solid var(--border-fino); padding-bottom: 10px;">Banners en Ecosistema</h4>
+                <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
                     {% for ad in anuncios_lista %}
-                    <div style="display: flex; align-items: center; justify-content: space-between; background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-dark);">
+                    <div style="display: flex; align-items: center; justify-content: space-between; background: #050505; padding: 15px 20px; border-radius: var(--radius); border: 1px solid var(--border-fino);">
                         <div style="display: flex; align-items: center; gap: 15px;">
-                            <img src="{{ ad.imagen_url }}" style="width: 70px; height: 45px; object-fit: cover; border-radius: 6px;">
-                            <span style="color: var(--text-white); font-size: 0.85rem; font-weight: bold;">{{ ad.titulo or 'Banner sin título' }}</span>
+                            <img src="{{ ad.imagen_url }}" style="width: 80px; height: 45px; object-fit: cover; border-radius: 2px;">
+                            <span style="color: var(--skin-beige); font-size: 0.85rem; font-weight: 500;">{{ ad.titulo or 'Diseño Visual' }}</span>
                         </div>
-                        <form action="{{ url_for('eliminar_anuncio', anuncio_id=ad.id) }}" method="POST" onsubmit="return confirm('¿Retirar este banner corporativo del ecosistema?');" style="margin: 0;">
-                            <button type="submit" class="btn-small" style="border-color: #5C2B2B; color: #D96868; padding: 8px 15px;">Dar de Baja</button>
+                        <form action="{{ url_for('eliminar_anuncio', anuncio_id=ad.id) }}" method="POST" onsubmit="return confirm('¿Remover este banner del ecosistema público?');" style="margin: 0;">
+                            <button type="submit" class="btn-small" style="border-color: #4a1d1d; color: #ff6b6b; padding: 8px 15px;">Desactivar</button>
                         </form>
                     </div>
                     {% else %}
-                    <span style="color: var(--text-gray); font-size: 0.8rem; text-align: center; padding: 10px;">No hay campañas activas.</span>
+                    <span style="color: #777; font-size: 0.8rem; text-align: center; padding: 20px; font-style: italic;">Sin campañas gráficas en curso.</span>
                     {% endfor %}
                 </div>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div style="display: flex; flex-direction: column; gap: 30px;">
                 <div class="card">
-                    <h3>🚫 Bloqueo de Fechas (Horno Cerrado)</h3>
-                    <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Inhabilita días específicos para que no puedan realizarse pedidos.</p>
+                    <h3>Bloqueo Maestro de Fechas</h3>
+                    <p style="color: #777; font-size: 0.8rem; margin-top: -15px; margin-bottom: 25px; line-height: 1.6;">Cierre del Atelier y sistema de pedidos por contingencia o mantenimiento.</p>
                     <form action="/admin/inhabilitar_dias" method="POST">
                         <div class="edit-grid">
                             <div>
-                                <label style="font-size:0.75rem; color:var(--text-gray);">Desde:</label>
-                                <input type="date" name="fecha_inicio" class="form-control" required style="padding: 10px; margin-bottom: 10px;">
+                                <label style="font-size:0.65rem; color:#888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">A partir de:</label>
+                                <input type="date" name="fecha_inicio" class="form-control" required style="padding: 12px; margin-bottom: 15px;">
                             </div>
                             <div>
-                                <label style="font-size:0.75rem; color:var(--text-gray);">Hasta:</label>
-                                <input type="date" name="fecha_fin" class="form-control" required style="padding: 10px; margin-bottom: 10px;">
+                                <label style="font-size:0.65rem; color:#888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Hasta (Inclusive):</label>
+                                <input type="date" name="fecha_fin" class="form-control" required style="padding: 12px; margin-bottom: 15px;">
                             </div>
                         </div>
 
-                        <input type="text" name="motivo" class="form-control" placeholder="Motivo (Ej. Mantenimiento del Atelier)">
-                        <button type="submit" class="btn-action">Ejecutar Bloqueo</button>
+                        <input type="text" name="motivo" class="form-control" placeholder="Razón Operativa (Ej. Cierre Trimestral)">
+                        <button type="submit" class="btn-action outline" style="border-color: #ff6b6b; color: #ff6b6b;">Ejecutar Cierre</button>
                     </form>
                 </div>
 
                 <div class="card">
-                    <h3>📅 Días Inhabilitados Actuales</h3>
-                    <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: -10px; margin-bottom: 15px;">Fechas en las que el Atelier no recibirá órdenes. Retíralas para abrir el horno.</p>
+                    <h3>Registro de Cierres Activos</h3>
+                    <p style="color: #777; font-size: 0.8rem; margin-top: -15px; margin-bottom: 25px; line-height: 1.6;">Desbloquee las siguientes fechas para restaurar las ventas.</p>
                     
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
                         {% for dia in dias_bloqueados_lista %}
-                        <div style="display: flex; justify-content: space-between; align-items: center; background: var(--input-bg); padding: 15px; border-radius: 12px; border: 1px solid var(--border-dark);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; background: #050505; padding: 20px; border-radius: var(--radius); border: 1px solid var(--border-fino);">
                             <div>
-                                <strong style="color: var(--text-white); display: block; font-size: 0.9rem;">{{ dia.fecha.strftime('%d/%m/%Y') }}</strong>
-                                <span style="color: var(--accent-gold); font-size: 0.75rem;">{{ dia.motivo }}</span>
+                                <strong style="color: var(--skin-beige); display: block; font-size: 0.95rem; margin-bottom: 5px;">{{ dia.fecha.strftime('%d/%m/%Y') }}</strong>
+                                <span style="color: var(--light-brown); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">{{ dia.motivo }}</span>
                             </div>
                             <form action="{{ url_for('habilitar_dia', dia_id=dia.id) }}" method="POST" style="margin: 0;">
-                                <button type="submit" class="btn-small" style="border-color: #5C2B2B; color: #D96868; padding: 6px 12px; margin: 0; min-width: 90px;">Reactivar</button>
+                                <button type="submit" class="btn-small" style="border-color: #c5a880; color: #c5a880; padding: 8px 15px; min-width: 100px;">Restaurar</button>
                             </form>
                         </div>
                         {% else %}
-                        <div style="text-align: center; padding: 20px; background: var(--input-bg); border-radius: 12px; border: 1px dashed var(--border-dark);">
-                            <span style="color: var(--text-gray); font-size: 0.85rem;">No hay fechas bloqueadas actualmente. El horno opera con normalidad.</span>
+                        <div style="text-align: center; padding: 30px; background: #050505; border-radius: var(--radius); border: 1px dashed var(--border-fino);">
+                            <span style="color: #777; font-size: 0.8rem; font-style: italic;">Sin interrupciones programadas. Operación normal.</span>
                         </div>
                         {% endfor %}
                     </div>
@@ -965,40 +1004,41 @@
         </div>
     </div>
 
+    <!-- SECCIÓN: HISTORIAL -->
     <div id="historial" class="tab-content">
         <div class="card">
-            <h3>🗃️ Cajas Cerradas (Completados)</h3>
+            <h3>Bóveda de Transacciones (Completadas)</h3>
             <div class="table-wrapper">
-                <table class="admin-table" style="width: 100%; border-collapse: collapse;">
+                <table class="admin-table">
                     <thead>
-                        <tr style="border-bottom: 1px solid var(--border-dark);">
-                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Tipo</th>
-                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Ticket</th>
-                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Cliente</th>
-                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Monto</th>
-                            <th style="padding: 12px; text-align: left; color: var(--text-white);">Estatus</th>
+                        <tr>
+                            <th>Clasificación</th>
+                            <th>Llave</th>
+                            <th>Cliente</th>
+                            <th>Ingreso</th>
+                            <th>Estado Final</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for pedido in pedidos_entregados %}
-                        <tr style="border-bottom: 1px solid #222; {% if pedido.es_relampago %}background: rgba(203, 165, 115, 0.05);{% endif %}">
-                            <td style="padding: 12px;">
+                        <tr style="{% if pedido.es_relampago %}background: rgba(197, 168, 128, 0.05);{% endif %}">
+                            <td>
                                 {% if pedido.es_relampago %}
-                                    <span style="color: var(--accent-gold); font-size: 0.65rem; font-weight: bold; border: 1px solid var(--accent-gold); padding: 2px 6px; border-radius: 4px;">⚡ FLASH</span>
+                                    <span style="color: var(--luxury-gold); font-size: 0.65rem; font-weight: 600; border: 1px solid var(--luxury-gold); padding: 4px 8px; border-radius: 2px; letter-spacing: 1px;">⚡ FLASH</span>
                                 {% else %}
-                                    <span style="color: var(--text-gray); font-size: 0.65rem; font-weight: normal; border: 1px solid #333; padding: 2px 6px; border-radius: 4px;">NORMAL</span>
+                                    <span style="color: #777; font-size: 0.65rem; font-weight: 500; border: 1px solid #333; padding: 4px 8px; border-radius: 2px; letter-spacing: 1px;">ESTÁNDAR</span>
                                 {% endif %}
                             </td>
-                            <td style="padding: 12px; color: var(--text-gray); font-weight: bold; font-size: 0.8rem;">{{ pedido.codigo_recogida }}</td>
-                            <td style="padding: 12px; font-weight: bold; font-size: 0.85rem; color: var(--text-white);">{{ pedido.cliente.nombre }}</td>
-                            <td style="padding: 12px; font-weight:bold; color: var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</td>
-                            <td style="padding: 12px;">
-                                <span style="background: #1F2E1A; color: #6BD968; padding: 4px 8px; border-radius: 10px; font-size: 0.65rem; border: 1px solid #365C2B;">ENTREGADO</span>
+                            <td style="color: var(--light-brown); font-weight: 600; font-size: 0.8rem; letter-spacing: 1px;">{{ pedido.codigo_recogida }}</td>
+                            <td style="font-weight: 500; font-size: 0.85rem; color: var(--skin-beige);">{{ pedido.cliente.nombre }}</td>
+                            <td style="font-family: 'Playfair Display', serif; color: var(--luxury-gold); font-size: 1.1rem;">${{ "%.2f"|format(pedido.monto_total) }}</td>
+                            <td>
+                                <span style="background: rgba(197, 168, 128, 0.1); color: var(--luxury-gold); padding: 4px 10px; border-radius: 4px; font-size: 0.65rem; border: 1px solid var(--luxury-gold); letter-spacing: 1px; font-weight: 600;">SELLADO</span>
                             </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="5" style="text-align:center; color:var(--text-gray); padding: 30px;">Sin historial en esta fecha.</td>
+                            <td colspan="5" style="text-align:center; color:#777; padding: 50px; font-style: italic; font-size: 0.85rem;">El registro histórico se encuentra vacío para este bloque.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -1007,27 +1047,27 @@
         </div>
     </div>
 
-
+    <!-- SECCIÓN: ESTADÍSTICAS -->
     <div id="estadisticas" class="tab-content">
         <div class="admin-grid">
             <div class="card">
-                <h3 style="color: #6BD968;">🏆 Top 5 Productos Más Vendidos</h3>
+                <h3>Top 5: Liderazgo en Ventas</h3>
                 <div class="table-wrapper">
                     <table class="admin-table">
                         <thead>
                             <tr>
-                                <th>Producto</th>
-                                <th>Unidades Entregadas</th>
+                                <th>Desarrollo / Producto</th>
+                                <th>Volumen de Salida</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for prod_nombre, cantidad in top_productos %}
                             <tr>
-                                <td style="color: var(--text-white); font-weight: bold; font-size: 0.9rem;">{{ prod_nombre }}</td>
-                                <td style="color: var(--accent-gold); font-size: 1.1rem; font-weight: 900;">{{ cantidad }} pzs</td>
+                                <td style="color: var(--skin-beige); font-weight: 500; font-size: 0.9rem;">{{ prod_nombre }}</td>
+                                <td style="color: var(--luxury-gold); font-size: 1.2rem; font-family: 'Playfair Display', serif;">{{ cantidad }} <span style="font-size: 0.7rem; font-family: 'Montserrat', sans-serif; color: #777;">uds</span></td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="2" style="text-align: center; color: var(--text-gray);">Acumulando datos del sistema...</td></tr>
+                            <tr><td colspan="2" style="text-align: center; color: #777; padding: 30px; font-style: italic;">Sintetizando datos corporativos...</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -1035,23 +1075,23 @@
             </div>
 
             <div class="card">
-                <h3 style="color: var(--accent-gold);">📈 Mejores Días de Ingresos</h3>
+                <h3>Top Rendimiento Financiero</h3>
                 <div class="table-wrapper">
                     <table class="admin-table">
                         <thead>
                             <tr>
-                                <th>Fecha Operativa</th>
-                                <th>Ingresos Registrados</th>
+                                <th>Corte de Fecha</th>
+                                <th>Ingreso Total de Operación</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for fecha, total in mejores_dias %}
                             <tr>
-                                <td style="color: var(--text-white); font-weight: bold; font-size: 0.9rem;">{{ fecha }}</td>
-                                <td style="color: #6BD968; font-weight: 900; font-size: 1.1rem;">${{ "%.2f"|format(total) }}</td>
+                                <td style="color: var(--skin-beige); font-weight: 500; font-size: 0.9rem;">{{ fecha }}</td>
+                                <td style="color: var(--luxury-gold); font-size: 1.2rem; font-family: 'Playfair Display', serif;">${{ "%.2f"|format(total) }}</td>
                             </tr>
                             {% else %}
-                            <tr><td colspan="2" style="text-align: center; color: var(--text-gray);">Acumulando datos del sistema...</td></tr>
+                            <tr><td colspan="2" style="text-align: center; color: #777; padding: 30px; font-style: italic;">Sintetizando datos corporativos...</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
@@ -1060,26 +1100,26 @@
         </div>
     </div>
 
-
+    <!-- SECCIÓN: SEGURIDAD -->
     <div id="usuarios_seguridad" class="tab-content">
-        <div class="card" id="panel-pin">
-            <h3 style="color: #FF5A5A;">⚠️ Acceso Restringido</h3>
-            <p style="color: var(--text-gray); font-size: 0.85rem;">Se requiere autorización ejecutiva para desencriptar el directorio de clientes.</p>
-            <input type="password" id="pin_maestro" class="form-control" placeholder="Ingrese PIN de Seguridad" style="max-width: 300px;">
-            <button class="btn-action" onclick="desbloquearDirectorio()" style="max-width: 300px; border-color: #FF5A5A; color: #FF5A5A;">Verificar Credenciales</button>
-            <p id="error-pin" style="color: #FF5A5A; font-size: 0.8rem; display: none; margin-top: 10px;"></p>
+        <div class="card" id="panel-pin" style="max-width: 500px; margin: 0 auto; text-align: center; border-color: #4a1d1d;">
+            <h3 style="color: #ff6b6b; justify-content: center;">Bóveda Encriptada</h3>
+            <p style="color: #888; font-size: 0.8rem; margin-bottom: 25px; line-height: 1.6;">Nivel de acceso ejecutivo requerido para desbloquear la base de datos de usuarios.</p>
+            <input type="password" id="pin_maestro" class="form-control" placeholder="PIN de Autorización..." style="text-align: center; margin-bottom: 20px;">
+            <button class="btn-action outline" onclick="desbloquearDirectorio()" style="border-color: #ff6b6b; color: #ff6b6b;">Verificar Credenciales</button>
+            <p id="error-pin" style="color: #ff6b6b; font-size: 0.75rem; display: none; margin-top: 15px; text-transform: uppercase; letter-spacing: 1px;"></p>
         </div>
 
         <div class="card" id="tabla-usuarios" style="display: none;">
-            <h3>👥 Directorio de Clientes Verificados</h3>
+            <h3>Directorio Analítico de Usuarios</h3>
             <div class="table-wrapper">
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Nombre</th>
-                            <th>Contacto</th>
-                            <th>Estado de Contraseña</th>
+                            <th>Matrícula</th>
+                            <th>Identidad</th>
+                            <th>Vías de Contacto</th>
+                            <th>Estatus de Seguridad</th>
                         </tr>
                     </thead>
                     <tbody id="cuerpo-usuarios">
@@ -1091,16 +1131,66 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
-        // INIT: IA DE PRODUCCIÓN Y TEMPORIZADORES
+        // INIT: IA DE PRODUCCIÓN, TABS Y CACHÉ DE CHECKLISTS
         document.addEventListener("DOMContentLoaded", function() {
             let lastTab = sessionStorage.getItem("adminActiveTab") || "activos";
             openTab(lastTab);
             
             calcularProduccionPura();
             iniciarMotorExpiracion();
+            
+            // Carga de estados de los Checklists de empaque desde LocalStorage
+            loadCheckboxes();
         });
 
-        // 1. FILTRO IA DE PRODUCCIÓN: AISLA LA ADQUISICIÓN RELÁMPAGO
+        // ================= SISTEMA DE EMPAQUE (PERSISTENCIA Y UI) =================
+        function loadCheckboxes() {
+            document.querySelectorAll('input[type="checkbox"][class^="check-empaque-"]').forEach(chk => {
+                if (!chk.disabled) {
+                    let isChecked = localStorage.getItem(chk.id) === 'true';
+                    chk.checked = isChecked;
+                }
+            });
+            // Re-verificar visualmente el botón de "Listo" en todos los modales
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                let pedidoId = modal.id.replace('modal-', '');
+                verificarEmpaque(pedidoId);
+            });
+        }
+
+        function guardarEmpaque(pedidoId, idx, checked) {
+            let chkId = `chk-${pedidoId}-${idx}`;
+            localStorage.setItem(chkId, checked);
+        }
+
+        function verificarEmpaque(pedidoId) {
+            const checks = document.querySelectorAll('.check-empaque-' + pedidoId);
+            if(checks.length === 0) return;
+            const allChecked = Array.from(checks).every(c => c.checked);
+            const btnBox = document.getElementById('btn-listo-' + pedidoId);
+            const selectorContenedor = document.getElementById('contenedor-selector-' + pedidoId);
+
+            if (allChecked) {
+                if(btnBox) btnBox.style.display = 'block';
+                if(selectorContenedor) selectorContenedor.style.display = 'none';
+            } else {
+                if(btnBox) btnBox.style.display = 'none';
+                if(selectorContenedor) selectorContenedor.style.display = 'block';
+            }
+        }
+
+        function marcarPedidoListo(pedidoId, telefono, nombre, codigo) {
+            // Se limpian del caché local los checkboxes de este pedido para no ocupar memoria, 
+            // ya que ahora el servidor los marcará como disabled/checked en la próxima carga.
+            const checks = document.querySelectorAll('.check-empaque-' + pedidoId);
+            checks.forEach(c => localStorage.removeItem(c.id));
+
+            const select = document.getElementById('select-estado-' + pedidoId);
+            select.value = 'Listo';
+            notificarWhatsApp(select, telefono, nombre, codigo);
+        }
+
+        // ================= FILTRO IA DE PRODUCCIÓN =================
         function calcularProduccionPura() {
             let items = document.querySelectorAll('.prod-data-item');
             let prodDict = {};
@@ -1120,20 +1210,20 @@
             let keys = Object.keys(prodDict);
 
             if(keys.length === 0) {
-                listaDiv.innerHTML = '<p style="color:var(--text-gray); font-size:0.85rem; text-align: center;">Sin requerimientos de producción activa.</p>';
+                listaDiv.innerHTML = '<p style="color:#777; font-size:0.8rem; text-align: center; font-style: italic;">No hay requerimientos activos en el Atelier.</p>';
                 return;
             }
 
             keys.forEach(k => {
                 listaDiv.innerHTML += `
-                <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-dark);">
-                    <span style="color:var(--text-gray); font-size: 0.85rem;">${k}</span>
-                    <span style="color: var(--accent-gold); font-weight:bold;">x${prodDict[k]}</span>
+                <div style="display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid var(--border-fino);">
+                    <span style="color:var(--skin-beige); font-size: 0.85rem;">${k}</span>
+                    <span style="color: var(--luxury-gold); font-weight:600; font-family: 'Montserrat', sans-serif;">x${prodDict[k]}</span>
                 </div>`;
             });
         }
 
-        // 2. MOTOR DE EXPIRACIÓN: TEMPORIZADOR DE 1 HORA (REMASTERIZADO)
+        // ================= MOTOR DE EXPIRACIÓN =================
         function iniciarMotorExpiracion() {
             const timers = document.querySelectorAll('.timer-recogida');
             setInterval(() => {
@@ -1142,17 +1232,16 @@
                 timers.forEach(timer => {
                     const estado = timer.dataset.estado;
                     if (estado === 'Entregado' || estado === 'Cancelado') {
-                        timer.innerHTML = `<span style="color: ${estado === 'Cancelado' ? '#FF5A5A' : '#6BD968'};">${estado.toUpperCase()}</span>`;
+                        timer.innerHTML = `<span style="color: ${estado === 'Cancelado' ? '#ff6b6b' : '#c5a880'}; letter-spacing: 2px;">${estado.toUpperCase()}</span>`;
                         return;
                     }
                     
                     const horarioStr = timer.dataset.horario;
                     if(!horarioStr || horarioStr === 'Inmediato') {
-                        timer.innerHTML = '<span style="color: #6BE0FF;">RETIRO INMEDIATO</span>';
+                        timer.innerHTML = '<span style="color: var(--luxury-gold); letter-spacing: 1px;">PRIORIDAD INMEDIATA</span>';
                         return;
                     }
 
-                    // Conversión del string "05:00 PM" a Date local de hoy
                     const match = horarioStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
                     if(!match) return;
                     
@@ -1162,18 +1251,16 @@
                     if(match[3].toUpperCase() === 'AM' && horas === 12) horas = 0;
 
                     const limiteInferior = new Date();
-                    limiteInferior.setHours(horas, mins, 0, 0); // Hora de recogida pactada
+                    limiteInferior.setHours(horas, mins, 0, 0); 
                     
                     const limiteSuperior = new Date();
-                    limiteSuperior.setHours(horas + 1, mins, 0, 0); // Expiración exacta de 1 hora
+                    limiteSuperior.setHours(horas + 1, mins, 0, 0); 
 
                     if (ahora < limiteInferior) {
-                        timer.innerHTML = '<span style="color: #6BE0FF;">Esperando hora de recogida...</span>';
-                        timer.style.border = "1px solid #6BE0FF";
+                        timer.innerHTML = '<span style="color: #777; letter-spacing: 1px;">En Espera...</span>';
                     } 
                     else if (ahora >= limiteSuperior) {
-                        timer.innerHTML = '<span style="color: #FF5A5A;">VENCIDO (Expira)</span>';
-                        timer.style.border = "1px solid #FF5A5A";
+                        timer.innerHTML = '<span style="color: #ff6b6b; font-weight: 600; letter-spacing: 2px;">EXPIRADO</span>';
                     } 
                     else {
                         const diff = limiteSuperior - ahora;
@@ -1181,36 +1268,13 @@
                         const s = Math.floor((diff % (1000 * 60)) / 1000);
                         const ms = m < 10 ? '0'+m : m;
                         const ss = s < 10 ? '0'+s : s;
-                        timer.innerHTML = `<span style="color: #CBA573;">Expira en: ${ms}:${ss}</span>`;
-                        timer.style.border = "1px solid var(--accent-gold)";
+                        timer.innerHTML = `<span style="color: var(--luxury-gold); letter-spacing: 2px;">${ms}:${ss}</span>`;
                     }
                 });
             }, 1000);
         }
 
-        // 3. LÓGICA DE EMPAQUE (NUEVO)
-        function verificarEmpaque(pedidoId) {
-            const checks = document.querySelectorAll('.check-empaque-' + pedidoId);
-            const allChecked = Array.from(checks).every(c => c.checked);
-            const btnBox = document.getElementById('btn-listo-' + pedidoId);
-            const selectorContenedor = document.getElementById('contenedor-selector-' + pedidoId);
-
-            if (allChecked && checks.length > 0) {
-                btnBox.style.display = 'block';
-                selectorContenedor.style.display = 'none';
-            } else {
-                btnBox.style.display = 'none';
-                selectorContenedor.style.display = 'block';
-            }
-        }
-
-        function marcarPedidoListo(pedidoId, telefono, nombre, codigo) {
-            const select = document.getElementById('select-estado-' + pedidoId);
-            select.value = 'Listo';
-            notificarWhatsApp(select, telefono, nombre, codigo);
-        }
-
-        // CONTROL DE PESTAÑAS
+        // ================= CONTROL DE VISTAS (TABS) =================
         function openTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -1224,14 +1288,14 @@
             sessionStorage.setItem("adminActiveTab", tabId);
         }
 
-        // SOCKET.IO PARA TIEMPO REAL ZMARTHNET
+        // ================= SOCKET.IO PARA ZMARTHNET =================
         const socket = io();
         socket.on('actualizacion_global', function() {
-            console.log("Señal de ZMARTHNET recibida. Sincronizando datos en tiempo real...");
+            console.log("Señal de ZMARTHNET recibida. Refrescando matriz operativa...");
             location.reload(); 
         });
 
-        // LÓGICA DE DESBLOQUEO DE USUARIOS
+        // ================= DESBLOQUEO BÓVEDA DE USUARIOS =================
         async function desbloquearDirectorio() {
             const pin = document.getElementById('pin_maestro').value;
             const errorMsg = document.getElementById('error-pin');
@@ -1253,10 +1317,10 @@
                     data.usuarios.forEach(u => {
                         tbody.innerHTML += `
                         <tr>
-                            <td style="color:var(--accent-gold); font-weight:bold;">USR-${u.id}</td>
-                            <td>${u.nombre}</td>
-                            <td><span style="display:block; color:#fff;">${u.correo}</span><span style="color:#777; font-size:0.75rem;">${u.telefono}</span></td>
-                            <td><span style="background: #111; color: #6BD968; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: 1px solid #365C2B;">Cifrada Correctamente</span></td>
+                            <td style="color:var(--luxury-gold); font-weight:600; letter-spacing: 1px;">USR-${u.id}</td>
+                            <td style="font-weight: 500;">${u.nombre}</td>
+                            <td><span style="display:block; color:var(--skin-beige); margin-bottom:4px;">${u.correo}</span><span style="color:#777; font-size:0.75rem;">${u.telefono}</span></td>
+                            <td><span style="background: rgba(197, 168, 128, 0.1); color: var(--luxury-gold); padding: 4px 10px; border-radius: 4px; font-size: 0.65rem; border: 1px solid var(--luxury-gold); letter-spacing: 1px; font-weight: 600;">INTEGRIDAD OK</span></td>
                         </tr>`;
                     });
                 } else {
@@ -1264,11 +1328,12 @@
                     errorMsg.style.display = 'block';
                 }
             } catch (error) {
-                errorMsg.innerText = "Fallo de conexión con el servidor maestro.";
+                errorMsg.innerText = "Error de sincronización con servidor maestro.";
                 errorMsg.style.display = 'block';
             }
         }
 
+        // ================= CONTROL DE MODALES (TICKETS) =================
         function abrirModalPedido(id) {
             document.getElementById('modal-' + id).style.display = 'flex';
         }
@@ -1283,11 +1348,12 @@
             }
         }
         
+        // ================= BOT WHATSAPP =================
         function notificarWhatsApp(selectElement, telefono, nombre, codigo) {
             if (selectElement.value === 'Listo') {
                 let numLimpiado = telefono.replace(/\D/g, '');
                 let numeroFinal = "52" + numLimpiado;
-                let mensaje = `👋Hola ${nombre}, tu orden ${codigo} ya te está esperando en Delicious Bread. Ya puedes pasar a recogerlo.`;
+                let mensaje = `Estimado(a) ${nombre}, le informamos que su orden ${codigo} ha finalizado su preparación en nuestro Atelier. Delicious Bread le espera para su recolección.`;
                 
                 let url = `https://wa.me/${numeroFinal}?text=${encodeURIComponent(mensaje)}`;
                 window.open(url, '_blank');
