@@ -179,16 +179,26 @@
         }
         .inv-item.agotado { opacity: 0.5; filter: grayscale(80%); }
         
+        /* INVENTARIO Y LISTAS (Imágenes Minimizadas y Centradas) */
         .inv-image-container {
             width: 100%;
-            height: 180px;
+            height: 120px; /* Tamaño reducido para no ocupar tanto espacio */
+            background: #0A0A0A; /* Fondo oscuro elegante */
             border-bottom: 1px solid var(--border-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            box-sizing: border-box;
         }
         .inv-image-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain; /* Acopla la imagen sin recortarla ni estirarla */
             display: block;
+            border-radius: 6px;
         }
         .img-placeholder-full {
             width: 100%;
@@ -291,6 +301,7 @@
             <button class="tab-btn" onclick="openTab('inventario')">🥖 Menú & Productos</button>
             <button class="tab-btn" onclick="openTab('configuracion')">⚙️ Alertas & Ajustes</button>
             <button class="tab-btn" onclick="openTab('historial')">🗄️ Historial</button>
+            <button class="tab-btn" onclick="openTab('estadisticas')">📊 Estadísticas y Top</button>
             <button class="tab-btn" onclick="openTab('usuarios_seguridad')">🔐 Bóveda de Usuarios</button>
         </div>
         
@@ -392,19 +403,47 @@
                                                         
                                                         <div style="background:var(--input-bg); padding:15px; border-radius:12px; margin:15px 0; border:1px solid var(--border-dark);">
                                                             <h4 style="margin:0 0 10px 0; color:var(--text-white); font-size:0.75rem; text-transform:uppercase;">Artículos:</h4>
-                                                            <div class="list-scroll">
-                                                                {% for d in pedido.detalles %}
-                                                                <div class="modal-list-item">
-                                                                    <span style="color:var(--text-gray);">{{ d.producto.nombre }}</span>
-                                                                    <strong style="color:var(--accent-gold);">x{{ d.cantidad }}</strong>
-                                                                </div>
-                                                                {% endfor %}
-                                                            </div>
-                                                            <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:1rem; font-weight:bold; border-top: 1px solid var(--border-dark); padding-top: 10px;">
-                                                                <span>Monto Total</span>
-                                                                <strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong>
-                                                            </div>
-                                                        </div>
+                                                            <div style="background: #F5EFE6; padding:20px; border-radius:12px; margin:15px 0; border: 2px dashed var(--accent-gold); box-shadow: inset 0 5px 15px rgba(0,0,0,0.05); color: #111;">
+    <h4 style="margin:0 0 15px 0; color:#111; font-size:0.85rem; text-transform:uppercase; border-bottom: 1px solid #d4c5b3; padding-bottom: 10px;">📋 Check-list de Empaque:</h4>
+    
+    <div class="list-scroll" style="max-height: 40vh; padding-right: 5px;">
+        {% for d in pedido.detalles %}
+        <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e3d5c5; font-size: 0.95rem; cursor: pointer; transition: 0.3s;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="checkbox" class="check-empaque-{{ pedido.id }}" onchange="verificarEmpaque('{{ pedido.id }}')" style="width: 20px; height: 20px; accent-color: #365C2B; cursor: pointer;">
+                <span style="color:#111; font-weight: 700;">{{ d.producto.nombre }}</span>
+            </div>
+            <strong style="color:var(--card-black); font-size: 1.1rem; background: #fff; padding: 2px 8px; border-radius: 6px; border: 1px solid #d4c5b3;">x{{ d.cantidad }}</strong>
+        </label>
+        {% endfor %}
+    </div>
+
+    <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:1.1rem; font-weight:900; border-top: 2px solid #d4c5b3; padding-top: 15px; color: #111;">
+        <span>MONTO TOTAL</span>
+        <strong style="color:#8b7355;">${{ "%.2f"|format(pedido.monto_total) }}</strong>
+    </div>
+
+    <div id="btn-listo-{{ pedido.id }}" style="display: none; margin-top: 20px;">
+        <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border: 2px solid #365C2B; width: 100%; padding: 15px; font-size: 0.85rem; border-radius: 12px; text-transform: uppercase; font-weight: 900; box-shadow: 0 5px 15px rgba(107,217,104,0.2);" onclick="marcarPedidoListo('{{ pedido.id }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+            ✅ ¡Todo Empaquetado! (Marcar como Listo)
+        </button>
+    </div>
+</div>
+
+<form id="form-estado-{{ pedido.id }}" action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
+    <div id="contenedor-selector-{{ pedido.id }}">
+        <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo Manual:</label>
+        <select name="estado" id="select-estado-{{ pedido.id }}" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+            <option value="Preparando" {% if pedido.estado == 'Preparando' %}selected{% endif %}>Preparando Pedido 📦</option>
+            <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>En Horno 🥖</option>
+            <option value="Sincronizando" {% if pedido.estado == 'Sincronizando' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
+            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
+            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
+            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+        </select>
+    </div>
+</form>
                                                         
                                                         <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
                                                             <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
@@ -520,19 +559,47 @@
                                                 
                                                 <div style="background:var(--input-bg); padding:15px; border-radius:12px; margin:15px 0; border:1px solid var(--accent-gold);">
                                                     <h4 style="margin:0 0 10px 0; color:var(--accent-gold); font-size:0.75rem; text-transform:uppercase;">Artículos Relámpago:</h4>
-                                                    <div class="list-scroll">
-                                                        {% for d in pedido.detalles %}
-                                                        <div class="modal-list-item">
-                                                            <span style="color:var(--text-white);">{{ d.producto.nombre }}</span>
-                                                            <strong style="color:var(--accent-gold);">x{{ d.cantidad }}</strong>
-                                                        </div>
-                                                        {% endfor %}
-                                                    </div>
-                                                    <div style="display:flex; justify-content:space-between; margin-top:10px; font-size:1rem; font-weight:bold; border-top: 1px solid var(--border-dark); padding-top: 10px;">
-                                                        <span>Monto Total</span>
-                                                        <strong style="color:var(--accent-gold);">${{ "%.2f"|format(pedido.monto_total) }}</strong>
-                                                    </div>
-                                                </div>
+                                                    <div style="background: #F5EFE6; padding:20px; border-radius:12px; margin:15px 0; border: 2px dashed var(--accent-gold); box-shadow: inset 0 5px 15px rgba(0,0,0,0.05); color: #111;">
+    <h4 style="margin:0 0 15px 0; color:#111; font-size:0.85rem; text-transform:uppercase; border-bottom: 1px solid #d4c5b3; padding-bottom: 10px;">📋 Check-list de Empaque:</h4>
+    
+    <div class="list-scroll" style="max-height: 40vh; padding-right: 5px;">
+        {% for d in pedido.detalles %}
+        <label style="display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #e3d5c5; font-size: 0.95rem; cursor: pointer; transition: 0.3s;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="checkbox" class="check-empaque-{{ pedido.id }}" onchange="verificarEmpaque('{{ pedido.id }}')" style="width: 20px; height: 20px; accent-color: #365C2B; cursor: pointer;">
+                <span style="color:#111; font-weight: 700;">{{ d.producto.nombre }}</span>
+            </div>
+            <strong style="color:var(--card-black); font-size: 1.1rem; background: #fff; padding: 2px 8px; border-radius: 6px; border: 1px solid #d4c5b3;">x{{ d.cantidad }}</strong>
+        </label>
+        {% endfor %}
+    </div>
+
+    <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:1.1rem; font-weight:900; border-top: 2px solid #d4c5b3; padding-top: 15px; color: #111;">
+        <span>MONTO TOTAL</span>
+        <strong style="color:#8b7355;">${{ "%.2f"|format(pedido.monto_total) }}</strong>
+    </div>
+
+    <div id="btn-listo-{{ pedido.id }}" style="display: none; margin-top: 20px;">
+        <button type="button" class="btn-action" style="background: #1F2E1A; color: #6BD968; border: 2px solid #365C2B; width: 100%; padding: 15px; font-size: 0.85rem; border-radius: 12px; text-transform: uppercase; font-weight: 900; box-shadow: 0 5px 15px rgba(107,217,104,0.2);" onclick="marcarPedidoListo('{{ pedido.id }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+            ✅ ¡Todo Empaquetado! (Marcar como Listo)
+        </button>
+    </div>
+</div>
+
+<form id="form-estado-{{ pedido.id }}" action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST">
+    <div id="contenedor-selector-{{ pedido.id }}">
+        <label style="font-size:0.75rem; color:var(--accent-gold); font-weight:bold; text-transform:uppercase; display:block; margin-bottom:8px;">Estado Operativo Manual:</label>
+        <select name="estado" id="select-estado-{{ pedido.id }}" class="form-control" style="margin-bottom: 0;" onchange="notificarWhatsApp(this, '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+            <option value="Pendiente" {% if pedido.estado == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+            <option value="Preparando" {% if pedido.estado == 'Preparando' %}selected{% endif %}>Preparando Pedido 📦</option>
+            <option value="Horneando" {% if pedido.estado == 'Horneando' %}selected{% endif %}>En Horno 🥖</option>
+            <option value="Sincronizando" {% if pedido.estado == 'Sincronizando' %}selected{% endif %}>Horno + Armando Sincronizado ⚡</option>
+            <option value="Listo" {% if pedido.estado == 'Listo' %}selected{% endif %}>Listo para Recoger</option>
+            <option value="Entregado" {% if pedido.estado == 'Entregado' %}selected{% endif %}>Entregado ✓</option>
+            <option value="Cancelado" {% if pedido.estado == 'Cancelado' %}selected{% endif %}>Cancelado</option>
+        </select>
+    </div>
+</form>
                                                 
                                                 <div style="font-size:0.85rem; color:var(--text-gray); margin-bottom:15px; line-height:1.5; background: #131210; padding: 15px; border-radius: 12px; text-align: center;">
                                                     <div style="display: flex; justify-content: space-around;">
@@ -1013,6 +1080,60 @@ async function enviarAnuncio() {
         </div>
     </div>
 
+
+<div id="estadisticas" class="tab-content">
+    <div class="admin-grid">
+        <div class="card">
+            <h3 style="color: #6BD968;">🏆 Top 5 Productos Más Vendidos</h3>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Unidades Entregadas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prod_nombre, cantidad in top_productos %}
+                        <tr>
+                            <td style="color: var(--text-white); font-weight: bold; font-size: 0.9rem;">{{ prod_nombre }}</td>
+                            <td style="color: var(--accent-gold); font-size: 1.1rem; font-weight: 900;">{{ cantidad }} pzs</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="2" style="text-align: center; color: var(--text-gray);">Acumulando datos del sistema...</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 style="color: var(--accent-gold);">📈 Mejores Días de Ingresos</h3>
+            <div class="table-wrapper">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Fecha Operativa</th>
+                            <th>Ingresos Registrados</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fecha, total in mejores_dias %}
+                        <tr>
+                            <td style="color: var(--text-white); font-weight: bold; font-size: 0.9rem;">{{ fecha }}</td>
+                            <td style="color: #6BD968; font-weight: 900; font-size: 1.1rem;">${{ "%.2f"|format(total) }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="2" style="text-align: center; color: var(--text-gray);">Acumulando datos del sistema...</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
     <div id="usuarios_seguridad" class="tab-content">
         <div class="card" id="panel-pin">
             <h3 style="color: #FF5A5A;">⚠️ Acceso Restringido</h3>
@@ -1138,6 +1259,31 @@ async function enviarAnuncio() {
                     }
                 });
             }, 1000);
+        }
+
+
+function verificarEmpaque(pedidoId) {
+            const checks = document.querySelectorAll('.check-empaque-' + pedidoId);
+            const allChecked = Array.from(checks).every(c => c.checked);
+            const btnBox = document.getElementById('btn-listo-' + pedidoId);
+            const selectorContenedor = document.getElementById('contenedor-selector-' + pedidoId);
+
+            if (allChecked && checks.length > 0) {
+                // Si todo está marcado, oculta el selector normal y muestra el botón verde gigante
+                btnBox.style.display = 'block';
+                selectorContenedor.style.display = 'none';
+            } else {
+                // Si desmarcan algo, regresa a la normalidad
+                btnBox.style.display = 'none';
+                selectorContenedor.style.display = 'block';
+            }
+        }
+
+        function marcarPedidoListo(pedidoId, telefono, nombre, codigo) {
+            const select = document.getElementById('select-estado-' + pedidoId);
+            select.value = 'Listo';
+            // Ejecuta el mensaje de WhatsApp nativo y envía la petición
+            notificarWhatsApp(select, telefono, nombre, codigo);
         }
 
         // CONTROL DE PESTAÑAS (Corregido y optimizado)

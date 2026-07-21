@@ -914,6 +914,23 @@ def admin():
     conf_halloween = ConfiguracionTienda.query.filter_by(clave='temporada_halloween').first()
     estado_halloween = conf_halloween.valor_booleano if conf_halloween else False
 
+    # === SISTEMA DE ESTADÍSTICAS Y TOP VENTAS ===
+    from collections import Counter
+    ventas_productos = Counter()
+    ventas_dias = {}
+
+    todos_entregados_historial = Pedido.query.filter_by(estado='Entregado').all()
+    for p_hist in todos_entregados_historial:
+        fecha_str = p_hist.fecha_pedido.strftime('%d/%m/%Y')
+        ventas_dias[fecha_str] = ventas_dias.get(fecha_str, 0) + p_hist.monto_total
+        for d_hist in p_hist.detalles:
+            if d_hist.producto:
+                ventas_productos[d_hist.producto.nombre] += d_hist.cantidad
+
+    top_productos = ventas_productos.most_common(5)
+    mejores_dias = sorted(ventas_dias.items(), key=lambda x: x[1], reverse=True)[:5]
+    # ============================================
+
     return render_template('admin.html', 
                            pedidos_activos=pedidos_activos, 
                            pedidos_entregados=pedidos_entregados,
@@ -923,7 +940,9 @@ def admin():
                            dias_bloqueados_lista=dias_bloqueados_lista,
                            anuncios_lista=anuncios_lista,
                            pedidos_especiales_lista=pedidos_especiales_lista,
-                           estado_halloween=estado_halloween)
+                           estado_halloween=estado_halloween,
+                           top_productos=top_productos,
+                           mejores_dias=mejores_dias)
 
 
 @app.route('/admin/anuncio/nuevo', methods=['POST'])
