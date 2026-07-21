@@ -559,7 +559,7 @@
                                                     {% endif %}
 
                                                     <!-- ESTADO DINÁMICO -->
-                                                    <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST" style="margin:0; display:flex;" onsubmit="confirmarEstado(this, '{{ 'Listo' if pedido.estado in ['Venta Flash Excedente', 'Preparando'] else '' }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
+                                                    <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST" style="margin:0; display:flex;" onsubmit="confirmarEstado(this, '{{ 'Listo' if pedido.estado == 'Preparando' else '' }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
                                                         {% if pedido.estado == 'Venta Flash Excedente' %}
                                                             <input type="hidden" name="estado" value="Preparando">
                                                             <button type="submit" class="btn-action" style="padding: 8px 12px; font-size:0.6rem; width: auto;">Preparar 📦</button>
