@@ -316,19 +316,35 @@
         .btn-flash { background: var(--luxury-gold); color: var(--card-black); border: none; padding: 10px; width: 100%; font-family: 'Montserrat'; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; margin-top: 15px; font-size: 0.8rem; }
         .btn-flash:hover { background: var(--skin-beige); }
 
-        /* CARRUSEL DE NOVEDADES (Anti-Adblock) */
+       /* CARRUSEL DE NOVEDADES (Anti-Adblock) */
         .contenedor-novedades { 
-            position: relative; width: 100%; margin-bottom: 40px; 
-            border-radius: 4px; overflow: hidden; border: 1px solid var(--border-fino); 
+            position: relative; 
+            width: 100%; 
+            margin-bottom: 40px; 
+            border-radius: 4px; 
+            overflow: hidden; 
+            border: 1px solid var(--border-fino); 
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center; /* Asegura que la imagen se centre si es pequeña */
+            background: var(--card-black); /* Fondo oscuro por si la imagen no llena los lados */
         }
         .item-novedad { 
-            position: relative; width: 100%; background: #000; 
-            display: none; animation: fadeInOut 1s ease-in-out;
+            position: relative; 
+            width: 100%; 
+            display: none; 
+            animation: fadeInOut 1s ease-in-out;
+            text-align: center;
         }
         .item-novedad.active { display: block; }
-        .item-novedad img { width: 100%; height: auto; display: block; }
-        .novedad-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 20px; box-sizing: border-box; }
+        .item-novedad img { 
+            max-width: 100%; /* Bloquea que la imagen salga de la pantalla en teléfonos */
+            width: auto;     /* Le dice al sistema que respete el tamaño original de la imagen */
+            height: auto;    /* Mantiene las proporciones sin deformar */
+            display: block; 
+            margin: 0 auto;  /* Centra la imagen */
+        }
+        .novedad-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(transparent, rgba(0,0,0,0.8)); padding: 20px; box-sizing: border-box; text-align: left; }
         .novedad-titulo { color: var(--skin-beige); font-family: 'Playfair Display', serif; font-size: 1.5rem; border-left: 3px solid var(--luxury-gold); padding-left: 15px; }
         @keyframes fadeInOut {
             from { opacity: 0; }
@@ -447,10 +463,10 @@
             background: var(--card-black);
             backdrop-filter: blur(12px);
             border: 1px solid var(--luxury-gold);
-            padding: 12px 25px;
+            padding: 6px 12px; /* Reducido a la mitad */
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 6px; /* Reducido a la mitad */
             z-index: 1500;
             cursor: pointer;
             border-radius: 4px;
@@ -466,8 +482,8 @@
         .btn-zedith-trigger:hover .zedith-dot { background: var(--card-black); }
 
         .zedith-dot {
-            width: 6px;
-            height: 6px;
+            width: 4px; /* Punto reducido */
+            height: 4px; /* Punto reducido */
             background: var(--luxury-gold);
             border-radius: 50%;
             animation: latido 2s infinite;
@@ -476,8 +492,8 @@
         
         .zedith-texto {
             font-family: 'Montserrat', sans-serif;
-            font-size: 0.75rem;
-            letter-spacing: 3px;
+            font-size: 0.45rem; /* Letra reducida drásticamente */
+            letter-spacing: 1.5px; /* Espaciado ajustado al nuevo tamaño */
             text-transform: uppercase;
             color: var(--luxury-gold);
             font-weight: 600;
@@ -1334,36 +1350,58 @@ let panBloqueado = contienePan && (horaActualLocal >= 16);
     var input = document.getElementById(inputId);
     var valorActual = parseInt(input.value) || 0;
     var nuevoValor = valorActual + delta;
-
-    // Extraemos el límite de stock directamente del HTML que ya tienes armado
     var maxAttr = input.getAttribute('max');
     var maxStock = (maxAttr && maxAttr !== '') ? parseInt(maxAttr) : null;
+    var categoriaNueva = (input.getAttribute('data-categoria') || 'pan').toLowerCase();
 
-    // 1. Evitar números negativos
+    // 1. BLOQUEADOR: Validación Estricta de Colección Halloween
+    if (delta > 0) { // Solo verificamos al intentar agregar (sumar) al carrito
+        var inputsActivos = document.querySelectorAll('.input-cantidad');
+        var carritoTieneHalloween = false;
+        var carritoTieneNormal = false;
+        
+        inputsActivos.forEach(function(inp) {
+            var cant = parseInt(inp.value) || 0;
+            if (cant > 0) {
+                var cat = (inp.getAttribute('data-categoria') || 'pan').toLowerCase();
+                if (cat === 'halloween') carritoTieneHalloween = true;
+                else carritoTieneNormal = true;
+            }
+        });
+
+        if (categoriaNueva === 'halloween' && carritoTieneNormal) {
+            alert("Por exclusividad del sistema, los artículos de la Colección Halloween deben procesarse en un pedido independiente. Procese primero sus artículos regulares.");
+            return; // Bloquea la acción
+        }
+        if (categoriaNueva !== 'halloween' && carritoTieneHalloween) {
+            alert("Actualmente tiene artículos exclusivos de Halloween en su carrito. Procese este pedido antes de agregar productos regulares del Atelier o Tienda.");
+            return; // Bloquea la acción
+        }
+    }
+
+    // 2. Evitar números negativos
     if (nuevoValor < 0) {
         nuevoValor = 0;
     }
 
-    // 2. Bloqueador inteligente: Si existe un límite y el usuario intenta superarlo, lo estancamos en el máximo
+    // 3. Bloqueador de límite de stock máximo
     if (maxStock !== null && nuevoValor >= maxStock) {
         nuevoValor = maxStock;
     }
 
-    // 3. Actualizamos la pantalla y los totales del carrito
+    // 4. Actualizamos la pantalla y los totales del carrito
     input.value = nuevoValor;
     calcularTotal(); 
 
-    // 4. Control visual del botón "+": Apagarlo cuando ya no haya más inventario
+    // 5. Control visual del botón "+" (Apagarlo cuando no haya inventario)
     if (maxStock !== null) {
-        var btnSuma = input.nextElementSibling; // Toma el botón "+" de forma automática
+        var btnSuma = input.nextElementSibling; 
         if (btnSuma && btnSuma.classList.contains('btn-suma-dinamico')) {
             if (nuevoValor >= maxStock) {
-                // Bloquea el botón
                 btnSuma.disabled = true;
                 btnSuma.style.opacity = '0.3';
                 btnSuma.style.cursor = 'not-allowed';
             } else {
-                // Reactiva el botón si el cliente resta artículos
                 btnSuma.disabled = false;
                 btnSuma.style.opacity = '1';
                 btnSuma.style.cursor = 'pointer';
