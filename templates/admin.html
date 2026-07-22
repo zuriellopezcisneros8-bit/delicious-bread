@@ -319,6 +319,7 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="openTab('activos')">Órdenes Live</button>
             <button class="tab-btn" onclick="openTab('inventario')">Catálogo Premium</button>
+            <button class="tab-btn" onclick="openTab('coleccionables')">Medallas Aves</button>
             <button class="tab-btn" onclick="openTab('configuracion')">Sistemas y Alertas</button>
             <button class="tab-btn" onclick="openTab('historial')">Bóveda Histórica</button>
             <button class="tab-btn" onclick="openTab('estadisticas')">Analíticas</button>
@@ -870,6 +871,68 @@
                     </div>
                 </div>
                 {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN: BÓVEDA DE MEDALLAS / COLECCIONABLES -->
+    <div id="coleccionables" class="tab-content">
+        <div class="admin-grid">
+            <!-- FORMULARIO DE REGISTRO -->
+            <div class="card" style="align-self: start;">
+                <h3>Inyección de Medalla (Ave)</h3>
+                <p style="color: #777; font-size: 0.75rem; margin-top: -20px; margin-bottom: 20px; line-height: 1.5; text-transform: uppercase; letter-spacing: 1px;">Subida directa a la Bóveda Neon y Cloudinary.</p>
+                
+                <form action="{{ url_for('nuevo_coleccionable') }}" method="POST" enctype="multipart/form-data">
+                    <label style="font-size:0.65rem; color:#888; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 2px;">Nombre del Especímen / Ave:</label>
+                    <input type="text" name="nombre" class="form-control" required placeholder="Ej. Halcón Peregrino">
+                    
+                    <label style="font-size:0.65rem; color:#888; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 2px;">Jerarquía / Tier (1 al 5):</label>
+                    <select name="tier" class="form-control" required style="margin-bottom: 15px;">
+                        <option value="1">Tier 1 - Común</option>
+                        <option value="2">Tier 2 - Poco Común</option>
+                        <option value="3">Tier 3 - Raro</option>
+                        <option value="4">Tier 4 - Épico</option>
+                        <option value="5">Tier 5 - Legendario</option>
+                    </select>
+
+                    <label style="font-size:0.65rem; color:#888; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 2px;">Probabilidad Base (%):</label>
+                    <input type="number" step="0.1" name="probabilidad_base" class="form-control" required placeholder="Ej. 25.0" style="margin-bottom: 15px;">
+
+                    <div style="background: #050505; border: 1px dashed var(--border-fino); padding: 20px 15px; border-radius: var(--radius); text-align: center; margin-bottom: 15px;">
+                        <span style="display:block; margin-bottom:12px; font-size:0.75rem; font-weight: 600; color: var(--light-brown); text-transform: uppercase; letter-spacing: 2px;">Archivo de Imagen (Cloudinary)</span>
+                        <input type="file" name="imagen_file" accept="image/*" style="font-size:0.75rem; width: 100%; color: #888; font-family: 'Montserrat', sans-serif;">
+                    </div>
+
+                    <label style="font-size:0.65rem; color:#888; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 2px;">O Ruta / URL Manual Local:</label>
+                    <input type="text" name="imagen_url_manual" class="form-control" placeholder="Ej. /static/css/imagenes/maves/halcon.png" style="margin-bottom: 20px;">
+
+                    <button type="submit" class="btn-action">Registrar Ave en Bóveda</button>
+                </form>
+            </div>
+
+            <!-- CUADRÍCULA DE MEDALLAS EXISTENTES -->
+            <div class="card">
+                <h3>Especímenes en Bóveda</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px;">
+                    {% for ave in coleccionables_lista %}
+                    <div style="background: #0A0A0A; border: 1px solid var(--border-fino); padding: 20px 15px; border-radius: var(--radius); text-align: center; position: relative;">
+                        <div style="width: 90px; height: 90px; margin: 0 auto 12px auto; background: radial-gradient(circle at 30% 30%, #2a2a2a 0%, #0a0a0a 50%, #000000 100%); border-radius: 50%; border: 2px solid var(--luxury-gold); display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.8);">
+                            <img src="{{ ave.imagen_url }}" alt="{{ ave.nombre }}" style="width: 80%; height: 80%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8));">
+                        </div>
+                        <h4 style="font-size: 0.85rem; color: var(--skin-beige); margin-bottom: 5px; font-weight: 600; font-family: 'Montserrat', sans-serif;">{{ ave.nombre }}</h4>
+                        <p style="font-size: 0.7rem; color: var(--luxury-gold); margin-bottom: 12px; font-weight: 500;">Tier {{ ave.tier }} | {{ ave.probabilidad_base }}% Prob.</p>
+                        
+                        <form action="{{ url_for('eliminar_coleccionable', coleccionable_id=ave.id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este especímen de la base de datos?');">
+                            <button type="submit" class="btn-small" style="width: 100%; border-color: #4a1d1d; color: #ff6b6b; padding: 6px 10px;">Eliminar</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #777; font-style: italic; font-size: 0.85rem;">
+                        No hay especímenes de aves en la base de datos Neon. Utiliza el formulario para registrar tus primeros coleccionables.
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>

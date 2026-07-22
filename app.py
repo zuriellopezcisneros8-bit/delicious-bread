@@ -687,6 +687,7 @@ def login():
             
     return render_template('login.html')
 
+
 @app.route('/logout')
 def logout():
     session.pop('usuario_id', None)
@@ -954,6 +955,7 @@ def admin():
         
         socketio.emit('actualizacion_global')
         return redirect(url_for('admin'))
+
     filtro = request.args.get('filtro', 'hoy')
     todos_pedidos = Pedido.query.order_by(Pedido.fecha_pedido.desc()).all()
     hoy = datetime.utcnow().date()
@@ -961,30 +963,37 @@ def admin():
     pedidos_filtrados = []
     for p in todos_pedidos:
         fecha_p = p.fecha_pedido.date()
-        if filtro == 'hoy' and fecha_p == hoy: pedidos_filtrados.append(p)
-        elif filtro == 'ayer' and fecha_p == (hoy - timedelta(days=1)): pedidos_filtrados.append(p)
-        elif filtro == 'semana' and (hoy - fecha_p).days <= 7: pedidos_filtrados.append(p)
-        elif filtro == 'mes' and hoy.month == fecha_p.month and hoy.year == fecha_p.year: pedidos_filtrados.append(p)
-        elif filtro == 'todos': pedidos_filtrados.append(p)
+        if filtro == 'hoy' and fecha_p == hoy: 
+            pedidos_filtrados.append(p)
+        elif filtro == 'ayer' and fecha_p == (hoy - timedelta(days=1)): 
+            pedidos_filtrados.append(p)
+        elif filtro == 'semana' and (hoy - fecha_p).days <= 7: 
+            pedidos_filtrados.append(p)
+        elif filtro == 'mes' and hoy.month == fecha_p.month and hoy.year == fecha_p.year: 
+            pedidos_filtrados.append(p)
+        elif filtro == 'todos': 
+            pedidos_filtrados.append(p)
 
     pedidos_activos = [p for p in pedidos_filtrados if p.estado != 'Entregado']
     pedidos_entregados = [p for p in pedidos_filtrados if p.estado == 'Entregado']
 
     produccion_total = {}
     for p in pedidos_activos:
-        for detalle in p.detalles: # ✅ Indentación corregida
+        for detalle in p.detalles:
             if detalle.producto: 
                 prod_nombre = detalle.producto.nombre
                 produccion_total[prod_nombre] = produccion_total.get(prod_nombre, 0) + detalle.cantidad
+
     productos = Producto.query.all()
     dias_bloqueados_lista = DiaInhabil.query.order_by(DiaInhabil.fecha.asc()).all()
-    
-    
     anuncios_lista = Anuncio.query.all()
     pedidos_especiales_lista = PedidoEspecial.query.order_by(PedidoEspecial.fecha_creacion.desc()).all()
 
     conf_halloween = ConfiguracionTienda.query.filter_by(clave='temporada_halloween').first()
     estado_halloween = conf_halloween.valor_booleano if conf_halloween else False
+
+    # === CONSULTA DE BÓVEDA DE COLECCIONABLES (MEDALLAS) ===
+    coleccionables_lista = Coleccionable.query.all()
 
     # === SISTEMA DE ESTADÍSTICAS Y TOP VENTAS ===
     from collections import Counter
@@ -1014,8 +1023,68 @@ def admin():
                            pedidos_especiales_lista=pedidos_especiales_lista,
                            estado_halloween=estado_halloween,
                            top_productos=top_productos,
-                           mejores_dias=mejores_dias)
+                           mejores_dias=mejores_dias,
+                           coleccionables_lista=coleccionables_lista)
 
+
+# ================= GESTIÓN DE BÓVEDA DE COLECCIONABLES =================
+
+@app.route('/admin/coleccionable/nuevo', methods=['POST'])
+def nuevo_coleccionable():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    nombre = request.form.get('nombre')
+    tier = int(request.form.get('tier', 1))
+    probabilidad_base = float(request.form.get('probabilidad_base', 10.0))
+    
+    # Manejo de la imagen: ya sea subida desde archivo o por ruta manual
+    file = request.files.get('imagen_file')
+    url_manual = request.form.get('imagen_url_manual')
+    
+    imagen_url = None
+    if file and file.filename != '':
+        # Se sube automáticamente a Cloudinary
+        imagen_url = subir_a_cloudinary(file)
+    elif url_manual and url_manual.strip() != '':
+        # Por si prefieres usar temporalmente la ruta local (/static/css/imagenes/maves/...)
+        imagen_url = url_manual.strip()
+
+    if not imagen_url:
+        flash('Debe seleccionar un archivo de imagen o ingresar una URL válida.', 'error')
+        return redirect(url_for('admin'))
+
+    nueva_ave = Coleccionable(
+        nombre=nombre,
+        tier=tier,
+        probabilidad_base=probabilidad_base,
+        imagen_url=imagen_url
+    )
+    
+    db.session.add(nueva_ave)
+    db.session.commit()
+    
+    # Sincronización en tiempo real vía SocketIO
+    socketio.emit('actualizacion_global')
+    flash('Especímen de Ave integrado a la Bóveda exitosamente.', 'success')
+    return redirect(url_for('admin'))
+
+
+@app.route('/admin/coleccionable/eliminar/<int:coleccionable_id>', methods=['POST'])
+def eliminar_coleccionable(coleccionable_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    
+    ave = db.session.get(Coleccionable, coleccionable_id)
+    if ave:
+        db.session.delete(ave)
+        db.session.commit()
+        socketio.emit('actualizacion_global')
+        flash('Especímen eliminado de la Bóveda.', 'success')
+    else:
+        flash('No se encontró la medalla especificada.', 'error')
+        
+    return redirect(url_for('admin'))
 
 @app.route('/admin/anuncio/nuevo', methods=['POST'])
 def nuevo_anuncio():
