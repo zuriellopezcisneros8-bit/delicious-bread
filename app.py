@@ -68,7 +68,7 @@ app.secret_key = 'zmarth_executive_secure_key_2026'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=180)
 
 
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
+app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024 
 
 db = SQLAlchemy(app)
 
