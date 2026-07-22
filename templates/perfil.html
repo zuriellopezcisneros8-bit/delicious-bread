@@ -53,6 +53,7 @@
 
         /* =========================================
            BÓVEDA DE COLECCIONES (MEDALLAS OBSIDIANA)
+           MODIFICACIÓN DE ESTILO PARA IMÁGENES COMPLETAS
            ========================================= */
         .collection-grid {
             display: grid;
@@ -73,28 +74,34 @@
         }
 
         .medal-obsidian {
-            /* Efecto de piedra pulida obsidiana */
-            background: radial-gradient(circle at 30% 30%, var(--obsidian-light) 0%, var(--obsidian-dark) 50%, #000000 100%);
+            /* Simplificado a negro puro para que las imágenes con fondo negro se fundan perfectamente */
+            background-color: #000000;
             width: clamp(100px, 35vw, 160px); /* Escalable en móviles, tope 160px */
             height: clamp(100px, 35vw, 160px);
             border-radius: 50%;
             border: 3px solid var(--luxury-gold);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.6), inset 0 -5px 15px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.1);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.6), inset 0 -5px 15px rgba(0,0,0,0.9);
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden;
+            overflow: hidden; /* Crucial para recortar la imagen redondamente */
             margin-bottom: 15px;
             transition: var(--transition-smooth);
             position: relative;
+            z-index: 1;
         }
 
+        /* Efecto de brillo sutil de cristal gloss sobre la medalla */
         .medal-obsidian::after {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 50%;
-            box-shadow: inset 0 0 20px rgba(197, 168, 128, 0.3);
+            top: 5%;
+            left: 5%;
+            width: 90%;
+            height: 45%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+            border-radius: 50% 50% 0 0;
+            z-index: 3; /* Sobre la imagen */
             pointer-events: none;
         }
 
@@ -104,17 +111,21 @@
             border-color: #dfd0c0;
         }
 
+        /* === MODIFICACIÓN CLAVE PARA ACOPLAR LA IMAGEN === */
         .medal-obsidian img {
-            width: 80%;
-            height: 80%;
-            object-fit: contain;
+            width: 100%; /* Ocupa el 100% del ancho del círculo */
+            height: 100%; /* Ocupa el 100% del alto del círculo */
+            object-fit: cover; /* SE EXPANDE Y RECORTA PARA LLENAR EL CÍRCULO PERFECTAMENTE */
             filter: drop-shadow(0 8px 10px rgba(0,0,0,0.7));
-            z-index: 2;
+            z-index: 2; /* Debajo del brillo de cristal */
             transition: var(--transition-smooth);
+            position: absolute; /* Para asegurar el llenado absoluto */
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%; /* Asegurar que la propia imagen se corte redonda */
         }
 
-        .medal-obsidian:hover img {
-            transform: scale(1.1);
+        .medal-wrapper:hover .medal-obsidian img {
+            transform: scale(1.1); /* Efecto de zoom sutil en hover */
         }
 
         .medal-name {
@@ -144,7 +155,6 @@
         .badges-container { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .badge { font-size: 0.65rem; padding: 6px 12px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); text-transform: uppercase; border-radius: 4px; white-space: nowrap; font-weight: 600; letter-spacing: 1px; }
         
-        /* Colores dinámicos sincronizados con el admin */
         .badge-pendiente { border-color: #8b7355; color: #8b7355; background: rgba(139, 115, 85, 0.05); }
         .badge-horneando { border-color: #d9884a; color: #d9884a; background: rgba(217, 136, 74, 0.05); }
         .badge-listo { border-color: #6BD968; color: #6BD968; background: rgba(107, 217, 104, 0.05); }
@@ -159,7 +169,6 @@
 
         .file-upload-section { margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border-fino); }
         
-        /* Estilo elegante para el input de archivo */
         .file-upload-section input[type="file"] { width: 100%; margin-bottom: 20px; color: var(--skin-beige); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; outline: none; }
         
         .file-upload-section input[type="file"]::file-selector-button {
@@ -217,20 +226,20 @@
     <header>
         <h1>PANEL DE SOCIO</h1>
         <div class="nav-actions">
+            <!-- Mantenemos los tags de plantilla para que los uses en tu integración -->
             <a href="{{ url_for('index') }}" class="btn-nav">Tienda Premium</a>
             <a href="{{ url_for('logout') }}" class="btn-nav" style="border-color: #4a1d1d; color: #ff6b6b;">Cerrar Sesión</a>
         </div>
     </header>
 
     <div class="container">
-        <!-- TARJETA DE IDENTIDAD Y RANGO -->
+        <!-- TARJETA DE IDENTIDAD Y RANGO (Usando tags de plantilla) -->
         <div class="profile-card">
-            <h3>{{ usuario.nombre }}</h3>
-            <p class="profile-info">{{ usuario.correo }} | {{ usuario.telefono }}</p>
+            <h3>{{ usuario.nombre|default("Usuario Demo") }}</h3>
+            <p class="profile-info">{{ usuario.correo|default("demo@deliciousbread.com") }} | {{ usuario.telefono|default("+34 600 000 000") }}</p>
             
             <div class="rango-divisor">
                 <span class="rango-sub">Estatus Corporativo</span>
-                <!-- Rango Dinámico extraído desde Python -->
                 <h2 class="rango-title">{{ titulo_rango|default("Iniciado de la Manada") }}</h2>
             </div>
         </div>
@@ -241,7 +250,7 @@
             <button class="tab-btn" onclick="switchTab('colecciones')" id="btn-colecciones">Bóveda de Colecciones</button>
         </div>
 
-        <!-- VISTA 1: HISTORIAL DE PEDIDOS -->
+        <!-- VISTA 1: HISTORIAL DE PEDIDOS (Mantenemos tu lógica de bucle) -->
         <div id="view-historial" class="tab-content active">
             {% for pedido in pedidos %}
             <div class="order-card">
@@ -323,18 +332,29 @@
             {% endfor %}
         </div>
 
-        <!-- VISTA 2: BÓVEDA DE COLECCIONES (MEDALLAS) -->
+        <!-- VISTA 2: BÓVEDA DE COLECCIONES (MEDALLAS CON CSS FIJO) -->
         <div id="view-colecciones" class="tab-content">
             <div class="collection-grid">
+                
+                <!-- EJEMPLO ESTÁTICO DE TU ÁGUILA MORA CON EL NUEVO CSS -->
+                <div class="medal-wrapper">
+                    <div class="medal-obsidian">
+                        <!-- Usamos directamente la imagen que me pasaste -->
+                        <img src="image_1.png" alt="Águila Mora">
+                    </div>
+                    <span class="medal-name">Águila Mora</span>
+                    <span class="medal-date">Desbloqueado: 15/07/2026</span>
+                </div>
+
+                <!-- (Comentado) Restaurar esta lógica de plantilla para la integración real -->
+                <!-- 
                 {% if medallas %}
                     {% for medalla in medallas %}
                     <div class="medal-wrapper">
                         <div class="medal-obsidian">
-                            <!-- Si no hay imagen temporalmente, muestra un icono o texto -->
                             <img src="{{ medalla.coleccionable.imagen_url }}" alt="{{ medalla.coleccionable.nombre }}">
                         </div>
                         <span class="medal-name">{{ medalla.coleccionable.nombre }}</span>
-                        <!-- Opcional: Mostrar fecha de obtención -->
                         <span class="medal-date">Desbloqueado: {{ medalla.fecha_obtencion.strftime('%d/%m/%Y') if medalla.fecha_obtencion else 'Reciente' }}</span>
                     </div>
                     {% endfor %}
@@ -343,6 +363,7 @@
                         <p style="color: #777; font-size: 0.85rem; letter-spacing: 1px; line-height: 1.6; text-transform: uppercase;">Aún no cuenta con especímenes en su bóveda.<br><br>Realice su primera adquisición para desbloquear su primera ave de presa.</p>
                     </div>
                 {% endif %}
+                -->
             </div>
         </div>
 
@@ -352,27 +373,25 @@
     <script>
         // Sistema de Pestañas
         function switchTab(tabId) {
-            // Ocultar todos los contenidos
             document.querySelectorAll('.tab-content').forEach(function(content) {
                 content.classList.remove('active');
             });
-            // Quitar clase active de todos los botones
             document.querySelectorAll('.tab-btn').forEach(function(btn) {
                 btn.classList.remove('active');
             });
-            
-            // Activar la pestaña y botón seleccionado
             document.getElementById('view-' + tabId).classList.add('active');
             document.getElementById('btn-' + tabId).classList.add('active');
         }
 
-        // Sistema WebSockets (Tiempo Real)
+        // Sistema WebSockets (Tiempo Real - Comentado para demo estática)
+        /*
         document.addEventListener("DOMContentLoaded", function() {
             const socket = io();
             socket.on('actualizacion_global', function() {
                 window.location.reload();
             });
         });
+        */
     </script>
 </body>
 </html>
