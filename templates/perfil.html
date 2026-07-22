@@ -53,12 +53,11 @@
 
         /* =========================================
            BÓVEDA DE COLECCIONES (MEDALLAS OBSIDIANA)
-           MODIFICACIÓN DE ESTILO PARA IMÁGENES COMPLETAS
            ========================================= */
         .collection-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Fuerza 2 columnas por fila siempre */
-            gap: 25px 15px; /* Gap vertical de 25px, horizontal de 15px */
+            grid-template-columns: repeat(2, 1fr);
+            gap: 25px 15px;
             padding: 20px 10px;
             background: var(--card-black);
             border-radius: 12px;
@@ -74,34 +73,28 @@
         }
 
         .medal-obsidian {
-            /* Simplificado a negro puro para que las imágenes con fondo negro se fundan perfectamente */
-            background-color: #000000;
-            width: clamp(100px, 35vw, 160px); /* Escalable en móviles, tope 160px */
+            /* Cambio único: Fondo totalmente negro para acoplarse a las imágenes */
+            background: #000000;
+            width: clamp(100px, 35vw, 160px);
             height: clamp(100px, 35vw, 160px);
             border-radius: 50%;
             border: 3px solid var(--luxury-gold);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.6), inset 0 -5px 15px rgba(0,0,0,0.9);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.6), inset 0 -5px 15px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.1);
             display: flex;
             justify-content: center;
             align-items: center;
-            overflow: hidden; /* Crucial para recortar la imagen redondamente */
+            overflow: hidden;
             margin-bottom: 15px;
             transition: var(--transition-smooth);
             position: relative;
-            z-index: 1;
         }
 
-        /* Efecto de brillo sutil de cristal gloss sobre la medalla */
         .medal-obsidian::after {
             content: '';
             position: absolute;
-            top: 5%;
-            left: 5%;
-            width: 90%;
-            height: 45%;
-            background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
-            border-radius: 50% 50% 0 0;
-            z-index: 3; /* Sobre la imagen */
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            box-shadow: inset 0 0 20px rgba(197, 168, 128, 0.3);
             pointer-events: none;
         }
 
@@ -111,21 +104,18 @@
             border-color: #dfd0c0;
         }
 
-        /* === MODIFICACIÓN CLAVE PARA ACOPLAR LA IMAGEN === */
+        /* Se mantiene intacto tu código original de la imagen */
         .medal-obsidian img {
-            width: 100%; /* Ocupa el 100% del ancho del círculo */
-            height: 100%; /* Ocupa el 100% del alto del círculo */
-            object-fit: cover; /* SE EXPANDE Y RECORTA PARA LLENAR EL CÍRCULO PERFECTAMENTE */
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
             filter: drop-shadow(0 8px 10px rgba(0,0,0,0.7));
-            z-index: 2; /* Debajo del brillo de cristal */
+            z-index: 2;
             transition: var(--transition-smooth);
-            position: absolute; /* Para asegurar el llenado absoluto */
-            top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 50%; /* Asegurar que la propia imagen se corte redonda */
         }
 
-        .medal-wrapper:hover .medal-obsidian img {
-            transform: scale(1.1); /* Efecto de zoom sutil en hover */
+        .medal-obsidian:hover img {
+            transform: scale(1.1);
         }
 
         .medal-name {
@@ -226,20 +216,20 @@
     <header>
         <h1>PANEL DE SOCIO</h1>
         <div class="nav-actions">
-            <!-- Mantenemos los tags de plantilla para que los uses en tu integración -->
             <a href="{{ url_for('index') }}" class="btn-nav">Tienda Premium</a>
             <a href="{{ url_for('logout') }}" class="btn-nav" style="border-color: #4a1d1d; color: #ff6b6b;">Cerrar Sesión</a>
         </div>
     </header>
 
     <div class="container">
-        <!-- TARJETA DE IDENTIDAD Y RANGO (Usando tags de plantilla) -->
+        <!-- TARJETA DE IDENTIDAD Y RANGO -->
         <div class="profile-card">
-            <h3>{{ usuario.nombre|default("Usuario Demo") }}</h3>
-            <p class="profile-info">{{ usuario.correo|default("demo@deliciousbread.com") }} | {{ usuario.telefono|default("+34 600 000 000") }}</p>
+            <h3>{{ usuario.nombre }}</h3>
+            <p class="profile-info">{{ usuario.correo }} | {{ usuario.telefono }}</p>
             
             <div class="rango-divisor">
                 <span class="rango-sub">Estatus Corporativo</span>
+                <!-- Rango Dinámico extraído desde Python -->
                 <h2 class="rango-title">{{ titulo_rango|default("Iniciado de la Manada") }}</h2>
             </div>
         </div>
@@ -250,7 +240,7 @@
             <button class="tab-btn" onclick="switchTab('colecciones')" id="btn-colecciones">Bóveda de Colecciones</button>
         </div>
 
-        <!-- VISTA 1: HISTORIAL DE PEDIDOS (Mantenemos tu lógica de bucle) -->
+        <!-- VISTA 1: HISTORIAL DE PEDIDOS -->
         <div id="view-historial" class="tab-content active">
             {% for pedido in pedidos %}
             <div class="order-card">
@@ -332,29 +322,18 @@
             {% endfor %}
         </div>
 
-        <!-- VISTA 2: BÓVEDA DE COLECCIONES (MEDALLAS CON CSS FIJO) -->
+        <!-- VISTA 2: BÓVEDA DE COLECCIONES (MEDALLAS DINÁMICAS RESTAURADAS) -->
         <div id="view-colecciones" class="tab-content">
             <div class="collection-grid">
-                
-                <!-- EJEMPLO ESTÁTICO DE TU ÁGUILA MORA CON EL NUEVO CSS -->
-                <div class="medal-wrapper">
-                    <div class="medal-obsidian">
-                        <!-- Usamos directamente la imagen que me pasaste -->
-                        <img src="image_1.png" alt="Águila Mora">
-                    </div>
-                    <span class="medal-name">Águila Mora</span>
-                    <span class="medal-date">Desbloqueado: 15/07/2026</span>
-                </div>
-
-                <!-- (Comentado) Restaurar esta lógica de plantilla para la integración real -->
-                <!-- 
                 {% if medallas %}
                     {% for medalla in medallas %}
                     <div class="medal-wrapper">
                         <div class="medal-obsidian">
+                            <!-- Si no hay imagen temporalmente, muestra un icono o texto -->
                             <img src="{{ medalla.coleccionable.imagen_url }}" alt="{{ medalla.coleccionable.nombre }}">
                         </div>
                         <span class="medal-name">{{ medalla.coleccionable.nombre }}</span>
+                        <!-- Opcional: Mostrar fecha de obtención -->
                         <span class="medal-date">Desbloqueado: {{ medalla.fecha_obtencion.strftime('%d/%m/%Y') if medalla.fecha_obtencion else 'Reciente' }}</span>
                     </div>
                     {% endfor %}
@@ -363,7 +342,6 @@
                         <p style="color: #777; font-size: 0.85rem; letter-spacing: 1px; line-height: 1.6; text-transform: uppercase;">Aún no cuenta con especímenes en su bóveda.<br><br>Realice su primera adquisición para desbloquear su primera ave de presa.</p>
                     </div>
                 {% endif %}
-                -->
             </div>
         </div>
 
@@ -373,25 +351,27 @@
     <script>
         // Sistema de Pestañas
         function switchTab(tabId) {
+            // Ocultar todos los contenidos
             document.querySelectorAll('.tab-content').forEach(function(content) {
                 content.classList.remove('active');
             });
+            // Quitar clase active de todos los botones
             document.querySelectorAll('.tab-btn').forEach(function(btn) {
                 btn.classList.remove('active');
             });
+            
+            // Activar la pestaña y botón seleccionado
             document.getElementById('view-' + tabId).classList.add('active');
             document.getElementById('btn-' + tabId).classList.add('active');
         }
 
-        // Sistema WebSockets (Tiempo Real - Comentado para demo estática)
-        /*
+        // Sistema WebSockets (Tiempo Real)
         document.addEventListener("DOMContentLoaded", function() {
             const socket = io();
             socket.on('actualizacion_global', function() {
                 window.location.reload();
             });
         });
-        */
     </script>
 </body>
 </html>
