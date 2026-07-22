@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PANEL DE SOCIO | DELICIOUS BREAD</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@200;300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 
     <style>
         :root {
@@ -15,31 +15,134 @@
             --luxury-gold: #c5a880;
             --border-fino: #222222;        
             --text-dark: #1A1A1A;
+            --obsidian-dark: #0a0a0a;
+            --obsidian-light: #2a2a2a;
+            --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: var(--bg-beige); color: var(--text-dark); font-family: 'Montserrat', sans-serif; padding: 20px 15px; }
+        body { background-color: var(--bg-beige); color: var(--text-dark); font-family: 'Montserrat', sans-serif; padding: 20px 15px; -webkit-font-smoothing: antialiased; }
         
-        header { text-align: center; margin: 60px 0; }
-        h1 { font-family: 'Playfair Display', serif; font-size: 2.5rem; letter-spacing: 6px; text-transform: uppercase; margin-bottom: 10px; }
+        header { text-align: center; margin: 40px 0; }
+        h1 { font-family: 'Playfair Display', serif; font-size: clamp(1.8rem, 4vw, 2.5rem); letter-spacing: 6px; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
         
         .nav-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 20px; margin-top: 20px; }
-        .btn-nav { color: var(--text-dark); text-decoration: none; border: 1px solid var(--text-dark); padding: 10px 20px; font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; text-align: center; border-radius: 6px; transition: 0.3s; }
+        .btn-nav { color: var(--text-dark); text-decoration: none; border: 1px solid var(--text-dark); padding: 10px 25px; font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; text-align: center; border-radius: 4px; transition: var(--transition-smooth); }
         .btn-nav:hover { background: var(--text-dark); color: var(--bg-beige); }
 
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 800px; margin: 0 auto; padding-bottom: 50px; }
         
-        /* Bordes redondeados aplicados a las tarjetas */
-        .profile-card { background: var(--card-black); padding: 30px; border-radius: 15px; margin-bottom: 40px; color: var(--skin-beige); text-align: center; }
-        .profile-card h3 { font-family: 'Playfair Display', serif; font-size: 1.8rem; margin-bottom: 10px; color: var(--luxury-gold); }
+        /* TARJETA DE PERFIL Y RANGO */
+        .profile-card { background: var(--card-black); padding: 35px 30px; border-radius: 12px; margin-bottom: 30px; color: var(--skin-beige); text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); border: 1px solid var(--luxury-gold); }
+        .profile-card h3 { font-family: 'Playfair Display', serif; font-size: 2rem; margin-bottom: 5px; color: var(--skin-beige); letter-spacing: 1px; }
+        .profile-info { font-size: 0.85rem; color: #888; margin-bottom: 20px; letter-spacing: 1px; }
         
-        .order-card { background: var(--card-black); border: 1px solid var(--border-fino); padding: 25px; margin-bottom: 25px; color: var(--skin-beige); border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .rango-divisor { border-top: 1px dashed var(--border-fino); padding-top: 20px; margin-top: 10px; }
+        .rango-sub { color: var(--light-brown); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 3px; font-weight: 600; margin-bottom: 8px; display: block; }
+        .rango-title { color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.6rem; letter-spacing: 1px; font-weight: 500; }
+
+        /* SISTEMA DE PESTAÑAS (TABS) */
+        .tabs-container { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 1px solid var(--border-fino); padding-bottom: 15px; justify-content: center; flex-wrap: wrap; }
+        .tab-btn { background: transparent; border: 1px solid var(--border-fino); color: var(--text-dark); padding: 12px 25px; border-radius: 4px; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; font-weight: 600; letter-spacing: 2px; transition: var(--transition-smooth); font-family: 'Montserrat', sans-serif; }
+        .tab-btn.active { background: var(--text-dark); color: var(--bg-beige); border-color: var(--text-dark); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .tab-btn:hover:not(.active) { background: #d4c5b3; }
+
+        .tab-content { display: none; animation: fadeIn 0.5s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* =========================================
+           BÓVEDA DE COLECCIONES (MEDALLAS OBSIDIANA)
+           ========================================= */
+        .collection-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Fuerza 2 columnas por fila siempre */
+            gap: 25px 15px; /* Gap vertical de 25px, horizontal de 15px */
+            padding: 20px 10px;
+            background: var(--card-black);
+            border-radius: 12px;
+            border: 1px solid var(--border-fino);
+            box-shadow: inset 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .medal-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .medal-obsidian {
+            /* Efecto de piedra pulida obsidiana */
+            background: radial-gradient(circle at 30% 30%, var(--obsidian-light) 0%, var(--obsidian-dark) 50%, #000000 100%);
+            width: clamp(100px, 35vw, 160px); /* Escalable en móviles, tope 160px */
+            height: clamp(100px, 35vw, 160px);
+            border-radius: 50%;
+            border: 3px solid var(--luxury-gold);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.6), inset 0 -5px 15px rgba(0,0,0,0.9), inset 0 5px 15px rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            margin-bottom: 15px;
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+
+        .medal-obsidian::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            box-shadow: inset 0 0 20px rgba(197, 168, 128, 0.3);
+            pointer-events: none;
+        }
+
+        .medal-obsidian:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 20px rgba(197, 168, 128, 0.4), inset 0 -5px 15px rgba(0,0,0,0.9);
+            border-color: #dfd0c0;
+        }
+
+        .medal-obsidian img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+            filter: drop-shadow(0 8px 10px rgba(0,0,0,0.7));
+            z-index: 2;
+            transition: var(--transition-smooth);
+        }
+
+        .medal-obsidian:hover img {
+            transform: scale(1.1);
+        }
+
+        .medal-name {
+            color: var(--skin-beige);
+            font-size: clamp(0.6rem, 2.5vw, 0.8rem);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .medal-date {
+            color: #777;
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        /* TARJETAS DE HISTORIAL DE ÓRDENES */
+        .order-card { background: var(--card-black); border: 1px solid var(--border-fino); padding: 30px; margin-bottom: 25px; color: var(--skin-beige); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); transition: var(--transition-smooth); }
+        .order-card:hover { border-color: #333; transform: translateY(-3px); }
         
-        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 15px; }
-        .order-id { color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.2rem; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+        .order-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed var(--border-fino); padding-bottom: 20px; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+        .order-id { color: var(--luxury-gold); font-family: 'Playfair Display', serif; font-size: 1.3rem; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font-weight: 600; letter-spacing: 1px; }
         
         .badges-container { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-        .badge { font-size: 0.65rem; padding: 6px 12px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); text-transform: uppercase; border-radius: 6px; white-space: nowrap; font-weight: 600; letter-spacing: 0.5px; }
+        .badge { font-size: 0.65rem; padding: 6px 12px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); text-transform: uppercase; border-radius: 4px; white-space: nowrap; font-weight: 600; letter-spacing: 1px; }
         
         /* Colores dinámicos sincronizados con el admin */
         .badge-pendiente { border-color: #8b7355; color: #8b7355; background: rgba(139, 115, 85, 0.05); }
@@ -49,33 +152,30 @@
         .badge-flash { border-color: var(--luxury-gold); color: var(--card-black); background: var(--luxury-gold); }
         .badge-cancelado { border-color: #ff4d4d; color: #ff4d4d; background: rgba(255, 77, 77, 0.05); }
 
-        /* Estilos Financieros */
         .badge-pagado { border-color: #6BD968; color: #6BD968; background: rgba(107, 217, 104, 0.1); }
         .badge-no-pagado { border-color: #d9884a; color: #d9884a; background: rgba(217, 136, 74, 0.05); }
         
-        /* Etiqueta Flash Mejorada */
-        .flash-tag { font-size: 0.75rem; padding: 4px 8px; border: 1px solid var(--luxury-gold); color: var(--luxury-gold); border-radius: 6px; font-weight: 600; letter-spacing: 1px; display: inline-flex; align-items: center; }
+        .flash-tag { font-size: 0.75rem; padding: 4px 10px; border: 1px solid var(--luxury-gold); color: var(--card-black); background: var(--luxury-gold); border-radius: 4px; font-weight: 600; letter-spacing: 1px; display: inline-flex; align-items: center; }
 
-        .file-upload-section { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #333; }
+        .file-upload-section { margin-top: 20px; padding-top: 20px; border-top: 1px dashed var(--border-fino); }
         
         /* Estilo elegante para el input de archivo */
-        .file-upload-section input[type="file"] { width: 100%; margin-bottom: 15px; color: var(--skin-beige); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; outline: none; }
+        .file-upload-section input[type="file"] { width: 100%; margin-bottom: 20px; color: var(--skin-beige); font-family: 'Montserrat', sans-serif; font-size: 0.85rem; outline: none; }
         
-        /* Modificando el botón interno del input file */
         .file-upload-section input[type="file"]::file-selector-button {
             background-color: transparent;
             color: var(--luxury-gold);
             border: 1px solid var(--luxury-gold);
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 10px 18px;
+            border-radius: 4px;
             cursor: pointer;
             font-family: 'Montserrat', sans-serif;
             text-transform: uppercase;
             font-size: 0.7rem;
             font-weight: 600;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             margin-right: 15px;
-            transition: all 0.3s ease;
+            transition: var(--transition-smooth);
         }
 
         .file-upload-section input[type="file"]::file-selector-button:hover {
@@ -84,34 +184,31 @@
         }
 
         .btn-anexar {
-            background-color: transparent;
-            color: var(--luxury-gold);
-            border: 1px solid var(--luxury-gold);
-            padding: 12px 15px;
+            background-color: var(--luxury-gold);
+            color: var(--card-black);
+            border: none;
+            padding: 14px 15px;
             font-size: 0.75rem;
             letter-spacing: 2px;
             text-transform: uppercase;
             font-weight: 600;
             width: 100%;
             cursor: pointer;
-            border-radius: 6px;
-            transition: 0.3s;
+            border-radius: 4px;
+            transition: var(--transition-smooth);
             font-family: 'Montserrat', sans-serif;
             display: block;
             text-align: center;
         }
 
         .btn-anexar:hover {
-            background-color: var(--luxury-gold);
-            color: var(--card-black);
+            background-color: var(--skin-beige);
         }
 
         @media (max-width: 600px) {
-            h1 { font-size: 1.8rem; letter-spacing: 3px; }
-            .order-header { flex-direction: column; align-items: flex-start; }
+            .order-header { flex-direction: column; align-items: flex-start; gap: 15px; }
             .badges-container { width: 100%; justify-content: flex-start; }
             .badge { text-align: center; }
-            .profile-card p { font-size: 0.85rem; }
         }
     </style>
 </head>
@@ -120,97 +217,156 @@
     <header>
         <h1>PANEL DE SOCIO</h1>
         <div class="nav-actions">
-            <a href="{{ url_for('index') }}" class="btn-nav">Tienda</a>
-            <a href="{{ url_for('logout') }}" class="btn-nav">Salir</a>
+            <a href="{{ url_for('index') }}" class="btn-nav">Tienda Premium</a>
+            <a href="{{ url_for('logout') }}" class="btn-nav" style="border-color: #4a1d1d; color: #ff6b6b;">Cerrar Sesión</a>
         </div>
     </header>
 
     <div class="container">
+        <!-- TARJETA DE IDENTIDAD Y RANGO -->
         <div class="profile-card">
             <h3>{{ usuario.nombre }}</h3>
-            <p>{{ usuario.correo }} | {{ usuario.telefono }}</p>
+            <p class="profile-info">{{ usuario.correo }} | {{ usuario.telefono }}</p>
+            
+            <div class="rango-divisor">
+                <span class="rango-sub">Estatus Corporativo</span>
+                <!-- Rango Dinámico extraído desde Python -->
+                <h2 class="rango-title">{{ titulo_rango|default("Iniciado de la Manada") }}</h2>
+            </div>
         </div>
 
-        <h2 style="text-align: center; margin-bottom: 30px; font-family: 'Playfair Display', serif; text-transform: uppercase; letter-spacing: 2px;">Historial de Pedidos</h2>
-        
-        {% for pedido in pedidos %}
-        <div class="order-card">
-            <div class="order-header">
-                <span class="order-id">
-                    {{ pedido.codigo_recogida }}
-                    {% if pedido.es_relampago %}
-                        <span class="flash-tag">⚡ FLASH</span>
-                    {% endif %}
-                </span>
-                
-                <div class="badges-container">
-                    <!-- Estado de Pago Financiero: Se oculta si el pedido está expirado/cancelado -->
-                    {% if pedido.estado != 'Cancelado' %}
-                        {% if pedido.pagado %}
-                            <span class="badge badge-pagado">✅ PAGADO</span>
-                        {% else %}
-                            <span class="badge badge-no-pagado">⏳ PAGO PENDIENTE</span>
+        <!-- CONTROLES DE PESTAÑAS -->
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('historial')" id="btn-historial">Historial de Órdenes</button>
+            <button class="tab-btn" onclick="switchTab('colecciones')" id="btn-colecciones">Bóveda de Colecciones</button>
+        </div>
+
+        <!-- VISTA 1: HISTORIAL DE PEDIDOS -->
+        <div id="view-historial" class="tab-content active">
+            {% for pedido in pedidos %}
+            <div class="order-card">
+                <div class="order-header">
+                    <span class="order-id">
+                        {{ pedido.codigo_recogida }}
+                        {% if pedido.es_relampago %}
+                            <span class="flash-tag">⚡ FLASH</span>
                         {% endif %}
-                    {% endif %}
+                    </span>
+                    
+                    <div class="badges-container">
+                        {% if pedido.estado != 'Cancelado' %}
+                            {% if pedido.pagado %}
+                                <span class="badge badge-pagado">✅ PAGADO</span>
+                            {% else %}
+                                <span class="badge badge-no-pagado">⏳ PAGO PENDIENTE</span>
+                            {% endif %}
+                        {% endif %}
 
-                    <!-- Estado Operativo -->
-                    {% if pedido.estado == 'Pendiente' %}
-                        <span class="badge badge-pendiente">En Fila</span>
-                    {% elif pedido.estado == 'Horneando' %}
-                        <span class="badge badge-horneando">En Hornos</span>
-                    {% elif pedido.estado == 'Listo' %}
-                        <span class="badge badge-listo">Listo en Delicious Bread</span>
-                    {% elif pedido.estado == 'Entregado' %}
-                        <span class="badge badge-entregado">Entregado</span>
-                    {% elif pedido.estado == 'Venta Flash Excedente' %}
-                        <span class="badge badge-flash">Reservado (Flash)</span>
-                    {% elif pedido.estado == 'Cancelado' %}
-                        <span class="badge badge-cancelado">Expirado</span>
+                        {% if pedido.estado == 'Pendiente' %}
+                            <span class="badge badge-pendiente">En Fila</span>
+                        {% elif pedido.estado == 'Horneando' %}
+                            <span class="badge badge-horneando">En Hornos 🥖</span>
+                        {% elif pedido.estado == 'Preparando' %}
+                            <span class="badge badge-horneando">Armando 📦</span>
+                        {% elif pedido.estado == 'Sincronizando' %}
+                            <span class="badge badge-horneando">Sincronizando ⚡</span>
+                        {% elif pedido.estado == 'Listo' %}
+                            <span class="badge badge-listo">Listo para Recoger ✓</span>
+                        {% elif pedido.estado == 'Entregado' %}
+                            <span class="badge badge-entregado">Entregado</span>
+                        {% elif pedido.estado == 'Venta Flash Excedente' %}
+                            <span class="badge badge-flash">Reservado (Flash)</span>
+                        {% elif pedido.estado == 'Cancelado' %}
+                            <span class="badge badge-cancelado">Cancelado / Expirado</span>
+                        {% else %}
+                            <span class="badge badge-pendiente">{{ pedido.estado }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="order-body">
+                    {% for detalle in pedido.detalles %}
+                        <p style="margin-bottom: 12px; font-size: 0.95rem; display: flex; gap: 10px; align-items: center;">
+                            <span style="color: var(--card-black); background: var(--luxury-gold); padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.75rem;">{{ detalle.cantidad }}x</span> 
+                            <span style="color: var(--skin-beige);">{{ detalle.producto.nombre }}</span>
+                        </p>
+                    {% endfor %}
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 25px; border-top: 1px dashed var(--border-fino); padding-top: 20px;">
+                        <span style="font-size: 0.75rem; color: #888; text-transform: uppercase; line-height: 1.8; letter-spacing: 1px;">
+                            <strong style="color: var(--light-brown);">Retiro:</strong> {{ pedido.horario_recogida }} <br>
+                            <strong style="color: var(--light-brown);">Pago:</strong> {{ pedido.metodo_pago }}
+                        </span>
+                        <p style="font-weight: 500; color: var(--luxury-gold); font-size: 1.3rem; font-family: 'Playfair Display', serif;">Total: ${{ "%.2f"|format(pedido.monto_total) }}</p>
+                    </div>
+                </div>
+
+                {% if pedido.metodo_pago == 'Transferencia' and pedido.estado != 'Entregado' and pedido.estado != 'Cancelado' %}
+                <div class="file-upload-section">
+                    {% if pedido.pagado %}
+                        <p style="color: #6BD968; font-size: 0.75rem; font-weight: 600; text-align: center; letter-spacing: 2px; padding: 15px; background: rgba(107, 217, 104, 0.05); border-radius: 4px; border: 1px solid rgba(107, 217, 104, 0.2);">✓ TRANSACCIÓN VALIDADA POR EL ATELIER</p>
+                    {% elif pedido.comprobante_url %}
+                        <p style="color: var(--luxury-gold); font-size: 0.75rem; font-weight: 600; text-align: center; letter-spacing: 2px; padding: 15px; background: rgba(197, 168, 128, 0.05); border-radius: 4px; border: 1px solid rgba(197, 168, 128, 0.2);">✓ EVIDENCIA EN REVISIÓN CORPORATIVA</p>
                     {% else %}
-                        <span class="badge badge-pendiente">{{ pedido.estado }}</span>
+                        <form action="{{ url_for('subir_comprobante', pedido_id=pedido.id) }}" method="POST" enctype="multipart/form-data">
+                            <label style="display: block; font-size: 0.75rem; color: var(--luxury-gold); margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px; font-weight: 600;">Cargar Evidencia de Transferencia:</label>
+                            <input type="file" name="comprobante_pago" required accept="image/*">
+                            <button type="submit" class="btn-anexar">Anexar Comprobante</button>
+                        </form>
                     {% endif %}
                 </div>
-            </div>
-            
-            <div class="order-body">
-                {% for detalle in pedido.detalles %}
-                    <p style="margin-bottom: 8px; font-size: 0.95rem;">
-                        <span style="color: #999; font-weight: 600;">{{ detalle.cantidad }}x</span> 
-                        <span>{{ detalle.producto.nombre }}</span>
-                    </p>
-                {% endfor %}
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 20px;">
-                    <span style="font-size: 0.75rem; color: #888; text-transform: uppercase; line-height: 1.6;">⏱️ {{ pedido.horario_recogida }} <br>💳 {{ pedido.metodo_pago }}</span>
-                    <p style="font-weight: 600; color: var(--luxury-gold); font-size: 1.2rem;">Total: ${{ "%.2f"|format(pedido.monto_total) }}</p>
-                </div>
-            </div>
-
-            <!-- Interfaz de Carga de Comprobante -->
-            {% if pedido.metodo_pago == 'Transferencia' and pedido.estado != 'Entregado' and pedido.estado != 'Cancelado' %}
-            <div class="file-upload-section">
-                {% if pedido.pagado %}
-                    <p style="color: #6BD968; font-size: 0.8rem; font-weight: 600; text-align: center; letter-spacing: 1.5px;">✓ TRANSACCIÓN VALIDADA POR EL ATELIER</p>
-                {% elif pedido.comprobante_url %}
-                    <p style="color: var(--luxury-gold); font-size: 0.8rem; text-align: center; letter-spacing: 1px;">✓ Comprobante enviado. Entró en proceso de revisión...</p>
-                {% else %}
-                    <form action="{{ url_for('subir_comprobante', pedido_id=pedido.id) }}" method="POST" enctype="multipart/form-data">
-                        <label style="display: block; font-size: 0.75rem; color: var(--luxury-gold); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500;">Evidencia de Transferencia:</label>
-                        <input type="file" name="comprobante_pago" required accept="image/*">
-                        <button type="submit" class="btn-anexar">Anexar Comprobante</button>
-                    </form>
                 {% endif %}
             </div>
-            {% endif %}
+            {% else %}
+            <div style="text-align: center; padding: 60px 20px; background: var(--card-black); border: 1px dashed var(--border-fino); color: #777; border-radius: 12px;">
+                <p style="font-size: 0.85rem; letter-spacing: 1px; text-transform: uppercase;">No existen operaciones en su registro actual.</p>
+            </div>
+            {% endfor %}
         </div>
-        {% else %}
-        <div style="text-align: center; padding: 40px 20px; border: 1px dashed var(--border-fino); color: #666; border-radius: 15px;">
-            <p>No existen operaciones en su registro actual.</p>
+
+        <!-- VISTA 2: BÓVEDA DE COLECCIONES (MEDALLAS) -->
+        <div id="view-colecciones" class="tab-content">
+            <div class="collection-grid">
+                {% if medallas %}
+                    {% for medalla in medallas %}
+                    <div class="medal-wrapper">
+                        <div class="medal-obsidian">
+                            <!-- Si no hay imagen temporalmente, muestra un icono o texto -->
+                            <img src="{{ medalla.coleccionable.imagen_url }}" alt="{{ medalla.coleccionable.nombre }}">
+                        </div>
+                        <span class="medal-name">{{ medalla.coleccionable.nombre }}</span>
+                        <!-- Opcional: Mostrar fecha de obtención -->
+                        <span class="medal-date">Desbloqueado: {{ medalla.fecha_obtencion.strftime('%d/%m/%Y') if medalla.fecha_obtencion else 'Reciente' }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+                        <p style="color: #777; font-size: 0.85rem; letter-spacing: 1px; line-height: 1.6; text-transform: uppercase;">Aún no cuenta con especímenes en su bóveda.<br><br>Realice su primera adquisición para desbloquear su primera ave de presa.</p>
+                    </div>
+                {% endif %}
+            </div>
         </div>
-        {% endfor %}
+
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
     <script>
+        // Sistema de Pestañas
+        function switchTab(tabId) {
+            // Ocultar todos los contenidos
+            document.querySelectorAll('.tab-content').forEach(function(content) {
+                content.classList.remove('active');
+            });
+            // Quitar clase active de todos los botones
+            document.querySelectorAll('.tab-btn').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            
+            // Activar la pestaña y botón seleccionado
+            document.getElementById('view-' + tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+        }
+
+        // Sistema WebSockets (Tiempo Real)
         document.addEventListener("DOMContentLoaded", function() {
             const socket = io();
             socket.on('actualizacion_global', function() {

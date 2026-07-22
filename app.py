@@ -117,6 +117,21 @@ class Producto(db.Model):
     categoria = db.Column(db.String(50), default='pan')
     stock_tienda = db.Column(db.Integer, nullable=True, default=None)
 
+class Coleccionable(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    tier = db.Column(db.Integer, nullable=False) # Del 1 (Común) al 5 (Legendario)
+    probabilidad_base = db.Column(db.Float, nullable=False)
+    imagen_url = db.Column(db.String(500), nullable=True)
+
+class ColeccionUsuario(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    coleccionable_id = db.Column(db.Integer, db.ForeignKey('coleccionable.id'), nullable=False)
+    fecha_obtencion = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    coleccionable = db.relationship('Coleccionable')
+
 class Pedido(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
@@ -623,6 +638,37 @@ def registro():
         
     return render_template('registro.html')
 
+
+def asignar_medalla_por_compra(usuario_id, monto_compra):
+    # Factor multiplicador: Cada $100 MXN aumenta las probabilidades de un ave legendaria
+    bonus = 1.0 + (monto_compra / 100.0) * 0.10 
+    
+    todas_las_aves = Coleccionable.query.all()
+    if not todas_las_aves:
+        return None # Por si aún no hemos registrado las aves en la base
+        
+    opciones = []
+    pesos = []
+    
+    for ave in todas_las_aves:
+        opciones.append(ave)
+        # Si es Tier alto (4 o 5), aplicamos el multiplicador del monto
+        peso_final = ave.probabilidad_base * bonus if ave.tier >= 4 else ave.probabilidad_base
+        pesos.append(peso_final)
+        
+    import random
+    ave_ganada = random.choices(opciones, weights=pesos, k=1)[0]
+    
+    # Verificar si el usuario ya la tiene
+    ya_la_tiene = ColeccionUsuario.query.filter_by(usuario_id=usuario_id, coleccionable_id=ave_ganada.id).first()
+    
+    if not ya_la_tiene:
+        nueva_medalla = ColeccionUsuario(usuario_id=usuario_id, coleccionable_id=ave_ganada.id)
+        db.session.add(nueva_medalla)
+        db.session.commit()
+        
+    return ave_ganada
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -769,9 +815,35 @@ def perfil():
         
     usuario = db.session.get(Usuario, session['usuario_id'])
     mis_pedidos = Pedido.query.filter_by(usuario_id=usuario.id).order_by(Pedido.fecha_pedido.desc()).all()
-    mis_especiales = PedidoEspecial.query.filter_by(correo_contacto=usuario.correo).order_by(PedidoEspecial.fecha_creacion.desc()).all()
     
-    return render_template('perfil.html', usuario=usuario, pedidos=mis_pedidos, especiales=mis_especiales)
+    # --- NUEVO: LÓGICA DE COLECCIONABLES ---
+    medallas_usuario = ColeccionUsuario.query.filter_by(usuario_id=usuario.id).all()
+    
+    # Determinar el título nobiliario leyendo el Tier más alto
+    titulo_rango = "Iniciado de la Manada" # Rango por defecto
+    tier_maximo = 0
+    
+    for m in medallas_usuario:
+        if m.coleccionable.tier > tier_maximo:
+            tier_maximo = m.coleccionable.tier
+            titulo_rango = m.coleccionable.nombre
+            
+    # Asignar el título dinámico final
+    if tier_maximo == 5:
+        titulo_final = f"Maestro de la Orden: {titulo_rango}"
+    elif tier_maximo >= 3:
+        titulo_final = f"Señor de la Alta Cima: {titulo_rango}"
+    elif tier_maximo > 0:
+        titulo_final = f"Vanguardia Alada: {titulo_rango}"
+    else:
+        titulo_final = titulo_rango
+    # ----------------------------------------
+    
+    return render_template('perfil.html', 
+                           usuario=usuario, 
+                           pedidos=mis_pedidos,
+                           medallas=medallas_usuario,
+                           titulo_rango=titulo_final)
 
 
 
@@ -1200,6 +1272,7 @@ def procesar_sobrante():
         detalle = DetallePedido(pedido_id=nuevo_pedido.id, producto_id=producto.id, cantidad=cantidad_solicitada)
         db.session.add(detalle)
         db.session.commit()
+        asignar_medalla_por_compra(usuario.id, monto_total)
         
         # Sincronización global inmediata
         socketio.emit('actualizacion_global')
@@ -1281,6 +1354,8 @@ def procesar_pedido():
             db.session.add(d)
             
         db.session.commit()
+
+        asignar_medalla_por_compra(usuario.id, monto_total)
         socketio.emit('actualizacion_global')
         
         # --- INTEGRACIÓN DE NOTIFICACIÓN PUSH AISLADA ---
