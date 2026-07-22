@@ -1355,7 +1355,8 @@ def procesar_pedido():
             
         db.session.commit()
 
-        asignar_medalla_por_compra(usuario.id, monto_total)
+     
+        ave_ganada = asignar_medalla_por_compra(usuario.id, monto_total)
         socketio.emit('actualizacion_global')
         
         # --- INTEGRACIÓN DE NOTIFICACIÓN PUSH AISLADA ---
@@ -1370,7 +1371,9 @@ def procesar_pedido():
         
         return jsonify({
             'success': True,
-            'codigo': nuevo_pedido.codigo_recogida
+            'codigo': nuevo_pedido.codigo_recogida,
+            'medalla_nombre': ave_ganada.nombre if ave_ganada else None,
+            'medalla_img': ave_ganada.imagen_url if ave_ganada else None
         })
         
     except Exception as e:

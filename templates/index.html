@@ -1061,6 +1061,19 @@
                 <span id="codigoExitoTexto" style="font-family: 'Playfair Display', serif; font-size: 2.4rem; color: var(--luxury-gold); letter-spacing: 5px; font-weight: 500;">DB-XXXX</span>
             </div>
 
+            <div id="seccionMedallaExito" style="display: none; flex-direction: column; align-items: center; margin-bottom: 25px; border-top: 1px dashed #222; padding-top: 25px;">
+                <span style="color: var(--light-brown); font-size: 0.65rem; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 15px; font-weight: 600;">Especímen Desbloqueado</span>
+                
+                <!-- Estilo de obsidiana pulida -->
+                <div style="background: radial-gradient(circle at 30% 30%, #2a2a2a 0%, #0a0a0a 50%, #000000 100%); width: 110px; height: 110px; border-radius: 50%; border: 2px solid var(--luxury-gold); box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 -3px 10px rgba(0,0,0,0.9); display: flex; justify-content: center; align-items: center; overflow: hidden; margin-bottom: 12px; position: relative;">
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 50%; box-shadow: inset 0 0 15px rgba(197, 168, 128, 0.2); pointer-events: none;"></div>
+                    <img id="imgMedallaExito" src="" alt="Medalla" style="width: 80%; height: 80%; object-fit: contain; filter: drop-shadow(0 6px 8px rgba(0,0,0,0.8)); z-index: 2;">
+                </div>
+                
+                <span id="nombreMedallaExito" style="color: var(--skin-beige); font-size: 1.1rem; font-family: 'Playfair Display', serif; letter-spacing: 1px;">Águila</span>
+            </div>
+            <!-- FIN SECCIÓN MEDALLA -->
+
             <div style="display: flex; gap: 12px; flex-direction: column;">
                 <button type="button" onclick="copiarCodigo()" style="background: var(--luxury-gold); color: var(--card-black); border: none; padding: 18px; font-family: 'Montserrat', sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: 0.3s; font-size: 0.8rem; border-radius: 4px; display: flex; align-items: center; justify-content: center; gap: 10px;">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
@@ -1571,7 +1584,8 @@ document.getElementById('ticketDetalleItems').innerHTML = detalleHtml;
         document.getElementById('modal-3d').style.display = 'none';
 
         if (data.success) {
-            mostrarModalCodigo(data.codigo);
+            // Pasamos los 3 parámetros a la función visual
+            mostrarModalCodigo(data.codigo, data.medalla_nombre, data.medalla_img);
         } else {
             // Ahora si el backend se queja, te dirá el motivo exacto
             alert(data.error || "Hubo un problema al procesar la orden.");
@@ -1587,8 +1601,19 @@ document.getElementById('ticketDetalleItems').innerHTML = detalleHtml;
             mostrarModalCodigo(codigo);
         }
 
-        function mostrarModalCodigo(codigo) {
+        function mostrarModalCodigo(codigo, medallaNombre = null, medallaImg = null) {
             document.getElementById('codigoExitoTexto').innerText = codigo;
+            
+            // Lógica de inyección de medalla
+            const seccionMedalla = document.getElementById('seccionMedallaExito');
+            if (medallaNombre && medallaImg) {
+                document.getElementById('nombreMedallaExito').innerText = medallaNombre;
+                document.getElementById('imgMedallaExito').src = medallaImg;
+                seccionMedalla.style.display = 'flex';
+            } else {
+                seccionMedalla.style.display = 'none';
+            }
+
             const modal = document.getElementById('modalCodigoExito');
             modal.style.display = 'flex';
             
@@ -1616,7 +1641,8 @@ document.getElementById('ticketDetalleItems').innerHTML = detalleHtml;
         }
         
         function cerrarModalYTienda() {
-            document.getElementById('modalCodigoExito').style.display = 'none';
+            document.getElementById('
+').style.display = 'none';
             window.location.reload(); 
         }
 
