@@ -1392,11 +1392,28 @@ def procesar_pedido():
     monto_total = 0
     detalles_a_crear = []
     
-    # 3. Leer carrito 
+    # 3. Leer carrito y descontar inventario
     for prod in productos:
         cant = request.form.get(f'cantidad_{prod.id}')
         if cant and int(cant) > 0:
             cantidad = int(cant)
+            
+            # --- NUEVA LÓGICA DE INVENTARIO ---
+            # Si el producto pertenece a la tienda (y tiene límite de stock)
+            if prod.categoria and prod.categoria.lower() not in ['pan', 'halloween']:
+                if prod.stock_tienda is not None:
+                    # Validar de lado del servidor para evitar compras fantasma
+                    if prod.stock_tienda < cantidad:
+                        return jsonify({'success': False, 'error': f'Stock insuficiente para {prod.nombre}. Solo quedan {prod.stock_tienda} unidades.'}), 400
+                    
+                    # Restar permanentemente el inventario de la base de datos
+                    prod.stock_tienda -= cantidad
+                    
+                    # Pausar visualmente si llega a 0
+                    if prod.stock_tienda == 0:
+                        prod.disponible = False
+            # ----------------------------------
+
             monto_total += prod.precio * float(cantidad)
             detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)
             detalles_a_crear.append(detalle)

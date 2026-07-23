@@ -407,7 +407,33 @@
         
         /* ALERTAS GLOBALES DE CIERRE Y HORARIO */
         .alerta-horario { background: var(--card-black); border: 1px solid #4a2d1d; color: var(--luxury-gold); padding: 20px; margin-bottom: 40px; text-align: center; font-size: 0.9rem; letter-spacing: 2px; line-height: 1.6; text-transform: uppercase; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
-        #mensajeCierre { display: none; background: #1a0f0f; border: 1px solid #4a1d1d; color: #ff6b6b; padding: 20px; margin-bottom: 20px; text-align: center; font-size: 0.8rem; letter-spacing: 1px; line-height: 1.6; border-radius: 4px; }
+        /* Se cambió el color rojo por dorados y beige para mantener el estilo premium */
+#mensajeCierre { 
+    display: none; 
+    background: #0A0A0A; 
+    border: 1px solid var(--luxury-gold); 
+    color: var(--skin-beige); 
+    padding: 20px; 
+    margin-bottom: 20px; 
+    text-align: center; 
+    font-size: 0.8rem; 
+    letter-spacing: 1px; 
+    line-height: 1.6; 
+    border-radius: 4px; 
+}
+
+/* Se ajustó el color de la alerta de producto agotado */
+.overlay-pausado {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.75); z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Montserrat', sans-serif; font-size: 1.2rem; font-weight: 600;
+    letter-spacing: 3px; 
+    color: var(--skin-beige); /* <-- Cambio clave de #ff4d4d a beige */
+    text-transform: uppercase; 
+    backdrop-filter: blur(2px); text-align: center; padding: 15px;
+}
 
         /* MODALES (AMAZON Y 3D) */
         .amazon-lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
@@ -966,10 +992,9 @@
                     Use su <b>código de pedido</b> asignado en el concepto.
                 </div>
 
-                <div style="background: #1a0f0f; border: 1px solid #4a1d1d; color: #ff6b6b; padding: 15px; margin-top: 25px; margin-bottom: 20px; font-size: 0.75rem; text-align: center; border-radius: 4px; line-height: 1.6; letter-spacing: 1px;">
-                    ⚠️ <b>POLÍTICA DE RETIRO:</b> Dispone de <b>1 HORA EXACTA</b> a partir del horario seleccionado para recoger su pedido. Si no acude en ese lapso, el sistema <b>cancelará su orden automáticamente</b>. Si presenta un retraso, notifique de inmediato vía WhatsApp.
-                </div>
-
+                <div style="background: #0A0A0A; border: 1px solid var(--luxury-gold); color: var(--skin-beige); padding: 15px; margin-top: 25px; margin-bottom: 20px; font-size: 0.75rem; text-align: center; border-radius: 4px; line-height: 1.6; letter-spacing: 1px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+    <span style="color: var(--luxury-gold);">⚠️ POLÍTICA DE RETIRO:</span> Dispone de <b style="color: var(--luxury-gold);">1 HORA EXACTA</b> a partir del horario seleccionado para recoger su pedido. Si no acude en ese lapso, el sistema <b>cancelará su orden automáticamente</b>. Si presenta un retraso, notifique de inmediato vía WhatsApp.
+</div>
                 <div id="mensajeCierre"></div>
             </div>
 
@@ -1051,7 +1076,7 @@
     </div>
 
     <div id="modalCodigoExito" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); backdrop-filter: blur(10px); z-index: 6000; align-items: center; justify-content: center; padding: 20px; opacity: 0; transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
-        <div class="ticket-contenido" style="border: 1px solid var(--luxury-gold); background: var(--card-black); max-width: 420px; width: 100%; padding: 45px 35px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.9); transform: translateY(20px); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 4px;">
+        <div class="ticket-contenido" style="margin: auto; border: 1px solid var(--luxury-gold); background: var(--card-black); max-width: 420px; width: 100%; padding: 45px 35px; text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.9); transform: translateY(20px); transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); border-radius: 4px;">
             
             <h2 style="font-family: 'Playfair Display', serif; color: var(--skin-beige); font-size: 1.6rem; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">Recepción Confirmada</h2>
             <p style="color: #888; font-family: 'Montserrat', sans-serif; font-size: 0.8rem; line-height: 1.6; margin-bottom: 30px; font-weight: 300;">Presente la siguiente llave criptográfica en la sucursal para la entrega de su alta selección.</p>
