@@ -436,13 +436,77 @@
 }
 
         /* MODALES (AMAZON Y 3D) */
-        .amazon-lightbox { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(5px); }
-        .lightbox-contenido { background: var(--card-black); border: 1px solid var(--border-fino); max-width: 950px; width: 100%; display: grid; grid-template-columns: 1fr 1fr; position: relative; max-height: 90vh; overflow-y: auto; border-radius: 4px;}
-        .btn-cerrar-lightbox { position: absolute; top: 15px; right: 20px; background: transparent; border: none; color: var(--skin-beige); font-size: 2.2rem; font-weight: 200; cursor: pointer; z-index: 10; }
-        .lightbox-izq img { width: 100%; height: 100%; object-fit: cover; display: block; }
-        .lightbox-der { padding: 50px; display: flex; flex-direction: column; justify-content: center; }
-        .precio-tag { font-family: 'Playfair Display', serif; font-size: 2.2rem; color: var(--luxury-gold); margin: 20px 0; }
-        #lightboxDescripcion { color: #888; font-size: 0.85rem; line-height: 1.8; margin-bottom: 40px; font-weight: 300; }
+.amazon-lightbox { 
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(0,0,0,0.95); z-index: 3000; align-items: center; justify-content: center; 
+    padding: 15px; backdrop-filter: blur(5px); 
+}
+
+.lightbox-contenido { 
+    background: var(--card-black); 
+    border: 1px solid var(--luxury-gold); 
+    max-width: 950px; width: 100%; 
+    display: flex; flex-direction: column; /* Diseño en columna para móviles */
+    position: relative; max-height: 90vh; overflow-y: auto; border-radius: 8px;
+    box-shadow: 0 15px 45px rgba(0,0,0,0.5);
+}
+
+.btn-cerrar-lightbox { 
+    position: absolute; top: 12px; right: 12px; 
+    background: var(--card-black); border: 1px solid var(--luxury-gold); 
+    color: var(--skin-beige); font-size: 1.5rem; font-weight: 200; 
+    width: 36px; height: 36px; border-radius: 50%; 
+    display: flex; align-items: center; justify-content: center; 
+    cursor: pointer; z-index: 10; transition: var(--transition-smooth);
+}
+
+.btn-cerrar-lightbox:hover {
+    background: var(--luxury-gold); color: var(--card-black);
+}
+
+.lightbox-izq {
+    background: #ffffff; /* Fondo blanco para simular caja de luz del producto */
+    width: 100%; height: 35vh; /* Altura controlada en móviles */
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+    border-bottom: 1px solid var(--border-fino);
+}
+
+.lightbox-izq img { 
+    max-width: 100%; max-height: 100%; 
+    object-fit: contain; /* CLAVE: Evita que la imagen del producto se mutile */
+    display: block; 
+}
+
+.lightbox-der { 
+    padding: 30px; display: flex; flex-direction: column; justify-content: center; 
+}
+
+#lightboxNombre {
+    color: var(--skin-beige); /* CLAVE: Hace visible el título oscuro */
+    font-size: 1.3rem; font-family: 'Playfair Display', serif; margin-bottom: 10px; line-height: 1.3;
+}
+
+.precio-tag { 
+    font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--luxury-gold); margin: 10px 0 20px 0; 
+}
+
+#lightboxDescripcion { 
+    color: #888; font-size: 0.85rem; line-height: 1.8; margin-bottom: 30px; font-weight: 300; 
+}
+
+/* Adaptación fluida para PC y Tablets */
+@media (min-width: 768px) {
+    .lightbox-contenido { 
+        flex-direction: row; height: 600px; overflow: hidden; 
+    }
+    .lightbox-izq { 
+        width: 50%; height: 100%; border-bottom: none; border-right: 1px solid var(--border-fino);
+    }
+    .lightbox-der { 
+        width: 50%; padding: 50px; overflow-y: auto; 
+    }
+    #lightboxNombre { font-size: 1.8rem; }
+}
 
         #modal-3d { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--card-black); z-index: 4000; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
         .escena-3d { width: 130px; height: 130px; perspective: 800px; margin-bottom: 50px; }
