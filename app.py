@@ -116,6 +116,7 @@ class Producto(db.Model):
     stock_sobrante = db.Column(db.Integer, default=0)
     categoria = db.Column(db.String(50), default='pan')
     stock_tienda = db.Column(db.Integer, nullable=True, default=None)
+    venta_a_granel = db.Column(db.Boolean, default=False)
 
 class Coleccionable(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -941,6 +942,10 @@ def admin():
         if file and file.filename != '':
             imagen_url = subir_a_cloudinary(file)
 
+        
+        venta_granel_form = request.form.get('venta_a_granel')
+        es_granel = True if venta_granel_form else False
+
         nuevo_prod = Producto(
             nombre=nombre, 
             descripcion=descripcion, 
@@ -948,7 +953,8 @@ def admin():
             imagen_url=imagen_url, 
             stock_sobrante=stock_sob, 
             categoria=categoria,
-            stock_tienda=stock_tienda_val
+            stock_tienda=stock_tienda_val,
+            venta_a_granel=es_granel # NUEVO
         )
         db.session.add(nuevo_prod)
         db.session.commit()
@@ -1217,6 +1223,8 @@ def editar_producto(producto_id):
     # === ACTUALIZACIÓN DE STOCK DE TIENDA ===
     stock_tienda_form = request.form.get('stock_tienda')
     producto.stock_tienda = int(stock_tienda_form) if stock_tienda_form and stock_tienda_form.strip() else None
+    
+    producto.venta_a_granel = True if request.form.get('venta_a_granel') else False
     
     categoria_form = request.form.get('categoria')
     if categoria_form:

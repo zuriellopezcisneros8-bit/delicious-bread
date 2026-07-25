@@ -736,6 +736,11 @@
                     <div style="margin-bottom: 20px;">
                         <input type="number" name="stock_tienda" class="form-control" min="0" placeholder="Límite Tienda (Vacío para pan)">
                     </div>
+
+<div style="margin-bottom: 20px; background: #0A0A0A; border: 1px solid var(--border-fino); border-radius: var(--radius); padding: 15px; display: flex; align-items: center; gap: 12px;">
+    <input type="checkbox" name="venta_a_granel" id="is_granel" value="1" style="accent-color: var(--luxury-gold); width: 18px; height: 18px; cursor: pointer;">
+    <label for="is_granel" style="font-size: 0.75rem; color: #888; cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Venta a Granel (Por Peso / Gramos)</label>
+</div>
                     
                     <div style="margin-bottom: 20px; background: #0A0A0A; border: 1px solid var(--border-fino); border-radius: var(--radius); padding: 15px; display: flex; align-items: center; gap: 12px;">
                         <input type="checkbox" name="es_pedido_grande" id="is_large" value="1" style="accent-color: var(--luxury-gold); width: 18px; height: 18px; cursor: pointer;">
@@ -826,6 +831,11 @@
                                     <input type="number" step="0.50" name="precio" class="form-control" value="{{ prod.precio }}" required>
                                 </div>
                             </div>
+
+<div style="display: flex; align-items: center; padding: 10px 0; margin-bottom: 10px;">
+    <input type="checkbox" name="venta_a_granel" id="edit_granel_{{ prod.id }}" value="1" {% if prod.venta_a_granel %}checked{% endif %} style="accent-color: var(--luxury-gold); width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
+    <label for="edit_granel_{{ prod.id }}" style="font-size: 0.75rem; color: var(--light-brown); cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Venta a Granel</label>
+</div>
                             
                             <div class="edit-grid" style="margin-top: 5px;">
                                 <div>
