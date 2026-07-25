@@ -1422,7 +1422,13 @@ def procesar_pedido():
                         prod.disponible = False
             # ----------------------------------
 
-            monto_total += prod.precio * float(cantidad)
+            # NUEVO: Cálculo del monto considerando el granel
+            if getattr(prod, 'venta_a_granel', False):
+                # Si es a granel, 'cantidad' son los gramos. El precio es por Kilo (1000g).
+                monto_total += (prod.precio * float(cantidad)) / 1000.0
+            else:
+                monto_total += prod.precio * float(cantidad)
+                
             detalle = DetallePedido(producto_id=prod.id, cantidad=cantidad)
             detalles_a_crear.append(detalle)
             
@@ -1449,7 +1455,6 @@ def procesar_pedido():
             
         db.session.commit()
 
-     
         ave_ganada = asignar_medalla_por_compra(usuario.id, monto_total)
         socketio.emit('actualizacion_global')
         
