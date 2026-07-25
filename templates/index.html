@@ -1413,7 +1413,7 @@
     // Variables de detección
     var contieneTienda = false;
     var contienePan = false;
-    var contieneHalloween = false; // Agregamos esta variable
+    var contieneHalloween = false;
 
     inputs.forEach(function(input) {
         var cantidad = parseInt(input.value) || 0;
@@ -1421,21 +1421,40 @@
             var precio = parseFloat(input.getAttribute('data-precio')) || 0;
             var nombre = input.getAttribute('data-nombre') || 'Producto';
             var categoria = (input.getAttribute('data-categoria') || 'pan').toLowerCase();
+            var esGranel = input.getAttribute('data-granel') === 'true'; // <--- DETECTA SI ES A GRANEL
             
             if (categoria === 'pan') { contienePan = true; } 
             else if (categoria === 'halloween') { contieneHalloween = true; } 
             else { contieneTienda = true; }
 
-            var subtotal = cantidad * precio;
-            totalAcumulado += subtotal;
-            articulosTotales += cantidad;
+            var subtotal = 0;
 
-            listaHtml += `
-                <div class="item-carrito">
-                    <span class="item-nombre">${cantidad}x ${nombre}</span>
-                    <span class="item-subtotal">$${subtotal.toFixed(2)}</span>
-                </div>
-            `;
+            // --- LÓGICA DE CÁLCULO ---
+            if (esGranel) {
+                // Cálculo a granel (divide gramos entre 1000 y cuenta como 1 artículo)
+                subtotal = (cantidad / 1000) * precio;
+                articulosTotales += 1; 
+                
+                listaHtml += `
+                    <div class="item-carrito">
+                        <span class="item-nombre">${cantidad}g de ${nombre}</span>
+                        <span class="item-subtotal">$${subtotal.toFixed(2)}</span>
+                    </div>
+                `;
+            } else {
+                // Cálculo normal por piezas
+                subtotal = cantidad * precio;
+                articulosTotales += cantidad;
+
+                listaHtml += `
+                    <div class="item-carrito">
+                        <span class="item-nombre">${cantidad}x ${nombre}</span>
+                        <span class="item-subtotal">$${subtotal.toFixed(2)}</span>
+                    </div>
+                `;
+            }
+            
+            totalAcumulado += subtotal;
         }
     });
 
@@ -1445,7 +1464,6 @@
     document.getElementById('montoSidebar').innerText = totalFormateado;
     document.getElementById('listaCarrito').innerHTML = listaHtml || '<p style="color:#555; font-size:0.85rem; font-style:italic; letter-spacing:0.5px;">Su selección está vacía.</p>';
 
-    // --- MAGIA: Mostrar/Ocultar el selector de fecha ---
     var grupoFecha = document.getElementById('grupoFechaHalloween');
     if (grupoFecha) {
         if (contieneHalloween) {
@@ -1459,14 +1477,12 @@
 
     evaluarHorariosDisponibles((contienePan || contieneHalloween), articulosTotales);
 
-    // Ajuste de bloqueos para que ignore el pan de Halloween (porque es preventa)
-const fechaLocal = new Date();
-const horaActualLocal = fechaLocal.getHours();
-const minutosLocal = fechaLocal.getMinutes();
-const tiempoLocalMinutos = (horaActualLocal * 60) + minutosLocal;
+    const fechaLocal = new Date();
+    const horaActualLocal = fechaLocal.getHours();
+    const minutosLocal = fechaLocal.getMinutes();
+    const tiempoLocalMinutos = (horaActualLocal * 60) + minutosLocal;
 
-// Se bloquea el procesamiento del pan a partir de las 16:00 hrs (4 PM)
-let panBloqueado = contienePan && (horaActualLocal >= 16);
+    let panBloqueado = contienePan && (horaActualLocal >= 16);
     let tiendaBloqueada = contieneTienda && (tiempoLocalMinutos < 600 || tiempoLocalMinutos >= 1290);
 
     if (panBloqueado && tiendaBloqueada) {
@@ -1620,52 +1636,67 @@ let panBloqueado = contienePan && (horaActualLocal >= 16);
         }
 
         function generarTicketVista() {
-            var inputs = document.querySelectorAll('.input-cantidad');
-            var totalAcumulado = 0;
-            var detalleHtml = '';
+    var inputs = document.querySelectorAll('.input-cantidad');
+    var totalAcumulado = 0;
+    var detalleHtml = '';
 
-            inputs.forEach(function(input) {
-                var cantidad = parseInt(input.value) || 0;
-                if (cantidad > 0) {
-                    var precio = parseFloat(input.getAttribute('data-precio')) || 0;
-                    var nombre = input.getAttribute('data-nombre') || 'Producto';
-                    var subtotal = cantidad * precio;
-                    totalAcumulado += subtotal;
+    inputs.forEach(function(input) {
+        var cantidad = parseInt(input.value) || 0;
+        if (cantidad > 0) {
+            var precio = parseFloat(input.getAttribute('data-precio')) || 0;
+            var nombre = input.getAttribute('data-nombre') || 'Producto';
+            var esGranel = input.getAttribute('data-granel') === 'true'; // <--- DETECTA A GRANEL
+            var subtotal = 0;
 
-                    detalleHtml += `
-                        <div class="ticket-linea">
-                            <span>${cantidad}x ${nombre}</span>
-                            <span>$${subtotal.toFixed(2)}</span>
-                        </div>
-                    `;
-                }
-            });
-          
-var horario = document.getElementById('horario').value;
-var metodo = document.getElementById('metodo_pago').value;
-var fechaHalloween = document.getElementById('fecha_preventa') ? document.getElementById('fecha_preventa').value : null;
+            if (esGranel) {
+                subtotal = (cantidad / 1000) * precio;
+                totalAcumulado += subtotal;
 
-var horarioFinal = horario;
-if (fechaHalloween && document.getElementById('grupoFechaHalloween').style.display !== 'none') {
-    horarioFinal = fechaHalloween + " | " + horario;
-}
+                detalleHtml += `
+                    <div class="ticket-linea">
+                        <span>${cantidad}g de ${nombre}</span>
+                        <span>$${subtotal.toFixed(2)}</span>
+                    </div>
+                `;
+            } else {
+                subtotal = cantidad * precio;
+                totalAcumulado += subtotal;
 
-detalleHtml += `
-    <div class="ticket-linea">
-        <span>Recepción:</span>
-        <span>${horarioFinal}</span>
-    </div>
-    <div class="ticket-linea" style="color: var(--luxury-gold);">
-        <span>Formato de Pago:</span>
-        <span>${metodo}</span>
-    </div>
-    <div class="ticket-total">
-        <span>TOTAL DB</span>
-        <span>$${totalAcumulado.toFixed(2)} MXN</span>
-    </div>
-`;
-document.getElementById('ticketDetalleItems').innerHTML = detalleHtml;
+                detalleHtml += `
+                    <div class="ticket-linea">
+                        <span>${cantidad}x ${nombre}</span>
+                        <span>$${subtotal.toFixed(2)}</span>
+                    </div>
+                `;
+            }
         }
+    });
+  
+    var horario = document.getElementById('horario').value;
+    var metodo = document.getElementById('metodo_pago').value;
+    var fechaHalloween = document.getElementById('fecha_preventa') ? document.getElementById('fecha_preventa').value : null;
+
+    var horarioFinal = horario;
+    if (fechaHalloween && document.getElementById('grupoFechaHalloween').style.display !== 'none') {
+        horarioFinal = fechaHalloween + " | " + horario;
+    }
+
+    detalleHtml += `
+        <div class="ticket-linea">
+            <span>Recepción:</span>
+            <span>${horarioFinal}</span>
+        </div>
+        <div class="ticket-linea" style="color: var(--luxury-gold);">
+            <span>Formato de Pago:</span>
+            <span>${metodo}</span>
+        </div>
+        <div class="ticket-total">
+            <span>TOTAL DB</span>
+            <span>$${totalAcumulado.toFixed(2)} MXN</span>
+        </div>
+    `;
+    document.getElementById('ticketDetalleItems').innerHTML = detalleHtml;
+}
 
         function cerrarTicket() {
             document.getElementById('modalTicket').style.display = 'none';
