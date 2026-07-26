@@ -997,9 +997,9 @@
                     {% if producto.disponible %}
                         {% if producto.venta_a_granel %}
                             <!-- BOTÓN QUE ABRE EL MODAL A GRANEL -->
-                            <button type="button" style="width: 100%; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; padding: 12px; font-weight: 600; color: var(--card-black); background: var(--luxury-gold); border-radius: 4px;" onclick="abrirModalGranel({{ producto.id }}, {{ producto.precio }}, '{{ producto.nombre }}')">
-                                Elegir Peso / $
-                            </button>
+                            <button type="button" style="width: 100%; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px; padding: 12px; font-weight: 600; color: var(--card-black); background: var(--luxury-gold); border-radius: 4px;" onclick="abrirModalGranel({{ producto.id }}, {{ producto.precio }}, '{{ producto.nombre }}', {{ producto.stock_tienda if producto.stock_tienda is not none else 'null' }})">
+    Elegir Peso / $
+</button>
                             <input type="hidden" class="input-cantidad" id="cant_{{ producto.id }}" name="cantidad_{{ producto.id }}" value="0" data-precio="{{ producto.precio }}" data-nombre="{{ producto.nombre }}" data-categoria="{{ producto.categoria|default('tienda') }}" data-granel="true">
                         {% else %}
                             <!-- CONTROL NORMAL [ - 0 + ] -->
@@ -1212,6 +1212,7 @@
         
         <input type="hidden" id="granelActivoId">
         <input type="hidden" id="granelActivoPrecio">
+        <input type="hidden" id="granelActivoStock">
     </div>
 </div>
 
@@ -1786,11 +1787,15 @@
             }, 50);
         }
 
-function abrirModalGranel(id, precioKg, nombre) {
+function abrirModalGranel(id, precioKg, nombre, stockKg) {
     document.getElementById('granelActivoId').value = id;
     document.getElementById('granelActivoPrecio').value = precioKg;
     document.getElementById('granelNombre').innerText = nombre;
     document.getElementById('granelPrecioKg').innerText = "$" + precioKg.toFixed(2) + " MXN por Kilo";
+    
+    // Guardamos el límite de stock convertido a gramos (si existe)
+    let limiteGramos = stockKg !== null ? (parseFloat(stockKg) * 1000) : "null";
+    document.getElementById('granelActivoStock').value = limiteGramos;
     
     // Limpieza de campos
     document.getElementById('inputPesos').value = '';
@@ -1807,12 +1812,36 @@ function calcularDesdePesos() {
     let pesos = parseFloat(document.getElementById('inputPesos').value) || 0;
     let precioKg = parseFloat(document.getElementById('granelActivoPrecio').value);
     let gramos = (pesos / precioKg) * 1000;
+    
+    // Validar límite de seguridad
+    let limiteGramos = document.getElementById('granelActivoStock').value;
+    if (limiteGramos !== "null" && limiteGramos !== "") {
+        let maxGramos = parseFloat(limiteGramos);
+        if (gramos > maxGramos) {
+            gramos = maxGramos;
+            document.getElementById('inputPesos').value = ((gramos / 1000) * precioKg).toFixed(2);
+            alert(`Inventario máximo alcanzado. Solo disponemos de ${(maxGramos / 1000).toFixed(2)} kg en la boutique.`);
+        }
+    }
+    
     document.getElementById('inputGramos').value = Math.round(gramos);
 }
 
 function calcularDesdeGramos() {
     let gramos = parseFloat(document.getElementById('inputGramos').value) || 0;
     let precioKg = parseFloat(document.getElementById('granelActivoPrecio').value);
+    
+    // Validar límite de seguridad
+    let limiteGramos = document.getElementById('granelActivoStock').value;
+    if (limiteGramos !== "null" && limiteGramos !== "") {
+        let maxGramos = parseFloat(limiteGramos);
+        if (gramos > maxGramos) {
+            gramos = maxGramos;
+            document.getElementById('inputGramos').value = Math.round(gramos);
+            alert(`Inventario máximo alcanzado. Solo disponemos de ${(maxGramos / 1000).toFixed(2)} kg en la boutique.`);
+        }
+    }
+
     let pesos = (gramos / 1000) * precioKg;
     document.getElementById('inputPesos').value = pesos.toFixed(2);
 }
@@ -1820,10 +1849,19 @@ function calcularDesdeGramos() {
 function confirmarGranel() {
     let id = document.getElementById('granelActivoId').value;
     let gramos = parseInt(document.getElementById('inputGramos').value) || 0;
+    let limiteGramos = document.getElementById('granelActivoStock').value;
     
     if (gramos <= 0) {
-        alert("Por favor ingrese un monto o peso válido.");
+        alert("Por favor ingrese un monto o peso válido de nuestra alta selección.");
         return;
+    }
+    
+    // Última validación estricta antes de enviar al carrito
+    if (limiteGramos !== "null" && limiteGramos !== "") {
+        if (gramos > parseFloat(limiteGramos)) {
+            alert("El monto supera el inventario disponible en tiempo real.");
+            return;
+        }
     }
     
     let inputCarrito = document.getElementById('cant_' + id);
@@ -1833,7 +1871,6 @@ function confirmarGranel() {
     }
     cerrarModalGranel();
 }
-
         function copiarCodigo() {
             const codigo = document.getElementById('codigoExitoTexto').innerText;
             navigator.clipboard.writeText(codigo).then(() => {

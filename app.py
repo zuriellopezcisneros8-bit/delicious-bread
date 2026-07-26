@@ -1406,28 +1406,24 @@ def procesar_pedido():
         if cant and int(cant) > 0:
             cantidad = int(cant)
             
-            # --- NUEVA LÓGICA DE INVENTARIO ---
+            # --- NUEVA LÓGICA DE INVENTARIO (CON CORRECCIÓN A GRANEL) ---
             # Si el producto pertenece a la tienda (y tiene límite de stock)
             if prod.categoria and prod.categoria.lower() not in ['pan', 'halloween']:
                 if prod.stock_tienda is not None:
-    # 1. Determinar cuánto descontar (si es granel, lo pasamos a kilos)
-    es_granel = getattr(prod, 'venta_a_granel', False)
-    cantidad_a_descontar = (cantidad / 1000.0) if es_granel else cantidad
-
-    # 2. Validar el stock con la cantidad ya convertida
-    if prod.stock_tienda < cantidad_a_descontar:
-        medida = "kg" if es_granel else "unidades"
-        return jsonify({'success': False, 'error': f'Stock insuficiente para {prod.nombre}. Solo quedan {prod.stock_tienda} {medida}.'}), 400
-
-    # 3. Restar el stock correctamente
-    prod.stock_tienda -= cantidad_a_descontar
-
-    # 4. Pausar visualmente si llega a 0
-    if prod.stock_tienda <= 0:
-        prod.disponible = False
+                    # 1. Determinar cuánto descontar (si es granel, lo pasamos a kilos)
+                    es_granel = getattr(prod, 'venta_a_granel', False)
+                    cantidad_a_descontar = (cantidad / 1000.0) if es_granel else float(cantidad)
                     
-                    # Pausar visualmente si llega a 0
-                    if prod.stock_tienda == 0:
+                    # 2. Validar de lado del servidor para evitar compras fantasma
+                    if prod.stock_tienda < cantidad_a_descontar:
+                        medida = "kg" if es_granel else "unidades"
+                        return jsonify({'success': False, 'error': f'Stock insuficiente para {prod.nombre}. Solo quedan {prod.stock_tienda} {medida}.'}), 400
+                    
+                    # 3. Restar permanentemente el inventario de la base de datos
+                    prod.stock_tienda -= cantidad_a_descontar
+                    
+                    # 4. Pausar visualmente si llega a 0
+                    if prod.stock_tienda <= 0:
                         prod.disponible = False
             # ----------------------------------
 
