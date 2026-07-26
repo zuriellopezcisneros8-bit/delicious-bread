@@ -115,7 +115,7 @@ class Producto(db.Model):
     disponible = db.Column(db.Boolean, default=True)
     stock_sobrante = db.Column(db.Integer, default=0)
     categoria = db.Column(db.String(50), default='pan')
-    stock_tienda = db.Column(db.Integer, nullable=True, default=None)
+    stock_tienda = db.Column(db.Float, nullable=True, default=None)
     venta_a_granel = db.Column(db.Boolean, default=False)
 
 class Coleccionable(db.Model):
@@ -1410,12 +1410,21 @@ def procesar_pedido():
             # Si el producto pertenece a la tienda (y tiene límite de stock)
             if prod.categoria and prod.categoria.lower() not in ['pan', 'halloween']:
                 if prod.stock_tienda is not None:
-                    # Validar de lado del servidor para evitar compras fantasma
-                    if prod.stock_tienda < cantidad:
-                        return jsonify({'success': False, 'error': f'Stock insuficiente para {prod.nombre}. Solo quedan {prod.stock_tienda} unidades.'}), 400
-                    
-                    # Restar permanentemente el inventario de la base de datos
-                    prod.stock_tienda -= cantidad
+    # 1. Determinar cuánto descontar (si es granel, lo pasamos a kilos)
+    es_granel = getattr(prod, 'venta_a_granel', False)
+    cantidad_a_descontar = (cantidad / 1000.0) if es_granel else cantidad
+
+    # 2. Validar el stock con la cantidad ya convertida
+    if prod.stock_tienda < cantidad_a_descontar:
+        medida = "kg" if es_granel else "unidades"
+        return jsonify({'success': False, 'error': f'Stock insuficiente para {prod.nombre}. Solo quedan {prod.stock_tienda} {medida}.'}), 400
+
+    # 3. Restar el stock correctamente
+    prod.stock_tienda -= cantidad_a_descontar
+
+    # 4. Pausar visualmente si llega a 0
+    if prod.stock_tienda <= 0:
+        prod.disponible = False
                     
                     # Pausar visualmente si llega a 0
                     if prod.stock_tienda == 0:
