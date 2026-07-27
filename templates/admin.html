@@ -414,12 +414,10 @@
                                                         <div class="acciones-flex">
                                                             <button class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto;" onclick="abrirModalPedido('{{ pedido.id }}')">Detalles</button>
                                                             
-                                                            <!-- PAGO -->
-                                                            {% if not pedido.pagado %}
-                                                            <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST" style="margin:0;">
-                                                                <button type="submit" class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto; border-color: #8b7355; color: #dfd0c0;">Validar Pago</button>
-                                                            </form>
-                                                            {% else %}
+                                                            <!-- PAGO (TERMINAL POS) -->
+{% if not pedido.pagado %}
+    <button type="button" class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto; border-color: #8b7355; color: #dfd0c0; background: #1a120b;" onclick="abrirModalPos('{{ pedido.id }}')">Cobrar / POS</button>
+{% else %}
                                                                 <button type="button" class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto; border-color: #c5a880; color: #c5a880; cursor: default;">Pagado</button>
                                                             {% endif %}
 
@@ -465,6 +463,47 @@
                                                         <p style="font-size:0.85rem; margin-top:15px; font-weight: 500;">Titular: <span style="color:var(--skin-beige);">{{ pedido.cliente.nombre }}</span></p>
                                                         <p style="color:#888; font-size:0.75rem; margin-top:0;">Tel: {{ pedido.cliente.telefono }}</p>
                                                         
+
+<!-- MODAL TERMINAL POS (PUNTO DE VENTA LIVE) -->
+<div id="modal-pos-{{ pedido.id }}" class="modal-overlay">
+    <div class="modal-content" style="border-color: var(--luxury-gold); box-shadow: 0 0 50px rgba(197, 168, 128, 0.15);">
+        <button type="button" class="btn-close-modal" onclick="cerrarModalPos('{{ pedido.id }}')">&times;</button>
+        <h2 style="color:var(--luxury-gold); margin:0 0 5px 0; letter-spacing:2px; font-size:1.4rem;">PUNTO DE VENTA</h2>
+        <p style="color:var(--light-brown); font-size:0.75rem; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 2px;">TICKET: {{ pedido.codigo_recogida }}</p>
+        <p style="font-size:0.85rem; margin-top:5px; font-weight: 500;">Cliente: <span style="color:var(--skin-beige);">{{ pedido.cliente.nombre }}</span></p>
+        
+        <div style="background: var(--card-black); padding:25px 20px; border-radius:var(--radius); margin:20px 0; border: 1px solid var(--luxury-gold); box-shadow: inset 0 10px 30px rgba(0,0,0,0.8);">
+            
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:1.4rem; font-weight:600; color: var(--skin-beige); border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px;">
+                <span>Total a Cobrar:</span>
+                <span id="pos-total-{{ pedido.id }}">${{ "%.2f"|format(pedido.monto_total) }}</span>
+            </div>
+
+            <div class="grupo-campo" style="margin-bottom: 15px;">
+                <label style="font-size: 0.65rem; color: var(--light-brown); text-transform: uppercase; letter-spacing: 1px;">Método de Pago del Cliente:</label>
+                <select id="pos-metodo-{{ pedido.id }}" class="form-control" onchange="toggleEfectivoPos('{{ pedido.id }}')" style="margin-bottom: 0; border-color: var(--luxury-gold);">
+                    <option value="Efectivo">Pago en Efectivo</option>
+                    <option value="Tarjeta">Tarjeta de Crédito / Débito (Terminal Física)</option>
+                    <option value="Transferencia">Transferencia Electrónica</option>
+                </select>
+            </div>
+
+            <div id="seccion-efectivo-{{ pedido.id }}" class="grupo-campo" style="margin-bottom: 25px;">
+                <label style="font-size: 0.65rem; color: var(--light-brown); text-transform: uppercase; letter-spacing: 1px;">Efectivo Recibido (Con cuánto paga):</label>
+                <input type="number" id="pos-recibido-{{ pedido.id }}" class="form-control" placeholder="Ej. 500" oninput="calcularCambioPos('{{ pedido.id }}', {{ pedido.monto_total }})" style="margin-bottom: 5px; font-size: 1.5rem; font-weight: bold; color: var(--skin-beige); text-align: center; background: #050505;">
+                
+                <div style="font-size: 0.85rem; color: var(--skin-beige); margin-top: 15px; padding: 15px; background: #0A0A0A; border: 1px dashed var(--luxury-gold); border-radius: var(--radius); text-align: center;">
+                    <span style="text-transform: uppercase; letter-spacing: 1px; color: #888; font-size: 0.7rem;">Cambio a devolver al cliente</span><br>
+                    <strong id="pos-cambio-{{ pedido.id }}" style="color: var(--luxury-gold); font-size: 2.2rem; display: block; margin-top: 8px;">$0.00</strong>
+                </div>
+            </div>
+
+            <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST" style="margin:0;">
+                <button type="submit" class="btn-action" style="background: var(--luxury-gold); color: #000; font-size: 0.85rem; padding: 15px;">Confirmar Pago y Cerrar Venta ✓</button>
+            </form>
+        </div>
+    </div>
+</div>
                                                         <!-- CHECK-LIST DE EMPAQUE (SOLO MEMORIA LOCAL) -->
                                                         <div style="background: var(--card-black); padding:25px 20px; border-radius:var(--radius); margin:20px 0; border: 1px solid var(--luxury-gold); box-shadow: inset 0 10px 30px rgba(0,0,0,0.8);">
                                                             <h4 style="margin:0 0 15px 0; color:var(--skin-beige); font-size:1rem; text-transform:uppercase; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; letter-spacing: 2px;">📋 Lista de Empaque</h4>
@@ -475,7 +514,9 @@
                                                                         <input type="checkbox" class="check-empaque-{{ pedido.id }}" id="chk-{{ pedido.id }}-{{ loop.index }}" onchange="guardarEmpaque('{{ pedido.id }}', '{{ loop.index }}', this.checked);" style="width: 18px; height: 18px; accent-color: var(--luxury-gold); cursor: pointer;" {% if pedido.estado in ['Listo', 'Entregado'] %}checked disabled{% endif %}>
                                                                         <span style="color:var(--skin-beige); font-weight: 400; font-size: 0.85rem;">{{ d.producto.nombre }}</span>
                                                                     </div>
-                                                                    <strong style="color:var(--card-black); font-size: 0.75rem; background: var(--luxury-gold); padding: 4px 10px; border-radius: var(--radius); font-weight: 600;">x{{ d.cantidad }}</strong>
+                                                                    <strong style="color:var(--card-black); font-size: 0.75rem; background: var(--luxury-gold); padding: 4px 10px; border-radius: var(--radius); font-weight: 600;">
+    {% if d.producto.venta_a_granel %}{{ d.cantidad }}g{% else %}x{{ d.cantidad }}{% endif %}
+</strong>
                                                                 </label>
                                                                 {% endfor %}
                                                             </div>
@@ -602,7 +643,9 @@
                                                                 <input type="checkbox" class="check-empaque-{{ pedido.id }}" id="chk-{{ pedido.id }}-{{ loop.index }}" onchange="guardarEmpaque('{{ pedido.id }}', '{{ loop.index }}', this.checked);" style="width: 18px; height: 18px; accent-color: var(--luxury-gold); cursor: pointer;" {% if pedido.estado in ['Listo', 'Entregado'] %}checked disabled{% endif %}>
                                                                 <span style="color:var(--skin-beige); font-weight: 400; font-size: 0.85rem;">{{ d.producto.nombre }}</span>
                                                             </div>
-                                                            <strong style="color:var(--card-black); font-size: 0.75rem; background: var(--luxury-gold); padding: 4px 10px; border-radius: var(--radius); font-weight: 600;">x{{ d.cantidad }}</strong>
+                                                            <strong style="color:var(--card-black); font-size: 0.75rem; background: var(--luxury-gold); padding: 4px 10px; border-radius: var(--radius); font-weight: 600;">
+    {% if d.producto.venta_a_granel %}{{ d.cantidad }}g{% else %}x{{ d.cantidad }}{% endif %}
+</strong>
                                                         </label>
                                                         {% endfor %}
                                                     </div>
@@ -1332,6 +1375,52 @@
                 });
             }, 1000);
         }
+
+
+// ================= SISTEMA POS (ÓRDENES LIVE) =================
+function abrirModalPos(id) {
+    document.getElementById('modal-pos-' + id).style.display = 'flex';
+    // Colocar el foco automáticamente en el input para cobrar rápido
+    setTimeout(() => {
+        const inputEfectivo = document.getElementById('pos-recibido-' + id);
+        if (inputEfectivo) inputEfectivo.focus();
+    }, 100);
+}
+
+function cerrarModalPos(id) {
+    document.getElementById('modal-pos-' + id).style.display = 'none';
+    // Limpiar campos por seguridad al cerrar
+    document.getElementById('pos-recibido-' + id).value = '';
+    document.getElementById('pos-cambio-' + id).innerText = '$0.00';
+    document.getElementById('pos-cambio-' + id).style.color = 'var(--luxury-gold)';
+}
+
+function toggleEfectivoPos(id) {
+    let metodo = document.getElementById('pos-metodo-' + id).value;
+    let seccion = document.getElementById('seccion-efectivo-' + id);
+    if (metodo === 'Efectivo') {
+        seccion.style.display = 'block';
+    } else {
+        seccion.style.display = 'none';
+    }
+}
+
+function calcularCambioPos(id, totalCobrar) {
+    let recibido = parseFloat(document.getElementById('pos-recibido-' + id).value) || 0;
+    let cambio = recibido - totalCobrar;
+    let textoCambio = document.getElementById('pos-cambio-' + id);
+    
+    if (recibido === 0) {
+        textoCambio.innerText = '$0.00';
+        textoCambio.style.color = 'var(--luxury-gold)';
+    } else if (cambio >= 0) {
+        textoCambio.innerText = '$' + cambio.toFixed(2);
+        textoCambio.style.color = '#4ade80'; // Verde de validación
+    } else {
+        textoCambio.innerText = 'Faltan $' + Math.abs(cambio).toFixed(2);
+        textoCambio.style.color = '#ff6b6b'; // Rojo de alerta
+    }
+}
 
         // ================= CONTROL DE VISTAS (TABS) =================
         function openTab(tabId) {
