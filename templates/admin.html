@@ -9,7 +9,7 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THE ZMARTH ORG — OPERACIONES PREMIUM</title>
+    <title>DELICIOUS BREAD — OPERACIONES PREMIUM</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -307,8 +307,8 @@
 <body>
 
     <header class="top-bar">
-        <h1>OPERACIONES</h1>
-        <p style="font-size: 0.75rem; color: var(--light-brown); margin-top: 5px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase;">Ecosistema The Zmarth Organization</p>
+        <h1>OPERACIONES DELICIOUS BREAD</h1>
+        <p style="font-size: 0.75rem; color: var(--light-brown); margin-top: 5px; font-weight: 500; letter-spacing: 4px; text-transform: uppercase;">Ecosistema Delicious Bread A ZMARTH Company</p>
         <div class="auth-links">
             <a href="{{ url_for('index') }}">Tienda Premium</a>
             <a href="{{ url_for('admin_logout') }}" style="border-color: #4a1d1d; color: #ff6b6b;">Cerrar Sesión</a>
@@ -409,13 +409,20 @@
                                                         <div style="font-size: 0.65rem; color: var(--skin-beige); margin-top: 5px; text-transform: uppercase; letter-spacing: 1px;">{{ pedido.estado }}</div>
                                                     </td>
                                                     
-                                                    <!-- BOTONES EXTERNOS -->
+                                                    <!-- BOTONES EXTERNOS (4 BOTONES SEPARADOS) -->
                                                     <td>
                                                         <div class="acciones-flex">
-                                                            <!-- BOTÓN UNIFICADO DE TICKET Y POS -->
-                                                            <button class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto; border-color: #8b7355; color: #dfd0c0;" onclick="abrirModalPedido('{{ pedido.id }}')">Abrir Ticket / POS</button>
+                                                            <!-- BOTÓN 1: TICKET DB -->
+                                                            <button class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto;" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket</button>
                                                             
-                                                            <!-- ESTADO DINÁMICO -->
+                                                            <!-- BOTÓN 2: TERMINAL POS -->
+                                                            {% if not pedido.pagado %}
+                                                                <button type="button" class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto; border-color: #8b7355; color: #dfd0c0; background: #1a120b;" onclick="abrirModalPos('{{ pedido.id }}')">POS</button>
+                                                            {% else %}
+                                                                <button type="button" class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto; border-color: #c5a880; color: #c5a880; cursor: default;" disabled>Pagado</button>
+                                                            {% endif %}
+
+                                                            <!-- BOTÓN 3: FUNCIONES DE ESTADO -->
                                                             <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST" style="margin:0; display:flex;" onsubmit="confirmarEstado(this, '{{ 'Listo' if pedido.estado in ['Horneando', 'Preparando', 'Sincronizando'] else '' }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
                                                                 {% if pedido.estado in ['Pendiente', 'Preventa Confirmada'] %}
                                                                     {% if pedido.tipo_pedido == 'puro_pan' %}
@@ -437,7 +444,7 @@
                                                                 {% endif %}
                                                             </form>
 
-                                                            <!-- CANCELAR -->
+                                                            <!-- BOTÓN 4: CANCELAR (X) -->
                                                             {% if pedido.estado not in ['Entregado', 'Cancelado'] %}
                                                             <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST" style="margin:0;" onsubmit="return confirm('¿Seguro que desea CANCELAR la orden {{ pedido.codigo_recogida }}?');">
                                                                 <input type="hidden" name="estado" value="Cancelado">
@@ -448,7 +455,7 @@
                                                     </td>
                                                 </tr>
                                                 
-                                                <!-- MODAL DEL TICKET Y POS UNIFICADO (RADAR NORMAL) -->
+                                                <!-- MODAL 1: TICKET DB (LISTA DE EMPAQUE SOLAMENTE) -->
                                                 <div id="modal-{{ pedido.id }}" class="modal-overlay">
                                                     <div class="modal-content">
                                                         <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
@@ -457,7 +464,6 @@
                                                         <p style="font-size:0.85rem; margin-top:15px; font-weight: 500;">Titular: <span style="color:var(--skin-beige);">{{ pedido.cliente.nombre }}</span></p>
                                                         <p style="color:#888; font-size:0.75rem; margin-top:0;">Tel: {{ pedido.cliente.telefono }}</p>
                                                         
-                                                        <!-- CHECK-LIST DE EMPAQUE -->
                                                         <div style="background: var(--card-black); padding:25px 20px; border-radius:var(--radius); margin:20px 0; border: 1px solid var(--luxury-gold); box-shadow: inset 0 10px 30px rgba(0,0,0,0.8);">
                                                             <h4 style="margin:0 0 15px 0; color:var(--skin-beige); font-size:1rem; text-transform:uppercase; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; letter-spacing: 2px;">📋 Lista de Empaque</h4>
                                                             <div class="list-scroll" style="max-height: 35vh; padding-right: 5px; overflow-y: auto;">
@@ -493,12 +499,24 @@
                                                                 </div>
                                                             {% endif %}
                                                         {% endif %}
+                                                    </div>
+                                                </div>
+
+                                                <!-- MODAL 2: TERMINAL POS (SISTEMA DE COBRO INDEPENDIENTE) -->
+                                                <div id="modal-pos-{{ pedido.id }}" class="modal-overlay">
+                                                    <div class="modal-content" style="border-color: var(--luxury-gold); box-shadow: 0 0 50px rgba(197, 168, 128, 0.15);">
+                                                        <button type="button" class="btn-close-modal" onclick="cerrarModalPos('{{ pedido.id }}')">&times;</button>
+                                                        <h2 style="color:var(--luxury-gold); margin:0 0 5px 0; letter-spacing:2px; font-size:1.4rem;">PUNTO DE VENTA</h2>
+                                                        <p style="color:var(--light-brown); font-size:0.75rem; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 2px;">TICKET: {{ pedido.codigo_recogida }}</p>
+                                                        <p style="font-size:0.85rem; margin-top:5px; font-weight: 500;">Cliente: <span style="color:var(--skin-beige);">{{ pedido.cliente.nombre }}</span></p>
                                                         
-                                                        <!-- PUNTO DE VENTA (SISTEMA DE COBRO INTEGRADO AL TICKET) -->
-                                                        {% if not pedido.pagado %}
                                                         <div style="background: var(--card-black); padding:25px 20px; border-radius:var(--radius); margin:20px 0; border: 1px solid var(--luxury-gold); box-shadow: inset 0 10px 30px rgba(0,0,0,0.8);">
-                                                            <h4 style="margin:0 0 15px 0; color:var(--luxury-gold); font-size:1rem; text-transform:uppercase; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; letter-spacing: 2px;">💰 Procesar Pago POS</h4>
                                                             
+                                                            <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:1.4rem; font-weight:600; color: var(--skin-beige); border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px;">
+                                                                <span>Total a Cobrar:</span>
+                                                                <span id="pos-total-{{ pedido.id }}">${{ "%.2f"|format(pedido.monto_total) }}</span>
+                                                            </div>
+
                                                             <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST" style="margin:0;">
                                                                 <div class="grupo-campo" style="margin-bottom: 15px;">
                                                                     <label style="font-size: 0.65rem; color: var(--light-brown); text-transform: uppercase; letter-spacing: 1px;">Método de Pago:</label>
@@ -519,17 +537,8 @@
                                                                     </div>
                                                                 </div>
 
-                                                                <button type="submit" class="btn-action" style="background: var(--luxury-gold); color: #000; font-size: 0.85rem; padding: 15px; width: 100%;">Confirmar Pago y Sellar ✓</button>
+                                                                <button type="submit" class="btn-action" style="background: var(--luxury-gold); color: #000; font-size: 0.85rem; padding: 15px; width: 100%;">Confirmar Pago y Cerrar Venta ✓</button>
                                                             </form>
-                                                        </div>
-                                                        {% else %}
-                                                        <div style="text-align: center; margin-top: 20px; padding: 15px; border: 1px solid #4ade80; border-radius: var(--radius); background: rgba(74, 222, 128, 0.05);">
-                                                            <span style="color: #4ade80; font-weight: 600; letter-spacing: 2px;">✅ ORDEN PAGADA EN SU TOTALIDAD</span>
-                                                        </div>
-                                                        {% endif %}
-
-                                                        <div style="text-align: center; margin-top: 20px;">
-                                                            <p style="color: #777; font-size: 0.75rem; margin-bottom: 0;">Nota: Los controles de cambio de estado se gestionan directamente desde la tabla principal del radar.</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -574,12 +583,21 @@
                                                 <strong style="color:var(--luxury-gold); font-size: 1.1rem;">${{ "%.2f"|format(pedido.monto_total) }}</strong>
                                                 <div style="font-size: 0.65rem; color: var(--skin-beige); margin-top: 5px; text-transform: uppercase; letter-spacing: 1px;">{{ pedido.estado }}</div>
                                             </td>
+                                            
+                                            <!-- BOTONES EXTERNOS (4 BOTONES SEPARADOS PARA FLASH) -->
                                             <td>
                                                 <div class="acciones-flex">
-                                                    <!-- BOTÓN UNIFICADO DE TICKET Y POS FLASH -->
-                                                    <button class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto; border-color: #8b7355; color: #dfd0c0;" onclick="abrirModalPedido('{{ pedido.id }}')">Abrir Ticket / POS</button>
+                                                    <!-- BOTÓN 1: TICKET DB -->
+                                                    <button class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto;" onclick="abrirModalPedido('{{ pedido.id }}')">Ticket</button>
                                                     
-                                                    <!-- ESTADO DINÁMICO -->
+                                                    <!-- BOTÓN 2: TERMINAL POS -->
+                                                    {% if not pedido.pagado %}
+                                                        <button type="button" class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto; border-color: #8b7355; color: #dfd0c0; background: #1a120b;" onclick="abrirModalPos('{{ pedido.id }}')">POS</button>
+                                                    {% else %}
+                                                        <button type="button" class="btn-action outline" style="padding: 8px 12px; font-size:0.6rem; width: auto; border-color: #c5a880; color: #c5a880; cursor: default;" disabled>Pagado</button>
+                                                    {% endif %}
+
+                                                    <!-- BOTÓN 3: FUNCIONES DE ESTADO -->
                                                     <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST" style="margin:0; display:flex;" onsubmit="confirmarEstado(this, '{{ 'Listo' if pedido.estado == 'Preparando' else '' }}', '{{ pedido.cliente.telefono }}', '{{ pedido.cliente.nombre | replace('\'', '\\\'') }}', '{{ pedido.codigo_recogida }}')">
                                                         {% if pedido.estado == 'Venta Flash Excedente' %}
                                                             <input type="hidden" name="estado" value="Preparando">
@@ -593,7 +611,7 @@
                                                         {% endif %}
                                                     </form>
 
-                                                    <!-- CANCELAR -->
+                                                    <!-- BOTÓN 4: CANCELAR (X) -->
                                                     {% if pedido.estado not in ['Entregado', 'Cancelado'] %}
                                                     <form action="{{ url_for('actualizar_estado', pedido_id=pedido.id) }}" method="POST" style="margin:0;" onsubmit="return confirm('¿Seguro que desea CANCELAR la orden {{ pedido.codigo_recogida }}?');">
                                                         <input type="hidden" name="estado" value="Cancelado">
@@ -604,7 +622,7 @@
                                             </td>
                                         </tr>
                                         
-                                        <!-- MODAL DEL TICKET FLASH Y POS UNIFICADO -->
+                                        <!-- MODAL 1: TICKET FLASH (SOLO LISTA) -->
                                         <div id="modal-{{ pedido.id }}" class="modal-overlay">
                                             <div class="modal-content" style="border-color: var(--luxury-gold);">
                                                 <button class="btn-close-modal" onclick="cerrarModalPedido('{{ pedido.id }}')">&times;</button>
@@ -613,7 +631,6 @@
                                                 <p style="font-size:0.85rem; margin-top:15px; font-weight: 500;">Titular: <span style="color:var(--skin-beige);">{{ pedido.cliente.nombre }}</span></p>
                                                 <p style="color:#888; font-size:0.75rem; margin-top:0;">Tel: {{ pedido.cliente.telefono }}</p>
                                                 
-                                                <!-- CHECK-LIST DE EMPAQUE FLASH -->
                                                 <div style="background: var(--card-black); padding:25px 20px; border-radius:var(--radius); margin:20px 0; border: 1px solid var(--luxury-gold); box-shadow: inset 0 10px 30px rgba(0,0,0,0.8);">
                                                     <h4 style="margin:0 0 15px 0; color:var(--skin-beige); font-size:1rem; text-transform:uppercase; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; letter-spacing: 2px;">⚡ Lista de Retiro</h4>
                                                     <div class="list-scroll" style="max-height: 35vh; padding-right: 5px; overflow-y: auto;">
@@ -649,12 +666,24 @@
                                                         </div>
                                                     {% endif %}
                                                 {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <!-- MODAL 2: TERMINAL POS PARA FLASH -->
+                                        <div id="modal-pos-{{ pedido.id }}" class="modal-overlay">
+                                            <div class="modal-content" style="border-color: var(--luxury-gold); box-shadow: 0 0 50px rgba(197, 168, 128, 0.15);">
+                                                <button type="button" class="btn-close-modal" onclick="cerrarModalPos('{{ pedido.id }}')">&times;</button>
+                                                <h2 style="color:var(--luxury-gold); margin:0 0 5px 0; letter-spacing:2px; font-size:1.4rem;">PUNTO DE VENTA</h2>
+                                                <p style="color:var(--light-brown); font-size:0.75rem; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 2px;">TICKET FLASH: {{ pedido.codigo_recogida }}</p>
+                                                <p style="font-size:0.85rem; margin-top:5px; font-weight: 500;">Cliente: <span style="color:var(--skin-beige);">{{ pedido.cliente.nombre }}</span></p>
                                                 
-                                                <!-- PUNTO DE VENTA (SISTEMA DE COBRO INTEGRADO AL TICKET FLASH) -->
-                                                {% if not pedido.pagado %}
                                                 <div style="background: var(--card-black); padding:25px 20px; border-radius:var(--radius); margin:20px 0; border: 1px solid var(--luxury-gold); box-shadow: inset 0 10px 30px rgba(0,0,0,0.8);">
-                                                    <h4 style="margin:0 0 15px 0; color:var(--luxury-gold); font-size:1rem; text-transform:uppercase; border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px; letter-spacing: 2px;">💰 Procesar Pago POS</h4>
                                                     
+                                                    <div style="display:flex; justify-content:space-between; margin-bottom:20px; font-size:1.4rem; font-weight:600; color: var(--skin-beige); border-bottom: 1px dashed var(--border-fino); padding-bottom: 15px;">
+                                                        <span>Total a Cobrar:</span>
+                                                        <span id="pos-total-{{ pedido.id }}">${{ "%.2f"|format(pedido.monto_total) }}</span>
+                                                    </div>
+
                                                     <form action="{{ url_for('marcar_pagar_pedido', pedido_id=pedido.id) }}" method="POST" style="margin:0;">
                                                         <div class="grupo-campo" style="margin-bottom: 15px;">
                                                             <label style="font-size: 0.65rem; color: var(--light-brown); text-transform: uppercase; letter-spacing: 1px;">Método de Pago:</label>
@@ -675,17 +704,8 @@
                                                             </div>
                                                         </div>
 
-                                                        <button type="submit" class="btn-action" style="background: var(--luxury-gold); color: #000; font-size: 0.85rem; padding: 15px; width: 100%;">Confirmar Pago y Sellar ✓</button>
+                                                        <button type="submit" class="btn-action" style="background: var(--luxury-gold); color: #000; font-size: 0.85rem; padding: 15px; width: 100%;">Confirmar Pago y Cerrar Venta ✓</button>
                                                     </form>
-                                                </div>
-                                                {% else %}
-                                                <div style="text-align: center; margin-top: 20px; padding: 15px; border: 1px solid #4ade80; border-radius: var(--radius); background: rgba(74, 222, 128, 0.05);">
-                                                    <span style="color: #4ade80; font-weight: 600; letter-spacing: 2px;">✅ ORDEN PAGADA EN SU TOTALIDAD</span>
-                                                </div>
-                                                {% endif %}
-
-                                                <div style="text-align: center; margin-top: 20px;">
-                                                    <p style="color: #777; font-size: 0.75rem; margin-bottom: 0;">Nota: Los controles de cambio de estado se gestionan directamente desde la tabla principal del radar.</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -812,132 +832,141 @@
                 </form>
             </div>
 
+            <!-- CATÁLOGO ESTRUCTURADO CON CUADRÍCULAS Y BUSCADOR -->
             <div class="card">
-                <h3>Catálogo Estructurado</h3>
-                {% for prod in productos %}
-                <div class="inv-item {% if not prod.disponible %}agotado{% endif %}">
-                    <div class="inv-image-container">
-                        {% if prod.imagen_url %}
-                            <img src="{{ prod.imagen_url }}" alt="{{ prod.nombre }}">
-                        {% else %}
-                            <div class="img-placeholder-full">Pendiente de Fotografía</div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="inv-content">
-                        <div>
-                            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
-                                <strong style="font-size:1.1rem; color:var(--skin-beige); text-transform: uppercase; letter-spacing: 1px;">{{ prod.nombre }}</strong>
-                                <span style="color:var(--luxury-gold); font-size: 1.1rem; font-weight: 600;">${{ "%.2f"|format(prod.precio) }}</span>
-                                
-                                {% if prod.stock_sobrante and prod.stock_sobrante > 0 %}
-                                    <span style="background: rgba(197,168,128,0.1); color: var(--luxury-gold); font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid var(--luxury-gold); text-transform: uppercase; letter-spacing: 1px;">⚡ FLASH: {{ prod.stock_sobrante }}</span>
-                                {% endif %}
-                                {% if prod.stock_tienda is not none %}
-                                    <span style="background: #111; color: #aaa; font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid #333; text-transform: uppercase; letter-spacing: 1px;">TIENDA: {{ prod.stock_tienda }}</span>
-                                {% endif %}
-                                {% if prod.es_pedido_grande %}
-                                    <span style="background: rgba(139,115,85,0.1); color: var(--light-brown); font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid var(--light-brown); text-transform: uppercase; letter-spacing: 1px;">MAYOREO</span>
-                                {% endif %}
-                                
-                                {% if not prod.disponible %}
-                                    <span style="background: #1a0f0f; color: #ff6b6b; font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid #4a1d1d; text-transform: uppercase; letter-spacing: 1px;">PAUSADO</span>
-                                {% endif %}
-                            </div>
-                            <div style="font-size:0.8rem; color:#777; margin-top:10px; line-height: 1.6;">{{ prod.descripcion }}</div>
-                        </div>
-
-                        <div class="inv-actions">
-                            <form action="{{ url_for('toggle_producto', producto_id=prod.id) }}" method="POST" style="flex: 1;">
-                                <button type="submit" class="btn-small" style="width: 100%; border-color: var(--light-brown); color: var(--light-brown);">
-                                    {% if prod.disponible %}Ocultar{% else %}Restaurar{% endif %}
-                                </button>
-                            </form>
-                            <button class="btn-small" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='block'">Modificar</button>
-                            <form action="{{ url_for('eliminar_producto', producto_id=prod.id) }}" method="POST" onsubmit="return confirm('¿Retirar artículo de la matriz principal?');" style="flex: 1;">
-                                <button type="submit" class="btn-small" style="width: 100%; border-color: #4a1d1d; color: #ff6b6b;">Eliminar</button>
-                            </form>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px; border-bottom: 1px solid var(--border-fino); padding-bottom: 15px;">
+                    <h3 style="margin: 0; border: none; padding: 0;">Catálogo Estructurado</h3>
+                    <input type="text" id="buscadorProductos" onkeyup="filtrarCatalogo()" class="form-control" placeholder="🔍 Buscar artículo..." style="max-width: 320px; margin-bottom: 0; border-color: var(--luxury-gold);">
+                </div>
+                
+                <div id="grid-catalogo" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                    {% for prod in productos %}
+                    <div class="inv-item prod-card {% if not prod.disponible %}agotado{% endif %}" data-nombre="{{ prod.nombre | lower }}">
+                        <div class="inv-image-container">
+                            {% if prod.imagen_url %}
+                                <img src="{{ prod.imagen_url }}" alt="{{ prod.nombre }}">
+                            {% else %}
+                                <div class="img-placeholder-full">Pendiente de Fotografía</div>
+                            {% endif %}
                         </div>
                         
-                        <div style="padding: 15px; background: #050505; border-radius: var(--radius); border: 1px solid var(--border-fino); width: 100%; box-sizing: border-box;">
-                            <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 15px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
-                                <input type="hidden" name="nombre" value="{{ prod.nombre }}">
-                                <input type="hidden" name="descripcion" value="{{ prod.descripcion }}">
-                                <input type="hidden" name="precio" value="{{ prod.precio }}">
-                                {% if prod.es_pedido_grande %}
-                                    <input type="hidden" name="es_pedido_grande" value="1">
-                                {% endif %}
+                        <div class="inv-content" style="flex-grow: 1; justify-content: space-between;">
+                            <div>
+                                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+                                    <strong style="font-size:1.1rem; color:var(--skin-beige); text-transform: uppercase; letter-spacing: 1px;">{{ prod.nombre }}</strong>
+                                    <span style="color:var(--luxury-gold); font-size: 1.1rem; font-weight: 600;">${{ "%.2f"|format(prod.precio) }}</span>
+                                    
+                                    {% if prod.stock_sobrante and prod.stock_sobrante > 0 %}
+                                        <span style="background: rgba(197,168,128,0.1); color: var(--luxury-gold); font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid var(--luxury-gold); text-transform: uppercase; letter-spacing: 1px;">⚡ FLASH: {{ prod.stock_sobrante }}</span>
+                                    {% endif %}
+                                    {% if prod.stock_tienda is not none %}
+                                        <span style="background: #111; color: #aaa; font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid #333; text-transform: uppercase; letter-spacing: 1px;">TIENDA: {{ prod.stock_tienda }}</span>
+                                    {% endif %}
+                                    {% if prod.es_pedido_grande %}
+                                        <span style="background: rgba(139,115,85,0.1); color: var(--light-brown); font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid var(--light-brown); text-transform: uppercase; letter-spacing: 1px;">MAYOREO</span>
+                                    {% endif %}
+                                    
+                                    {% if not prod.disponible %}
+                                        <span style="background: #1a0f0f; color: #ff6b6b; font-size: 0.6rem; padding: 4px 10px; border-radius: var(--radius); border: 1px solid #4a1d1d; text-transform: uppercase; letter-spacing: 1px;">PAUSADO</span>
+                                    {% endif %}
+                                </div>
+                                <div style="font-size:0.8rem; color:#777; margin-top:10px; line-height: 1.6;">{{ prod.descripcion }}</div>
+                            </div>
+
+                            <div style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+                                <div class="inv-actions">
+                                    <form action="{{ url_for('toggle_producto', producto_id=prod.id) }}" method="POST" style="flex: 1;">
+                                        <button type="submit" class="btn-small" style="width: 100%; border-color: var(--light-brown); color: var(--light-brown);">
+                                            {% if prod.disponible %}Ocultar{% else %}Restaurar{% endif %}
+                                        </button>
+                                    </form>
+                                    <button class="btn-small" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='block'">Modificar</button>
+                                    <form action="{{ url_for('eliminar_producto', producto_id=prod.id) }}" method="POST" onsubmit="return confirm('¿Retirar artículo de la matriz principal?');" style="flex: 1;">
+                                        <button type="submit" class="btn-small" style="width: 100%; border-color: #4a1d1d; color: #ff6b6b;">Eliminar</button>
+                                    </form>
+                                </div>
                                 
-                                <label style="font-size: 0.7rem; color: var(--light-brown); white-space: nowrap; text-transform: uppercase; letter-spacing: 1px;">Suministro Flash:</label>
-                                <input type="number" name="stock_sobrante" value="{{ prod.stock_sobrante or 0 }}" min="0" class="form-control" style="margin-bottom: 0; padding: 10px; width: 90px; flex: 1;">
-                                <button type="submit" class="btn-action outline" style="padding: 10px 20px; flex: none;">Fijar</button>
+                                <div style="padding: 15px; background: #050505; border-radius: var(--radius); border: 1px solid var(--border-fino); width: 100%; box-sizing: border-box;">
+                                    <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap;">
+                                        <input type="hidden" name="nombre" value="{{ prod.nombre }}">
+                                        <input type="hidden" name="descripcion" value="{{ prod.descripcion }}">
+                                        <input type="hidden" name="precio" value="{{ prod.precio }}">
+                                        {% if prod.es_pedido_grande %}
+                                            <input type="hidden" name="es_pedido_grande" value="1">
+                                        {% endif %}
+                                        
+                                        <label style="font-size: 0.7rem; color: var(--light-brown); white-space: nowrap; text-transform: uppercase; letter-spacing: 1px;">Suministro Flash:</label>
+                                        <input type="number" name="stock_sobrante" value="{{ prod.stock_sobrante or 0 }}" min="0" class="form-control" style="margin-bottom: 0; padding: 10px; width: 70px; flex: 1;">
+                                        <button type="submit" class="btn-action outline" style="padding: 10px 15px; flex: none;">Fijar</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- FORMULARIO DE EDICIÓN OCULTO -->
+                        <div id="edit-form-{{ prod.id }}" style="display:none; background:#050505; padding:25px; border-top:1px solid var(--border-fino);">
+                            <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data">
+                                <div class="edit-grid">
+                                    <div>
+                                        <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Nomenclatura:</label>
+                                        <input type="text" name="nombre" class="form-control" value="{{ prod.nombre }}" required>
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Valor ($):</label>
+                                        <input type="number" step="0.50" name="precio" class="form-control" value="{{ prod.precio }}" required>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; align-items: center; padding: 10px 0; margin-bottom: 10px;">
+                                    <input type="checkbox" name="venta_a_granel" id="edit_granel_{{ prod.id }}" value="1" {% if prod.venta_a_granel %}checked{% endif %} style="accent-color: var(--luxury-gold); width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
+                                    <label for="edit_granel_{{ prod.id }}" style="font-size: 0.75rem; color: var(--light-brown); cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Venta a Granel</label>
+                                </div>
+                                
+                                <div class="edit-grid" style="margin-top: 5px;">
+                                    <div>
+                                        <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Inventario Relámpago:</label>
+                                        <input type="number" name="stock_sobrante" class="form-control" value="{{ prod.stock_sobrante or 0 }}" min="0">
+                                    </div>
+                                    <div>
+                                        <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Límite Estándar:</label>
+                                        <input type="number" name="stock_tienda" class="form-control" value="{{ prod.stock_tienda if prod.stock_tienda is not none else '' }}" min="0">
+                                    </div>
+                                </div>
+
+                                <div style="margin-top: 5px;">
+                                    <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Segmento:</label>
+                                    <select name="categoria" class="form-control">
+                                        <option value="pan" {% if prod.categoria == 'pan' %}selected{% endif %}>Boutique (Panadería)</option>
+                                        <option value="halloween" {% if prod.categoria == 'halloween' %}selected{% endif %}>Colección Halloween</option>
+                                        <option value="bebidas" {% if prod.categoria == 'bebidas' %}selected{% endif %}>Cafetería y Bebidas</option>
+                                        <option value="snacks" {% if prod.categoria == 'snacks' %}selected{% endif %}>Acompañamientos y Snacks</option>
+                                        <option value="abarrotes" {% if prod.categoria == 'abarrotes' %}selected{% endif %}>Abarrotes y Alacena</option>
+                                        <option value="cremeria" {% if prod.categoria == 'cremeria' %}selected{% endif %}>Cremería Selecta</option>
+                                        <option value="verduras" {% if prod.categoria == 'verduras' %}selected{% endif %}>Frescos y Verduras</option>
+                                    </select>
+                                </div>
+                                
+                                <div style="display: flex; align-items: center; padding: 10px 0; margin-bottom: 10px;">
+                                    <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--luxury-gold); width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
+                                    <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--light-brown); cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Clasificar Mayoreo</label>
+                                </div>
+
+                                <textarea name="descripcion" class="form-control" style="height:80px; resize:none; margin-top: 10px;">{{ prod.descripcion }}</textarea>
+                                
+                                <div style="background: var(--card-black); border: 1px dashed var(--border-fino); padding: 20px; border-radius: var(--radius); text-align: center; margin-top: 5px;">
+                                    <span style="display:block; margin-bottom:12px; font-size:0.75rem; font-weight: 600; color: #777; text-transform: uppercase; letter-spacing: 2px;">Sustituir Fotografía</span>
+                                    <input type="file" name="imagen_file" accept="image/*" style="font-size:0.75rem; width: 100%; color: #888; font-family: 'Montserrat', sans-serif;">
+                                </div>
+                                
+                                <div style="display:flex; flex-wrap: wrap; gap:10px; margin-top: 20px;">
+                                    <button type="submit" class="btn-action" style="flex: 1; min-width: 150px;">Actualizar Registro</button>
+                                    <button type="button" class="btn-small" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='none'" style="flex: 0 0 auto;">Cancelar</button>
+                                </div>
                             </form>
                         </div>
                     </div>
-
-                    <!-- FORMULARIO DE EDICIÓN OCULTO -->
-                    <div id="edit-form-{{ prod.id }}" style="display:none; background:#050505; padding:30px; border-top:1px solid var(--border-fino);">
-                        <form action="{{ url_for('editar_producto', producto_id=prod.id) }}" method="POST" enctype="multipart/form-data">
-                            <div class="edit-grid">
-                                <div>
-                                    <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Nomenclatura:</label>
-                                    <input type="text" name="nombre" class="form-control" value="{{ prod.nombre }}" required>
-                                </div>
-                                <div>
-                                    <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Valor ($):</label>
-                                    <input type="number" step="0.50" name="precio" class="form-control" value="{{ prod.precio }}" required>
-                                </div>
-                            </div>
-
-                            <div style="display: flex; align-items: center; padding: 10px 0; margin-bottom: 10px;">
-                                <input type="checkbox" name="venta_a_granel" id="edit_granel_{{ prod.id }}" value="1" {% if prod.venta_a_granel %}checked{% endif %} style="accent-color: var(--luxury-gold); width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
-                                <label for="edit_granel_{{ prod.id }}" style="font-size: 0.75rem; color: var(--light-brown); cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Venta a Granel</label>
-                            </div>
-                            
-                            <div class="edit-grid" style="margin-top: 5px;">
-                                <div>
-                                    <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Inventario Relámpago:</label>
-                                    <input type="number" name="stock_sobrante" class="form-control" value="{{ prod.stock_sobrante or 0 }}" min="0">
-                                </div>
-                                <div>
-                                    <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Límite Estándar:</label>
-                                    <input type="number" name="stock_tienda" class="form-control" value="{{ prod.stock_tienda if prod.stock_tienda is not none else '' }}" min="0">
-                                </div>
-                            </div>
-
-                            <div style="margin-top: 5px;">
-                                <label style="font-size: 0.65rem; color: #888; display: block; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 2px;">Segmento:</label>
-                                <select name="categoria" class="form-control">
-                                    <option value="pan" {% if prod.categoria == 'pan' %}selected{% endif %}>Boutique (Panadería)</option>
-                                    <option value="halloween" {% if prod.categoria == 'halloween' %}selected{% endif %}>Colección Halloween</option>
-                                    <option value="bebidas" {% if prod.categoria == 'bebidas' %}selected{% endif %}>Cafetería y Bebidas</option>
-                                    <option value="snacks" {% if prod.categoria == 'snacks' %}selected{% endif %}>Acompañamientos y Snacks</option>
-                                    <option value="abarrotes" {% if prod.categoria == 'abarrotes' %}selected{% endif %}>Abarrotes y Alacena</option>
-                                    <option value="cremeria" {% if prod.categoria == 'cremeria' %}selected{% endif %}>Cremería Selecta</option>
-                                    <option value="verduras" {% if prod.categoria == 'verduras' %}selected{% endif %}>Frescos y Verduras</option>
-                                </select>
-                            </div>
-                            
-                            <div style="display: flex; align-items: center; padding: 10px 0; margin-bottom: 10px;">
-                                <input type="checkbox" name="es_pedido_grande" id="edit_large_{{ prod.id }}" value="1" {% if prod.es_pedido_grande %}checked{% endif %} style="accent-color: var(--luxury-gold); width: 18px; height: 18px; margin-right: 12px; cursor: pointer;">
-                                <label for="edit_large_{{ prod.id }}" style="font-size: 0.75rem; color: var(--light-brown); cursor: pointer; text-transform: uppercase; letter-spacing: 1px;">Clasificar Mayoreo</label>
-                            </div>
-
-                            <textarea name="descripcion" class="form-control" style="height:80px; resize:none; margin-top: 10px;">{{ prod.descripcion }}</textarea>
-                            
-                            <div style="background: var(--card-black); border: 1px dashed var(--border-fino); padding: 25px; border-radius: var(--radius); text-align: center; margin-top: 5px;">
-                                <span style="display:block; margin-bottom:12px; font-size:0.75rem; font-weight: 600; color: #777; text-transform: uppercase; letter-spacing: 2px;">Sustituir Fotografía</span>
-                                <input type="file" name="imagen_file" accept="image/*" style="font-size:0.75rem; width: 100%; color: #888; font-family: 'Montserrat', sans-serif;">
-                            </div>
-                            
-                            <div style="display:flex; gap:15px; margin-top: 25px;">
-                                <button type="submit" class="btn-action" style="flex: 2;">Actualizar Registro</button>
-                                <button type="button" class="btn-small" onclick="document.getElementById('edit-form-{{ prod.id }}').style.display='none'" style="flex: 1;">Cancelar</button>
-                            </div>
-                        </form>
-                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </div>
     </div>
@@ -1390,7 +1419,22 @@
             }, 1000);
         }
 
-        // ================= SISTEMA POS INTEGRADO =================
+        // ================= SISTEMA POS (INDEPENDIENTE) =================
+        function abrirModalPos(id) {
+            document.getElementById('modal-pos-' + id).style.display = 'flex';
+            setTimeout(() => {
+                const inputEfectivo = document.getElementById('pos-recibido-' + id);
+                if (inputEfectivo) inputEfectivo.focus();
+            }, 100);
+        }
+
+        function cerrarModalPos(id) {
+            document.getElementById('modal-pos-' + id).style.display = 'none';
+            document.getElementById('pos-recibido-' + id).value = '';
+            document.getElementById('pos-cambio-' + id).innerText = '$0.00';
+            document.getElementById('pos-cambio-' + id).style.color = 'var(--luxury-gold)';
+        }
+
         function toggleEfectivoPos(id) {
             let metodo = document.getElementById('pos-metodo-' + id).value;
             let seccion = document.getElementById('seccion-efectivo-' + id);
@@ -1416,6 +1460,21 @@
                 textoCambio.innerText = 'Faltan $' + Math.abs(cambio).toFixed(2);
                 textoCambio.style.color = '#ff6b6b'; // Rojo de alerta
             }
+        }
+
+        // ================= BUSCADOR DEL CATÁLOGO =================
+        function filtrarCatalogo() {
+            let input = document.getElementById('buscadorProductos').value.toLowerCase();
+            let cards = document.querySelectorAll('.prod-card');
+            
+            cards.forEach(card => {
+                let nombre = card.getAttribute('data-nombre');
+                if (nombre.includes(input)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
         }
 
         // ================= CONTROL DE VISTAS (TABS) =================
@@ -1476,28 +1535,13 @@
             }
         }
 
-        // ================= CONTROL DE MODALES UNIFICADOS =================
+        // ================= CONTROL DE MODALES =================
         function abrirModalPedido(id) {
             document.getElementById('modal-' + id).style.display = 'flex';
-            // Al abrir el ticket, si el pago no se ha validado, enfoca el input de efectivo
-            setTimeout(() => {
-                const inputEfectivo = document.getElementById('pos-recibido-' + id);
-                if (inputEfectivo) {
-                    inputEfectivo.focus();
-                }
-            }, 100);
         }
         
         function cerrarModalPedido(id) {
             document.getElementById('modal-' + id).style.display = 'none';
-            // Por seguridad corporativa, limpia el monto si cierran la ventana
-            const inputRecibido = document.getElementById('pos-recibido-' + id);
-            const divCambio = document.getElementById('pos-cambio-' + id);
-            if (inputRecibido) inputRecibido.value = '';
-            if (divCambio) {
-                divCambio.innerText = '$0.00';
-                divCambio.style.color = 'var(--luxury-gold)';
-            }
         }
 
         window.onclick = function(event) {
