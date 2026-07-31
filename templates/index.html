@@ -1017,6 +1017,7 @@
         
     {% endfor %}
     </div>
+    </div>
 
     <form id="pedidoForm">
         <div id="sidebarCarrito" class="sidebar-carrito">
@@ -1916,7 +1917,7 @@ function confirmarGranel() {
 async function procesarPreventaHalloween(event) {
     event.preventDefault(); // Evita que la página parpadee o recargue
 
-    const form = document.getElementById('form-halloween');
+    const form = document.getElementById('pedidoForm');
     const formData = new FormData(form);
 
     // 1. Validar que no envíen el formulario vacío
@@ -1932,7 +1933,7 @@ async function procesarPreventaHalloween(event) {
         return;
     }
 
-    const btn = form.querySelector('.btn-dorado-premium');
+    const btn = document.getElementById('btnProcesar');
     const textoOriginal = btn.innerText;
     btn.innerText = "Procesando...";
     btn.disabled = true;
